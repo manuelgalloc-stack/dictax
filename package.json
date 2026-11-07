@@ -1,0 +1,12 @@
+{
+  "name": "dictax",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx wrangler pages dev",
+    "check": "npx wrangler pages functions build --outdir=.build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0"
+  }
+}

@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e9a55">
+<meta name="description" content="Dictax trasforma la tua voce in testi pronti: note, email, verbali e contenuti social.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dictax">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Dictax</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: colonna da app mobile — scelta profilo, registratore in alto, filtri, schede note, barra in basso */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --paper:#f5f9f5; --fg:#13211a; --muted:#61756a; --line:#dde8de;
+  --deck:#17261e; --deck-fg:#e3efe6; --deck-muted:#8ea596;
+  --accent:#1e9a55; --accent-strong:#137240; --accent-soft:#d9efe0; --on-accent:#ffffff; --danger:#b3261e; --warn-bg:#fff2c2; --warn-fg:#7a5600;
+  --serif:"Young Serif",Georgia,serif; --body:"Figtree",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%;overflow-x:clip;max-width:100vw}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 110px}
+.app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.app>section{width:100%}
+.top{display:flex;flex-direction:column;align-items:center;gap:10px}
+.brand{font:400 26px/1 var(--serif);text-align:center;letter-spacing:-.01em}
+.brand span{color:var(--accent)}
+.modesw{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
+.modesw button{border:0;background:none;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.modesw button[aria-pressed="true"]{background:var(--deck);color:var(--deck-fg)}
+button,select{font-family:var(--body)}
+button:focus-visible,textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Scelta profilo */
+.pickmode{display:flex;flex-direction:column;gap:12px}
+.mcard{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:20px;padding:18px;cursor:pointer;color:var(--fg);font:inherit;width:100%}
+.mcard:hover{border-color:var(--accent)}
+.mcard .kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong)}
+.mcard h2{font:400 22px/1.2 var(--serif);margin:0}
+.mcard ul{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.mcard .go{font-weight:600;color:var(--accent-strong)}
+
+/* Registratore */
+.deck{background:var(--deck);color:var(--deck-fg);border-radius:26px;padding:22px 18px 46px;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative}
+.timer{font:500 30px/1 var(--mono);letter-spacing:.12em;font-variant-numeric:tabular-nums}
+.wave{display:flex;align-items:center;gap:3px;height:30px}
+.wave i{width:3px;border-radius:2px;background:var(--deck-fg);opacity:.85;height:6px;transition:height .12s}
+.state{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--deck-muted);background:rgba(255,255,255,.07);padding:4px 12px;border-radius:999px}
+.deck .side{position:absolute;bottom:14px;background:none;border:0;color:var(--deck-muted);cursor:pointer;padding:6px;font-size:13px}
+.deck .side.l{left:14px}.deck .side.r{right:14px}
+.mic{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);width:72px;height:72px;border-radius:50%;border:5px solid var(--bg);background:var(--accent);color:var(--on-accent);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(20,110,60,.35)}
+.mic svg{width:28px;height:28px}
+.mic .stop{width:22px;height:22px;border-radius:5px;background:var(--on-accent)}
+.mic.on{animation:pulse 1.5s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 12px rgba(30,154,85,.25)}}
+@media (prefers-reduced-motion:reduce){.mic.on{animation:none}}
+.spacer{height:20px}
+
+/* Composer e controlli */
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+textarea,input[type=text],input[type=search],select{width:100%;font:15px/1.5 var(--body);color:var(--fg);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 13px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--fg);font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.row.tight{gap:8px;justify-content:flex-start;flex-wrap:nowrap}
+.row.tight input{flex:1;min-width:0}
+.toggle{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.toggle input{accent-color:var(--accent);width:18px;height:18px}
+.btn{border:0;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:15px;padding:10px 18px;border-radius:12px;cursor:pointer;white-space:nowrap}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.ghost{background:none;color:var(--accent-strong);border:1px solid var(--line)}
+.btn.danger{background:none;color:var(--danger);border:1px solid var(--line)}
+.btn.sm{font-size:13px;padding:5px 11px;border-radius:9px}
+.status{font-size:13px;color:var(--muted)}
+.pro{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-strong);background:var(--accent-soft);padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:6px;white-space:nowrap}
+.style{border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+.style summary{cursor:pointer;padding:10px 13px;font-size:14px;font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.style summary span{color:var(--muted);font-weight:500;font-size:13px;text-align:right}
+.style .body{padding:4px 13px 14px;display:flex;flex-direction:column;gap:14px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:none;padding:7px 4px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--accent-strong);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.opts button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:500;text-align:left;cursor:pointer;min-width:0;overflow-wrap:anywhere}
+.opts button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
+.opts button.add{border-style:dashed;color:var(--accent-strong)}
+.newstyle{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:10px;background:var(--surface)}
+.help{font-size:12px;color:var(--muted);margin:-8px 0 0}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* Filtri */
+.tabs{display:flex;gap:18px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none;align-items:center}
+.tabs button{background:none;border:0;padding:8px 0;color:var(--muted);font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-pressed="true"]{color:var(--fg);border-color:var(--accent)}
+.tabs button.add{color:var(--accent-strong);font-weight:600}
+
+/* Note */
+.list{display:flex;flex-direction:column;gap:12px}
+.note{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;color:var(--fg);width:100%;font:inherit}
+.note .meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.note .meta .cat{color:var(--accent-strong)}
+.note h3{font:400 19px/1.25 var(--serif);margin:0;text-wrap:balance}
+.note p{margin:0;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:600;background:var(--accent-soft);color:var(--accent-strong);padding:2px 9px;border-radius:999px;border:0}
+button.pill{cursor:pointer}
+.empty{color:var(--muted);text-align:center;padding:24px}
+.pick{display:flex;gap:12px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer}
+.pick input{accent-color:var(--accent);width:18px;height:18px;margin-top:3px;flex:none}
+.pick b{font:400 16px/1.3 var(--serif);display:block}
+.pick small{color:var(--muted)}
+
+/* Dettaglio */
+.back{background:none;border:0;color:var(--accent-strong);font-weight:600;cursor:pointer;padding:0;align-self:flex-start}
+h1{font:400 26px/1.2 var(--serif);margin:0;text-wrap:balance}
+.lead{margin:0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .fmt{font-weight:700;font-size:14px;color:var(--accent-strong)}
+.card .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
+.fid{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.fid:empty{display:none}
+.fid .ok{color:var(--accent-strong);font-weight:600}
+.fid .warn{color:var(--warn-fg);font-weight:600}
+.fid ul{margin:0;padding-left:18px}
+.orig{font-size:14px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.organize{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.organize>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.voice-grid{display:flex;flex-direction:column;gap:10px}
+.voice-grid div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.voice-grid b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:10px}
+.bub{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub.me{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.bub.ai{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:4px}
+.sugg{display:flex;flex-wrap:wrap;gap:7px}
+
+/* Barra in basso */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;justify-content:center;pointer-events:none}
+.dock nav{pointer-events:auto;display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px;box-shadow:0 8px 24px rgba(10,40,20,.12);max-width:100%}
+.dock button{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.dock button[aria-current="true"]{background:var(--deck);color:var(--deck-fg)}
+@media (max-width:380px){.dock button{padding:9px 10px;font-size:12px}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div class="top">
+    <div class="brand">Dict<span>ax</span></div>
+    <div class="modesw" id="modesw" role="group" aria-label="Profilo" hidden>
+      <button data-m="note">Note</button><button data-m="creator">Creator</button>
+    </div>
+  </div>
+
+  <!-- CODICE DI ACCESSO -->
+  <div class="composer" id="lockBox" hidden>
+    <label class="lbl" for="codeIn">Codice di accesso</label>
+    <p class="lead" style="margin:0">Dictax è in prova privata. Inserisci il codice che hai ricevuto.</p>
+    <div class="row tight"><input type="text" id="codeIn" autocomplete="off" autocapitalize="off"><button class="btn sm" id="codeSave">Entra</button></div>
+  </div>
+
+  <!-- SCELTA PROFILO -->
+  <section id="v-mode" class="app" style="gap:14px" hidden>
+    <h1>Come vuoi usare Dictax?</h1>
+    <p class="lead">Puoi cambiare profilo quando vuoi dall'interruttore in alto. Ogni profilo ha le sue note.</p>
+    <div class="pickmode">
+      <button class="mcard" data-m="note">
+        <span class="kicker">Profilo Note · Pro</span>
+        <h2>Pensieri, riunioni e appunti in testo chiaro</h2>
+        <ul><li>Testo pulito, email, verbali, liste di attività</li><li>Super note e chat con le tue note</li><li>Cartelle, tag, export per Obsidian</li></ul>
+        <span class="go">Inizia con Note →</span>
+      </button>
+      <button class="mcard" data-m="creator">
+        <span class="kicker">Profilo Creator · per creator e social media manager</span>
+        <h2>Da un vocale a post, caroselli e reel</h2>
+        <ul><li>Più formati social da una sola idea</li><li>Voce di brand per te e per ogni cliente</li><li>Ganci, script, newsletter e idee di contenuto</li></ul>
+        <span class="go">Inizia con Creator →</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- HOME -->
+  <section id="v-home" class="app" style="gap:18px" hidden>
+    <div class="deck">
+      <div class="timer" id="timer">00:00</div>
+      <div class="wave" id="wave" aria-hidden="true"></div>
+      <div class="state" id="state">pronto</div>
+      <button class="side l" id="reset" aria-label="Ricomincia">↺ Ricomincia</button>
+      <button class="side r" id="uploadBtn">⇪ Carica audio</button>
+      <input type="file" id="audioFile" accept="audio/*,video/mp4,video/webm" hidden>
+      <button class="mic" id="mic" aria-label="Avvia registrazione"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+    </div>
+    <div class="spacer"></div>
+
+    <div class="composer" id="composer">
+      <label class="lbl" for="transcript">Detta, scrivi o incolla <span class="pro planBadge"></span></label>
+      <textarea id="transcript" rows="5"></textarea>
+      <details class="style" id="styleBox">
+        <summary>Stile di riscrittura <span id="styleSum"></span></summary>
+        <div class="body">
+          <span class="lbl">Quanto riscrivere</span>
+          <div class="seg" id="level"></div>
+          <p class="help" id="levelHelp"></p>
+          <span class="lbl">Stile <span class="pro planBadge"></span></span>
+          <div class="opts" id="wstyle"></div>
+          <div class="newstyle" id="newStyle" hidden>
+            <label class="lbl" for="nsName">Nome dello stile</label>
+            <input type="text" id="nsName" placeholder="Es. Verbale riunione">
+            <label class="lbl" for="nsRule">Come deve scrivere</label>
+            <textarea id="nsRule" rows="3" placeholder="Es. Elenca decisioni, responsabili e scadenze. Tono formale, niente aggettivi."></textarea>
+            <div class="row"><button class="btn ghost sm" id="nsCancel">Annulla</button><button class="btn sm" id="nsSave">Salva stile</button></div>
+          </div>
+          <label class="lbl" for="len">Lunghezza</label>
+          <input type="range" id="len" min="0" max="4" step="1">
+          <p class="help" id="lenHelp"></p>
+        </div>
+      </details>
+      <div class="row tight" id="jobRow"><label class="lbl" for="job" style="flex:none">Il mio lavoro</label><select id="job" style="flex:1;min-width:0"></select></div>
+      <span class="lbl" id="fmtLabel">Trasforma in</span>
+      <div class="chips" id="formats"></div>
+      <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI <span class="pro planBadge"></span></label>
+      <div class="row">
+        <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Con la mia voce di brand</label>
+        <button class="btn" id="go">Trasforma</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+
+    <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
+    <div class="tabs" id="tabs" role="toolbar" aria-label="Cartelle"></div>
+    <div class="row tight" id="newFolder" hidden>
+      <input type="text" id="nfName" placeholder="Nome della nuova cartella" aria-label="Nome della nuova cartella">
+      <button class="btn sm" id="nfSave">Crea</button>
+      <button class="btn ghost sm" id="nfCancel">Annulla</button>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <!-- DETTAGLIO -->
+  <section id="v-detail" class="app" style="gap:14px" hidden>
+    <button class="back" id="back">← Tutte le note</button>
+    <div class="note" style="cursor:default" id="dHead"></div>
+    <div class="organize" id="dOrg">
+      <div><label class="lbl" for="dFolder">Cartella</label><select id="dFolder"></select></div>
+      <div><label class="lbl" for="dTag">Aggiungi tag</label><div class="row tight"><input type="text" id="dTag" placeholder="es. cliente"><button class="btn sm" id="dTagAdd">+</button></div></div>
+    </div>
+    <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
+    <div class="list" id="dOut"></div>
+    <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
+    <div class="row" style="justify-content:flex-start">
+      <button class="btn ghost sm" id="mdCopy">Copia in Markdown</button>
+      <button class="btn ghost sm" id="mdSave">Esporta per Obsidian (.md)</button>
+      <button class="btn danger sm" id="del">Elimina</button>
+    </div>
+    <div class="status" id="dStatus" aria-live="polite"></div>
+    <div class="composer" id="appendBox">
+      <label class="lbl" for="addText">Aggiungi alla nota</label>
+      <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
+      <div class="row"><span class="status" id="aStatus" aria-live="polite"></span><button class="btn" id="appendGo">Aggiungi e riscrivi</button></div>
+    </div>
+  </section>
+
+  <!-- UNISCI -->
+  <section id="v-merge" class="app" style="gap:14px" hidden>
+    <h1>Super nota <span class="pro planBadge"></span></h1>
+    <p class="lead" id="mLead"></p>
+    <div class="list" id="mList"></div>
+    <div class="composer">
+      <label class="lbl" for="mHow">Istruzioni (facoltative)</label>
+      <input type="text" id="mHow">
+      <div class="row"><span class="status" id="mStatus" aria-live="polite"></span><button class="btn" id="mGo">Crea super nota</button></div>
+    </div>
+  </section>
+
+  <!-- CHIEDI -->
+  <section id="v-ask" class="app" style="gap:14px" hidden>
+    <h1>Chiedi alle tue note <span class="pro planBadge"></span></h1>
+    <p class="lead">Fai una domanda: Dictax risponde usando solo quello che hai registrato in questo profilo.</p>
+    <div class="sugg" id="sugg"></div>
+    <div class="chat" id="chat"></div>
+    <div class="composer">
+      <label class="lbl" for="q">La tua domanda</label>
+      <textarea id="q" rows="2"></textarea>
+      <div class="row"><button class="btn ghost sm" id="qReset">Nuova chat</button><button class="btn" id="qGo">Chiedi</button></div>
+    </div>
+  </section>
+
+  <!-- VOCE (solo Creator) -->
+  <section id="v-voice" class="app" style="gap:14px" hidden>
+    <h1>Voce di brand <span class="pro planBadge"></span></h1>
+    <p class="lead">Incolla 2 o 3 testi scritti da te o dal tuo cliente. Dictax ricava lo stile e lo usa ogni volta che trasformi una nota.</p>
+    <div class="composer">
+      <label class="lbl" for="brandName">Nome del profilo</label>
+      <input type="text" id="brandName" value="ManuLab">
+      <label class="lbl" for="samples">Testi di esempio</label>
+      <textarea id="samples" rows="7" placeholder="Post, email, caption… separati da una riga vuota"></textarea>
+      <div class="row"><span class="status" id="vStatus" aria-live="polite"></span><button class="btn" id="analyze">Analizza lo stile</button></div>
+    </div>
+    <div class="row"><span class="lbl">Profilo attivo</span><span class="pill" id="vTag">Esempio</span></div>
+    <div class="voice-grid" id="voiceSum"></div>
+  </section>
+</div>
+
+<div class="dock" id="dock" hidden><nav aria-label="Sezioni" id="dockNav"></nav></div>
+
+<script>
+const FORMATS={
+  pulito:{n:"Testo pulito",p:"il pensiero riscritto in modo chiaro e scorrevole, senza ripetizioni"},
+  email:{n:"Email",p:"email con riga 'Oggetto: ...', saluto, corpo chiaro e firma"},
+  todo:{n:"Attività",p:"elenco puntato delle azioni concrete e delle scadenze emerse dalla nota"},
+  verbale:{n:"Verbale riunione",p:"verbale con sezioni 'Decisioni', 'Chi fa cosa' e 'Scadenze', in elenchi puntati"},
+  riassunto:{n:"Riassunto",p:"riassunto breve seguito da 'Punti chiave' (elenco puntato) e 'Prossime azioni' (elenco puntato)"},
+  diario:{n:"Pagina di diario",p:"pagina di diario in prima persona, riflessiva e ordinata"},
+  linkedin:{n:"Post LinkedIn",p:"post LinkedIn con gancio iniziale forte, paragrafi brevi, chiusura con domanda o call to action"},
+  instagram:{n:"Caption Instagram",p:"caption Instagram breve e coinvolgente con call to action e 5 hashtag pertinenti in fondo"},
+  carosello:{n:"Carosello",p:"testo per carosello Instagram di 6 slide, una riga 'Slide N: ...' per slide, titolo forte sulla prima, CTA sull'ultima"},
+  reel:{n:"Script reel",p:"script per reel di 30-45 secondi: GANCIO (primi 3 secondi), CORPO, CTA, con indicazioni visive tra parentesi quadre"},
+  tiktok:{n:"Caption TikTok",p:"caption TikTok brevissima e diretta, con 3-4 hashtag"},
+  ganci:{n:"5 ganci",p:"5 ganci alternativi per l'inizio di un post o di un video, uno per riga, numerati"},
+  newsletter:{n:"Newsletter",p:"breve sezione di newsletter con titolo, 2-3 paragrafi e CTA finale con [LINK]"},
+  idee:{n:"Idee di contenuto",p:"5 idee di contenuti derivate da questa nota, ognuna con formato consigliato e titolo"},
+  piano:{n:"Piano settimanale",p:"piano di pubblicazione per 5 giorni (lunedì-venerdì): per ogni giorno piattaforma, formato e titolo del contenuto"},
+  visita:{n:"Resoconto visita",p:"resoconto di una visita commerciale con le sezioni 'Cliente', 'Esigenze', 'Obiezioni', 'Prossimo passo' e 'Quando richiamare'"},
+  pratica:{n:"Nota di pratica",p:"nota di pratica legale in tono formale con le sezioni 'Fatti', 'Questioni aperte' e 'Prossimi passi'"},
+  lettera:{n:"Lettera al cliente",p:"lettera formale al cliente, chiara e cortese, con saluto e firma"},
+  seduta:{n:"Nota di seduta",p:"nota di seduta professionale e neutra con le sezioni 'Temi emersi', 'Osservazioni' e 'Obiettivi per la prossima seduta'"},
+  bozza:{n:"Bozza di articolo",p:"bozza di articolo con titolo, introduzione, 2-4 paragrafi e conclusione"},
+  memorie:{n:"Capitolo di memorie",p:"capitolo di memorie in prima persona, con il tono e le espressioni dell'autore"},
+  scheda:{n:"Scheda immobile",p:"scheda immobile con 'Zona', 'Caratteristiche', 'Punti di forza', 'Da segnalare' e 'Prezzo indicato'"},
+  annuncio:{n:"Annuncio immobiliare",p:"annuncio immobiliare accattivante ma onesto, con titolo e descrizione"}
+};
+const BASE_STYLES={chiaro:{n:"Chiaro e semplice"},descrittivo:{n:"Descrittivo"},elenco:{n:"A elenco"},professionale:{n:"Professionale"},amichevole:{n:"Amichevole"},mio:{n:"Come scrivo io"},diretto:{n:"Diretto"},ironico:{n:"Ironico"},ispirazionale:{n:"Ispirazionale"}};
+const MODES={
+  note:{badge:"Pro · gratis",formats:["pulito","email","todo","verbale","riassunto","diario"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio"],folders:["Idee","Lavoro","Personale","Diario"],
+    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
+    ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
+    qph:"Es. Cosa devo fare questa settimana?",sugg:["Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
+  creator:{badge:"Creator · gratis",formats:["linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["linkedin","instagram"],styles:["mio","diretto","amichevole","professionale","ironico","ispirazionale"],folders:["Idee","Contenuti","Clienti","Pubblicati"],
+    tabs:[["home","Contenuti"],["merge","Unisci"],["ask","Chiedi"],["voice","Voce brand"]],writer:"Sei un copywriter e social media manager italiano.",fmtLabel:"Crea per",
+    ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
+    qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
+};
+const JOBS={generico:{n:"Uso generale",f:[]},commerciale:{n:"Commerciale",f:["visita"]},avvocato:{n:"Avvocato",f:["pratica","lettera"]},terapeuta:{n:"Terapeuta / psicologo",f:["seduta"]},scrittore:{n:"Scrittore / giornalista",f:["bozza"]},memorie:{n:"Scrivo le mie memorie",f:["memorie"]},immobiliare:{n:"Agente immobiliare",f:["scheda","annuncio"]}};
+const LEVELS={leggera:{n:"Leggera",h:"Pulisce esitazioni e ripetizioni, lascia le tue parole.",p:"Riscrittura leggera: togli solo esitazioni e ripetizioni, conserva il più possibile le parole originali."},media:{n:"Media",h:"Riordina e migliora le frasi, mantiene il senso.",p:"Riscrittura media: riordina e migliora le frasi mantenendo il senso e parte delle espressioni originali."},completa:{n:"Completa",h:"Riscrive tutto da capo nello stile scelto.",p:"Riscrittura completa: riscrivi liberamente da capo, nello stile scelto."}};
+const LENS=[["Molto breve","circa un terzo dell'originale"],["Breve","più corto dell'originale"],["Simile","più o meno come l'originale"],["Più ricco","un po' più lungo, sviluppando le idee"],["Esteso","molto più sviluppato, senza inventare fatti"]];
+const EXAMPLES={
+  note:[
+    {id:"exn1",ex:true,at:Date.now()-864e5,cat:"Lavoro",title:"Cose da chiedere al commercialista",tags:["tasse","scadenze"],
+     tr:"allora devo ricordarmi di chiedere al commercialista ehm la scadenza dell'IVA trimestrale, se posso scaricare il computer nuovo che ho preso a settembre, e poi devo mandargli le fatture di ottobre entro venerdì, sennò slitta tutto.",
+     out:{todo:"• Chiedere la scadenza dell'IVA trimestrale\n• Chiedere se il computer acquistato a settembre è deducibile\n• Inviare le fatture di ottobre entro venerdì"}},
+    {id:"exn2",ex:true,at:Date.now()-4*864e5,cat:"Diario",title:"Una mattina senza telefono",tags:["abitudini"],
+     tr:"oggi ho provato a non guardare il telefono per la prima ora, all'inizio strano, poi mi sono accorto che avevo la testa più libera e ho scritto la scaletta del progetto in mezz'ora.",
+     out:{pulito:"Oggi ho provato a non guardare il telefono per la prima ora della giornata. All'inizio è stato strano, poi mi sono accorto di avere la testa più libera. In mezz'ora ho scritto tutta la scaletta del progetto."}}
+  ],
+  creator:[
+    {id:"exc1",ex:true,at:Date.now()-864e5,cat:"Contenuti",title:"Due minuti in macchina valgono una settimana di post",tags:["social","produttività"],
+     tr:"allora ehm volevo dire che tanti piccoli imprenditori pensano che per fare contenuti servano ore, invece io la mattina in macchina registro un vocale di due minuti con un'idea e da lì tiro fuori il post, la caption, a volte lo script del reel. L'idea ce l'hai già, ti manca il tempo di scriverla. Quindi smetti di aspettare il momento perfetto e parla.",
+     out:{linkedin:"Non ti manca la creatività. Ti manca il tempo per scrivere.\n\nOgni mattina, in macchina, registro un vocale di due minuti. Da lì nascono il post, la caption e spesso lo script del reel.\n\nL'idea ce l'hai già. Serve solo un modo veloce per tirarla fuori.\n\nSmetti di aspettare il momento perfetto. Parla.\n\nTu come catturi le tue idee?",
+          instagram:"2 minuti in macchina = una settimana di contenuti 🎙️\nL'idea ce l'hai già: ti manca solo il tempo di scriverla.\n\n👉 Salva il post e provalo domani mattina.\n\n#contentcreation #imprenditori #socialmediatips #produttività #personalbranding"}},
+    {id:"exc2",ex:true,at:Date.now()-3*864e5,cat:"Clienti",title:"Ristorante sul lago: idee per il lancio del menu",tags:["cliente","ristorazione"],
+     tr:"cliente ristorante sul lago, a marzo esce il menu di primavera, vogliono far vedere i piatti e lo chef, magari un reel dietro le quinte in cucina e un carosello con i piatti nuovi.",
+     out:{idee:"1. Reel dietro le quinte: lo chef prepara il piatto simbolo del menu di primavera\n2. Carosello: i 5 piatti nuovi, una slide per piatto\n3. Post: la storia dello chef e del lago\n4. Stories: sondaggio \"quale piatto proveresti per primo?\"\n5. Reel: dal mercato al piatto, gli ingredienti di stagione"}}
+  ]
+};
+const EX_VOICE={tono:"Diretto, pratico, da pari a pari",lessico:"Parole semplici, frasi brevi, esempi concreti",struttura:"Gancio forte, punto chiave, consiglio operativo finale",evitare:"Gergo tecnico, toni da guru, promesse esagerate",sintesi:"Scrive come un consulente amico: va al punto e chiude sempre con un'azione da fare."};
+
+const $=id=>document.getElementById(id);
+const raw={get(k,d){try{const v=localStorage.getItem("dx1_"+k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem("dx1_"+k,JSON.stringify(v))}catch{}}};
+let mode=raw.get("mode",null);
+const store={get:(k,d)=>raw.get(mode+"_"+k,d),set:(k,v)=>raw.set(mode+"_"+k,v)};
+const M=()=>MODES[mode];
+let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
+const picked=new Set();
+function loadMode(){
+  st=store.get("style",{level:"media",ws:mode==="creator"?"mio":"chiaro",len:2});
+  customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
+  $("useFid").checked=store.get("fid",true);
+  job=mode==="note"?store.get("job","generico"):"generico";if(!JOBS[job])job="generico";
+  selected=new Set(store.get("formats",M().def).filter(k=>fmts().includes(k)));cat="Tutte";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
+}
+const fmts=()=>[...JOBS[job].f,...M().formats];
+function renderJobs(){$("job").innerHTML="";for(const[k,j]of Object.entries(JOBS)){const o=document.createElement("option");o.value=k;o.textContent=j.n;o.selected=k===job;$("job").append(o)}}
+const folders=()=>[...M().folders,...customFolders];
+const examples=()=>EXAMPLES[mode].filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
+const allNotes=()=>[...store.get("notes",[]),...examples()];
+const allStyles=()=>{const o={};M().styles.forEach(k=>o[k]=BASE_STYLES[k]);customStyles.forEach(s=>o[s.id]={n:s.n,rule:s.rule,custom:true});return o};
+/* Server di Dictax */
+async function api(path,opts={}){
+  const h=new Headers(opts.headers||{});const code=raw.get("code","");if(code)h.set("x-access-code",code);
+  let r;try{r=await fetch(path,{...opts,headers:h})}catch{throw {code:"offline"}}
+  let data={};try{data=await r.json()}catch{}
+  if(!r.ok){if(r.status===401)showLock();throw {code:data.code||(r.status===401?"locked":"upstream_error"),message:data.error||""}}
+  return data}
+function parseJSON(t){try{return JSON.parse(t)}catch{}
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f){try{return JSON.parse(f[1])}catch{}}
+  const starts=["{","["].map(c=>t.indexOf(c)).filter(i=>i>=0);const a=starts.length?Math.min(...starts):-1;const b=Math.max(t.lastIndexOf("}"),t.lastIndexOf("]"));
+  if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch{}}
+  throw {code:"invalid_json"}}
+const sampleFn=Object.assign(async(input,opts={})=>{
+  const d=await api("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({input,tier:opts.modelTier==="quick"?"quick":"default"})});
+  const text=String(d.text||"");opts.onText?.({text,delta:text});return {text,truncated:!!d.truncated}},
+  {json:async(input,opts={})=>{const {text}=await sampleFn(input+"\n\nRispondi solo con JSON valido, senza testo prima o dopo.",opts);return parseJSON(text)}});
+const errMsg=e=>({locked:"Serve il codice di accesso: inseriscilo in alto.",not_configured:"La riscrittura non è ancora attiva: manca la chiave di Claude sul server.",rate_limited:"Troppe richieste: riprova tra poco.",refused:"L'AI non ha elaborato questo testo: prova a riformularlo.",too_large:"Il file è troppo grande (massimo 25 MB).",invalid_json:"Risposta non valida dall'AI: riprova.",offline:"Sei offline: controlla la connessione e riprova."}[e?.code]||"Qualcosa non è andato: riprova tra poco.");
+function showLock(){$("lockBox").hidden=false;$("codeIn").focus()}
+$("codeSave").onclick=()=>{const c=$("codeIn").value.trim();if(!c)return;raw.set("code",c);$("lockBox").hidden=true;$("status").textContent="Codice salvato. Ora puoi usare Dictax."};
+$("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
+
+/* Profili */
+function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode();show("home")}
+function applyMode(){
+  $("modesw").hidden=false;$("dock").hidden=false;
+  document.querySelectorAll("#modesw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));
+  document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
+  $("transcript").placeholder=M().ph;$("fmtLabel").textContent=M().fmtLabel;$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
+  $("voiceToggle").hidden=mode!=="creator";$("jobRow").hidden=mode!=="note";renderJobs();$("useVoice").checked=mode==="creator"&&st.ws==="mio";
+  $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
+  renderStyle();renderChips();renderTabs();renderList();renderVoice();
+}
+document.querySelectorAll("#modesw button,.mcard").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+
+/* Viste */
+function show(v){["mode","home","detail","merge","ask","voice"].forEach(x=>$("v-"+x).hidden=x!==v);
+  document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
+  if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+$("back").onclick=()=>show("home");
+
+/* Onda e timer */
+const MAX_SEC=15*60;
+const W=$("wave");for(let i=0;i<22;i++)W.append(document.createElement("i"));
+let t0=0,tick=null,level=0,audioCtx=null,raf=null;
+function setWave(on){[...W.children].forEach((b,i)=>b.style.height=on?(6+Math.min(1,level*1.6+0.15*Math.abs(Math.sin(Date.now()/180+i)))*24)+"px":(6+((i*7)%5)*2)+"px")}
+setWave(false);
+function startClock(){t0=Date.now();tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("timer").textContent=String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");setWave(true);if(s>=MAX_SEC&&recOn){$("status").textContent="Hai raggiunto i 15 minuti: registrazione fermata.";mr?.stop()}},150)}
+function stopClock(){clearInterval(tick);setWave(false)}
+function startMeter(stream){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();const an=audioCtx.createAnalyser();an.fftSize=256;audioCtx.createMediaStreamSource(stream).connect(an);const d=new Uint8Array(an.frequencyBinCount);
+  const loop=()=>{an.getByteTimeDomainData(d);let m=0;for(const v of d)m=Math.max(m,Math.abs(v-128));level=m/128;raf=requestAnimationFrame(loop)};loop()}catch{}}
+function stopMeter(){cancelAnimationFrame(raf);try{audioCtx?.close()}catch{}audioCtx=null;level=0}
+
+/* Microfono: registrazione vera, trascrizione sul server */
+let mr=null,recOn=false;
+const micIcon=$("mic").innerHTML;
+function setRec(on){recOn=on;$("mic").classList.toggle("on",on);$("mic").innerHTML=on?'<span class="stop"></span>':micIcon;$("mic").setAttribute("aria-label",on?"Ferma registrazione":"Avvia registrazione");$("state").textContent=on?"in ascolto":"pronto";on?startClock():stopClock()}
+$("mic").onclick=async()=>{
+  if(recOn){mr?.stop();return}
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){$("status").textContent="Questo browser non permette di registrare: scrivi il testo o carica un file audio.";return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch{$("status").textContent="Microfono non disponibile: consenti l'accesso al microfono nelle impostazioni del browser.";return}
+  const type=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"].find(t=>window.MediaRecorder.isTypeSupported?.(t))||"";
+  const chunks=[];mr=new MediaRecorder(stream,type?{mimeType:type}:undefined);
+  mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+  mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());stopMeter();setRec(false);const blob=new Blob(chunks,{type:mr.mimeType||type||"audio/webm"});if(blob.size)transcribe(blob)};
+  mr.start(1000);$("status").textContent="";setRec(true);startMeter(stream);
+};
+async function transcribe(blob){
+  if(blob.size>25*1024*1024){$("status").textContent=errMsg({code:"too_large"});return}
+  $("state").textContent="trascrivo…";$("status").textContent="Sto trascrivendo l'audio…";$("mic").disabled=true;$("uploadBtn").disabled=true;
+  try{const r=await api("/api/transcribe?lang=it",{method:"POST",headers:{"content-type":blob.type||"application/octet-stream"},body:blob});
+    const t=String(r.text||"").trim();
+    if(!t){$("status").textContent="Non ho sentito parole: riprova più vicino al microfono.";return}
+    const prev=$("transcript").value.trim();$("transcript").value=(prev?prev+"\n\n":"")+t;
+    $("status").textContent="Trascrizione pronta. Scegli i formati e premi Trasforma.";
+  }catch(e){$("status").textContent=errMsg(e)}
+  finally{$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false}}
+$("reset").onclick=()=>{if(recOn){mr.onstop=null;mr.stop();mr.stream?.getTracks().forEach(t=>t.stop());stopMeter();setRec(false)}$("timer").textContent="00:00";$("transcript").value="";$("status").textContent=""};
+$("uploadBtn").onclick=()=>$("audioFile").click();
+$("audioFile").onchange=e=>{const f=e.target.files?.[0];e.target.value="";if(f)transcribe(f)};
+
+/* Stile e libreria stili */
+function saveStyle(){store.set("style",st);renderStyle()}
+function styleText(){const s=allStyles()[st.ws]||BASE_STYLES.chiaro;return `${LEVELS[st.level].p} Stile: ${s.n}${s.rule?` (regola dello stile: ${s.rule})`:""}. Lunghezza: ${LENS[st.len][1]}.`}
+function renderStyle(){
+  if(!allStyles()[st.ws])st.ws=M().styles[0];
+  $("level").innerHTML="";for(const[k,l]of Object.entries(LEVELS)){const b=document.createElement("button");b.textContent=l.n;b.setAttribute("aria-pressed",st.level===k);b.onclick=()=>{st.level=k;saveStyle()};$("level").append(b)}
+  $("levelHelp").textContent=LEVELS[st.level].h;
+  $("wstyle").innerHTML="";
+  for(const[k,s]of Object.entries(allStyles())){const b=document.createElement("button");b.textContent=(st.ws===k?"✓ ":"")+s.n;b.setAttribute("aria-pressed",st.ws===k);if(s.rule)b.title=s.rule;
+    b.onclick=()=>{st.ws=k;if(mode==="creator")$("useVoice").checked=k==="mio";saveStyle()};$("wstyle").append(b);
+    if(s.custom&&st.ws===k){const d=document.createElement("button");d.textContent="Elimina “"+s.n+"”";d.className="add";d.onclick=()=>{customStyles=customStyles.filter(x=>x.id!==k);store.set("cstyles",customStyles);st.ws=M().styles[0];saveStyle()};$("wstyle").append(d)}}
+  const add=document.createElement("button");add.className="add";add.textContent="+ Nuovo stile";add.onclick=()=>{$("newStyle").hidden=false;$("nsName").focus()};$("wstyle").append(add);
+  $("len").value=st.len;$("lenHelp").textContent=LENS[st.len][0]+": "+LENS[st.len][1]+".";
+  $("styleSum").textContent=LEVELS[st.level].n+" · "+allStyles()[st.ws].n+" · "+LENS[st.len][0];
+}
+$("len").oninput=e=>{st.len=+e.target.value;saveStyle()};
+$("nsCancel").onclick=()=>{$("newStyle").hidden=true};
+$("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.trim();if(!n||!r){$("nsRule").placeholder="Scrivi nome e regola dello stile.";return}
+  const id="c"+Date.now();customStyles.push({id,n,rule:r});store.set("cstyles",customStyles);st.ws=id;$("useVoice").checked=false;
+  $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
+
+/* Formati */
+$("job").onchange=e=>{job=e.target.value;store.set("job",job);selected=new Set(JOBS[job].f.length?JOBS[job].f:M().def);store.set("formats",[...selected]);renderChips()};
+function renderChips(){$("formats").innerHTML="";fmts().forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};$("formats").append(c)})}
+
+/* Cartelle, ricerca, lista */
+function renderTabs(){$("tabs").innerHTML="";["Tutte",...folders()].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.setAttribute("aria-pressed",c===cat);b.onclick=()=>{cat=c;renderTabs();renderList()};$("tabs").append(b)});
+  const a=document.createElement("button");a.className="add";a.textContent="+ Cartella";a.onclick=()=>{$("newFolder").hidden=false;$("nfName").focus()};$("tabs").append(a)}
+$("nfCancel").onclick=()=>{$("newFolder").hidden=true};
+$("nfSave").onclick=()=>{const n=$("nfName").value.trim();if(!n||folders().includes(n))return;customFolders.push(n);store.set("folders",customFolders);$("nfName").value="";$("newFolder").hidden=true;cat=n;renderTabs();renderList()};
+$("search").oninput=e=>{query=e.target.value.trim().toLowerCase();renderList()};
+function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
+function noteCard(n,el){
+  el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;
+  el.querySelector(".d").textContent=fmtDate(n.at)+(n.ex?" · esempio":"");el.querySelector(".cat").textContent=n.cat;
+  el.querySelector("h3").textContent=n.title;el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
+  (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
+}
+const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.cat].join(" ").toLowerCase();
+function renderList(){const L=$("list");L.innerHTML="";
+  const ns=allNotes().filter(n=>(cat==="Tutte"||n.cat===cat)&&(!query||haystack(n).includes(query)));
+  if(!ns.length){L.innerHTML=`<div class="empty">${query?"Nessuna nota trovata.":"Nessuna nota in questa cartella."}</div>`;return}
+  ns.forEach(n=>{const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=()=>openNote(n);L.append(b)})}
+
+function saveNote(n){
+  if(n.ex){exEdits[n.id]={cat:n.cat,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
+  else{const ns=store.get("notes",[]);const i=ns.findIndex(x=>x.id===n.id);i<0?ns.unshift(n):ns[i]=n;store.set("notes",ns.slice(0,200))}
+  renderList()}
+
+/* Dettaglio */
+function outCard(k,text,n){const d=document.createElement("article");d.className="card";
+  d.innerHTML='<div class="head"><span class="fmt"></span><button class="btn ghost sm">Copia</button></div><div class="txt"></div><div class="fid"></div>';
+  d.querySelector(".fmt").textContent=FORMATS[k]?.n||k;const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
+  b.onclick=()=>copyText(t.textContent,b,t);
+  const c={el:d,txt:t,fid:d.querySelector(".fid")};
+  if(n&&fidOn()){if(n.fid?.[k])showFid(c,n.fid[k],n.out[k]);else{const cb=document.createElement("button");cb.className="btn ghost sm";cb.textContent="Controlla che ogni frase venga da te";cb.onclick=()=>runFid(n,k,c).then(()=>saveNote(n));c.fid.append(cb)}}
+  return c}
+
+/* Controllo di fedeltà */
+$("useFid").onchange=e=>{store.set("fid",e.target.checked)};
+function fidOn(){return $("useFid").checked}
+function highlight(el,text,list){el.textContent="";const rs=[];list.forEach(x=>{const i=text.indexOf(x.testo);if(i>=0)rs.push([i,i+x.testo.length,x.motivo])});rs.sort((a,b)=>a[0]-b[0]);let p=0;
+  rs.forEach(([s,e,m])=>{if(s<p)return;el.append(text.slice(p,s));const mk=document.createElement("mark");mk.textContent=text.slice(s,e);mk.title=m||"";el.append(mk);p=e});el.append(text.slice(p))}
+function showFid(c,list,text){c.fid.innerHTML="";
+  if(!list.length){const s=document.createElement("span");s.className="ok";s.textContent="✓ Ogni frase viene da quello che hai detto";c.fid.append(s);c.txt.textContent=text;return}
+  highlight(c.txt,text,list);
+  const s=document.createElement("span");s.className="warn";s.textContent=`⚠ ${list.length===1?"1 parte non viene":list.length+" parti non vengono"} da quello che hai detto (evidenziate in giallo):`;
+  const ul=document.createElement("ul");list.forEach(x=>{const li=document.createElement("li");li.textContent=`“${x.testo}” — ${x.motivo||"non presente nella trascrizione"}`;ul.append(li)});c.fid.append(s,ul)}
+async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textContent="Controllo che ogni frase venga da te…";
+  try{const r=await sampleFn.json(`Confronta il TESTO con la FONTE, che è ciò che l'autore ha detto davvero. Trova le parti del TESTO che aggiungono fatti, numeri, esempi, nomi, luoghi, promesse o opinioni che NON sono nella FONTE. Non segnalare riformulazioni, sintesi, ordine diverso, hashtag, emoji, call to action generiche o formattazione. Rispondi solo con JSON {"aggiunte":[{"testo":"citazione copiata esattamente dal TESTO, max 15 parole","motivo":"breve spiegazione in italiano"}]}, con array vuoto se tutto è fedele.\n\nFONTE:\n${n.tr.slice(0,20000)}\n\nTESTO:\n${n.out[k]}`);
+    const list=Array.isArray(r?.aggiunte)?r.aggiunte.filter(x=>x&&typeof x.testo==="string"&&x.testo.trim()).map(x=>({testo:x.testo.trim(),motivo:String(x.motivo||"")})).slice(0,8):[];
+    n.fid={...(n.fid||{}),[k]:list};showFid(c,list,n.out[k])}
+  catch(e){c.fid.textContent=e?.code==="not_granted"?"Controllo non disponibile: non hai consentito l'uso di Claude.":"Controllo non riuscito."}}
+function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
+function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
+  const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
+  $("dFolder").innerHTML="";folders().forEach(f=>{const o=document.createElement("option");o.textContent=f;o.selected=f===cur.cat;$("dFolder").append(o)})}
+$("dFolder").onchange=e=>{cur.cat=e.target.value;saveNote(cur);renderHead()};
+$("dTagAdd").onclick=()=>{const t=$("dTag").value.trim().replace(/^#/,"").toLowerCase();if(!t)return;cur.tags=[...new Set([...(cur.tags||[]),t])];$("dTag").value="";saveNote(cur);renderHead()};
+$("dTag").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("dTagAdd").click()}};
+document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
+function openNote(n){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
+  renderHead();$("dOut").innerHTML="";for(const[k,t]of Object.entries(n.out))$("dOut").append(outCard(k,t,n).el);$("dOrig").textContent=n.tr;show("detail")}
+
+/* Markdown / Obsidian */
+function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
+  return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ncartella: ${n.cat}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
+    Object.entries(n.out).map(([k,t])=>`## ${FORMATS[k]?.n||k}\n\n${t}\n`).join("\n")+`\n## Trascrizione\n\n${n.tr}\n`}
+$("mdCopy").onclick=()=>copyText(toMarkdown(cur),$("mdCopy"));
+$("mdSave").onclick=()=>{const name=(cur.title.replace(/[\\/:*?"<>|]/g,"").slice(0,80)||"nota")+".md";
+  const url=URL.createObjectURL(new Blob([toMarkdown(cur)],{type:"text/markdown;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  $("dStatus").textContent="File scaricato: mettilo nella cartella del tuo vault Obsidian."};
+$("del").onclick=()=>{if($("del").textContent==="Elimina"){$("del").textContent="Conferma eliminazione";return}
+  if(cur.ex){exEdits[cur.id]={...(exEdits[cur.id]||{}),deleted:true};store.set("exedits",exEdits)}
+  else store.set("notes",store.get("notes",[]).filter(x=>x.id!==cur.id));
+  renderList();show("home")};
+
+/* Prompt comuni */
+const voiceText=()=>{if(mode!=="creator"||!$("useVoice").checked)return"";const v=voice||EX_VOICE;return `\nScrivi con questa voce di brand — Tono: ${v.tono}. Lessico: ${v.lessico}. Struttura: ${v.struttura}. Da evitare: ${v.evitare}. In sintesi: ${v.sintesi}\n`};
+
+/* Aggiungi alla nota */
+$("appendGo").onclick=async()=>{
+  const add=$("addText").value.trim();if(!cur||!add)return $("aStatus").textContent="Scrivi o detta cosa aggiungere.";
+  if(!sampleFn)return $("aStatus").textContent="La riscrittura con l'AI non è disponibile in questa vista.";
+  $("appendGo").disabled=true;cur.tr+="\n\n"+add;cur.fid={};$("dOrig").textContent=cur.tr;$("dOut").innerHTML="";const jobs=[];
+  try{for(const k of Object.keys(cur.out)){const c=outCard(k,"Sto riscrivendo…");$("dOut").append(c.el);
+      const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[k]?.p||k}.\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
+    await Promise.all(jobs);saveNote(cur);$("addText").value="";$("aStatus").textContent="Nota aggiornata.";
+  }catch(e){$("aStatus").textContent=errMsg(e)}
+  finally{$("appendGo").disabled=false}
+};
+
+/* Trasforma */
+async function makeMeta(n,src){
+  const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "cat": una tra ${JSON.stringify(folders())}, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
+  Object.assign(n,{title:String(meta.title||n.title),cat:folders().includes(meta.cat)?meta.cat:folders()[0],tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
+$("go").onclick=async()=>{
+  const tr=$("transcript").value.trim();
+  if(!tr)return $("status").textContent="Detta, scrivi o incolla qualcosa prima di trasformare.";
+  if(!selected.size)return $("status").textContent="Scegli almeno un formato.";
+  if(!sampleFn)return $("status").textContent="La trasformazione con l'AI non è disponibile in questa vista.";
+  $("go").disabled=true;const jobs=[];
+  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},cat:folders()[0],title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
+  $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("dStatus").textContent="";show("detail");
+  const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
+  try{
+    await makeMeta(n,tr);renderHead();
+    for(const k of fmts().filter(k=>selected.has(k))){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
+      const{text}=await sampleFn(`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`,{onText:({text})=>{c.txt.textContent=text}});
+      n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
+    await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;renderHead();
+    $("transcript").value="";$("status").textContent="";
+  }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
+  finally{$("go").disabled=false}
+};
+
+/* Super nota */
+function renderMerge(){const L=$("mList");L.innerHTML="";
+  allNotes().forEach(n=>{const l=document.createElement("label");l.className="pick";const c=document.createElement("input");c.type="checkbox";c.checked=picked.has(n.id);c.onchange=()=>{c.checked?picked.add(n.id):picked.delete(n.id)};
+    const d=document.createElement("div");const b=document.createElement("b");b.textContent=n.title;const s=document.createElement("small");s.textContent=fmtDate(n.at)+" · "+n.cat+(n.ex?" · esempio":"");d.append(b,s);l.append(c,d);L.append(l)})}
+$("mGo").onclick=async()=>{
+  const ns=allNotes().filter(n=>picked.has(n.id));
+  if(ns.length<2)return $("mStatus").textContent="Scegli almeno 2 note.";
+  if(!sampleFn)return $("mStatus").textContent="L'AI non è disponibile in questa vista.";
+  $("mGo").disabled=true;$("mStatus").textContent="Sto unendo le note…";
+  const src=ns.map(n=>`### ${n.title} (${fmtDate(n.at)}, ${n.cat})\n${Object.values(n.out)[0]||""}\nTrascrizione: ${n.tr}`).join("\n\n").slice(0,60000);
+  const how=$("mHow").value.trim();
+  const shape=mode==="creator"?`un riassunto, poi "Messaggi chiave" (elenco puntato) e "Contenuti da pubblicare" (elenco puntato con formato consigliato per ciascuno)`:`un riassunto chiaro, poi "Punti chiave" (elenco puntato) e "Prossime azioni" (elenco puntato con eventuali scadenze)`;
+  const n={id:"n"+Date.now(),at:Date.now(),tr:"Super nota creata da: "+ns.map(x=>x.title).join(" · "),out:{},cat:folders()[0],title:"Super nota",tags:["super nota"]};
+  try{
+    const{text}=await sampleFn(`${M().writer} Unisci queste note in un'unica super nota in italiano: ${shape}. ${how?"Istruzioni dell'autore: "+how+".":""}${voiceText()}\nUsa solo le informazioni presenti, non inventare. Niente markdown con asterischi: usa titoli semplici e "•" per gli elenchi.\n\nNOTE:\n${src}`);
+    n.out.riassunto=text;
+    await makeMeta(n,text).catch(()=>{});n.tags=[...new Set(["super nota",...n.tags])];
+    saveNote(n);picked.clear();$("mHow").value="";$("mStatus").textContent="";openNote(n);
+  }catch(e){$("mStatus").textContent=errMsg(e)}
+  finally{$("mGo").disabled=false}
+};
+
+/* Chiedi alle note */
+function renderSugg(){$("sugg").innerHTML="";if(turns.length)return;M().sugg.forEach(s=>{const b=document.createElement("button");b.className="chip";b.textContent=s;b.onclick=()=>{$("q").value=s;$("qGo").click()};$("sugg").append(b)})}
+function bubble(cls,t){const d=document.createElement("div");d.className="bub "+cls;d.textContent=t;$("chat").append(d);return d}
+$("qReset").onclick=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
+$("qGo").onclick=async()=>{
+  const q=$("q").value.trim();if(!q)return;
+  if(!sampleFn){bubble("ai","L'AI non è disponibile in questa vista.");return}
+  $("qGo").disabled=true;$("q").value="";$("sugg").innerHTML="";bubble("me",q);const a=bubble("ai","Sto cercando nelle tue note…");
+  const ctx=allNotes().map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — cartella ${n.cat}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
+  const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico, usando SOLO le note qui sotto. Cita il titolo della nota da cui prendi l'informazione. Se la risposta non è nelle note, dillo chiaramente. Niente markdown con asterischi.\n\nNOTE DELL'UTENTE:\n${ctx}`;
+  turns.push({role:"user",content:q});
+  try{const{text}=await sampleFn([{role:"user",content:rules},...turns.slice(-10)],{cache:false,onText:({text})=>{a.textContent=text}});turns.push({role:"assistant",content:text})}
+  catch(e){a.textContent=e?.text||errMsg(e);turns.pop()}
+  finally{$("qGo").disabled=false}
+};
+$("q").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("qGo").click()}};
+
+/* Voce del brand */
+function renderVoice(){const v=voice||EX_VOICE;$("vTag").textContent=voice?(voice.nome||"Tuo"):"Esempio";$("voiceSum").innerHTML="";
+  [["Tono","tono"],["Lessico","lessico"],["Struttura","struttura"],["Da evitare","evitare"],["In sintesi","sintesi"]].forEach(([l,k])=>{const d=document.createElement("div"),b=document.createElement("b");b.textContent=l;d.append(b,document.createTextNode(v[k]||"—"));$("voiceSum").append(d)})}
+$("analyze").onclick=async()=>{
+  const s=$("samples").value.trim();
+  if(s.length<200)return $("vStatus").textContent="Incolla almeno 2 o 3 testi di qualche riga.";
+  if(!sampleFn)return $("vStatus").textContent="L'analisi con l'AI non è disponibile in questa vista.";
+  $("analyze").disabled=true;$("vStatus").textContent="Sto analizzando lo stile…";
+  try{const r=await sampleFn.json(`Analizza lo stile di scrittura di questi testi in italiano. Rispondi solo con un oggetto JSON con le chiavi "tono","lessico","struttura","evitare","sintesi" (stringhe brevi in italiano, max 20 parole ciascuna).\n\nTESTI:\n${s.slice(0,12000)}`);
+    voice={...r,nome:$("brandName").value.trim()||"Il mio profilo"};raw.set("voice",voice);renderVoice();$("vStatus").textContent="Profilo salvato.";
+  }catch(e){$("vStatus").textContent=errMsg(e)}
+  finally{$("analyze").disabled=false}
+};
+
+/* Avvio */
+if(mode&&MODES[mode]){loadMode();applyMode();show("home")}else{show("mode")}
+fetch("/api/health").then(r=>r.json()).then(h=>{
+  if(h.locked&&!raw.get("code",""))showLock();
+  if(!h.rewrite)$("status").textContent="Per ora puoi registrare e trascrivere. La riscrittura con l'AI si attiva quando sul server c'è la chiave di Claude.";
+}).catch(()=>{});
+</script>
+
+</body>
+</html>

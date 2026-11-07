@@ -1,0 +1,14 @@
+{
+  "name": "Dictax",
+  "short_name": "Dictax",
+  "description": "Dalla voce a testi pronti: note, email, verbali e contenuti social.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e9a55",
+  "lang": "it",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
