@@ -228,6 +228,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
           <p class="help" id="lenHelp"></p>
         </div>
       </details>
+      <div class="row tight" id="folderRow"><label class="lbl" for="newCat" style="flex:none">Salva in</label><select id="newCat" style="flex:1;min-width:0"></select></div>
       <div class="row tight" id="jobRow"><label class="lbl" for="job" style="flex:none">Il mio lavoro</label><select id="job" style="flex:1;min-width:0"></select></div>
       <span class="lbl" id="fmtLabel">Trasforma in</span>
       <div class="chips" id="formats"></div>
@@ -524,7 +525,9 @@ $("job").onchange=e=>{job=e.target.value;store.set("job",job);selected=new Set(J
 function renderChips(){$("formats").innerHTML="";fmts().forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};$("formats").append(c)})}
 
 /* Cartelle, ricerca, lista */
-function renderTabs(){$("tabs").innerHTML="";["Tutte",...folders()].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.setAttribute("aria-pressed",c===cat);b.onclick=()=>{cat=c;renderTabs();renderList()};$("tabs").append(b)});
+function renderNewCat(){const sel=$("newCat"),keep=sel.value||store.get("newCat","auto");sel.innerHTML="";[["auto","Scegli in automatico"],...folders().map(f=>[f,f])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.append(o)});sel.value=[...sel.options].some(o=>o.value===keep)?keep:"auto"}
+$("newCat").onchange=e=>store.set("newCat",e.target.value);
+function renderTabs(){renderNewCat();$("tabs").innerHTML="";["Tutte",...folders()].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.setAttribute("aria-pressed",c===cat);b.onclick=()=>{cat=c;renderTabs();renderList()};$("tabs").append(b)});
   const a=document.createElement("button");a.className="add";a.textContent="+ Cartella";a.onclick=()=>{$("newFolder").hidden=false;$("nfName").focus()};$("tabs").append(a)}
 $("nfCancel").onclick=()=>{$("newFolder").hidden=true};
 $("nfSave").onclick=()=>{const n=$("nfName").value.trim();if(!n||folders().includes(n))return;customFolders.push(n);store.set("folders",customFolders);$("nfName").value="";$("newFolder").hidden=true;cat=n;renderTabs();renderList()};
@@ -625,7 +628,7 @@ $("go").onclick=async()=>{
   $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("dStatus").textContent="";show("detail");
   const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
   try{
-    await makeMeta(n,tr);renderHead();
+    await makeMeta(n,tr);if($("newCat").value!=="auto")n.cat=$("newCat").value;renderHead();
     for(const k of fmts().filter(k=>selected.has(k))){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`,{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
