@@ -32,7 +32,7 @@ function cleanTurns(input) {
   return out;
 }
 
-async function runWorkersAI(env, messages, quick) {
+async function runWorkersAI(env, messages, quick, warning) {
   const model = env.CF_TEXT_MODEL || "@cf/google/gemma-4-26b-a4b-it";
   try {
     const out = await env.AI.run(model, {
@@ -43,7 +43,7 @@ async function runWorkersAI(env, messages, quick) {
     const choice = out?.choices?.[0];
     const text = String(choice?.message?.content ?? out?.response ?? "").trim();
     if (!text) return json({ code: "empty_completion", error: "Nessuna risposta." }, 502);
-    return json({ text, truncated: choice?.finish_reason === "length" });
+    return json({ text, truncated: choice?.finish_reason === "length", engine: "cloudflare", warning: warning || undefined });
   } catch (err) {
     console.error("workers ai failed", err);
     return json({ code: "upstream_error", error: "Servizio AI non disponibile." }, 502);
@@ -109,22 +109,25 @@ export async function onRequestPost({ request, env }) {
     if (!text) return json({ code: "empty_completion", error: "Nessuna risposta." }, 502);
     return json({ text, truncated: res.stop_reason === "max_tokens" });
   } catch (err) {
+    let reason;
     if (err instanceof Anthropic.RateLimitError) {
-      return json({ code: "rate_limited", error: "Troppe richieste." }, 429);
+      reason = "Claude: troppe richieste, riprova tra poco.";
+    } else if (err instanceof Anthropic.AuthenticationError) {
+      reason = "Claude: la chiave non è valida.";
+    } else if (err instanceof Anthropic.PermissionDeniedError) {
+      reason = "Claude: la chiave non ha i permessi necessari.";
+    } else if (err instanceof Anthropic.BadRequestError) {
+      reason = /credit|balance|billing/i.test(err.message)
+        ? "Claude: credito esaurito o non caricato sull'account Anthropic."
+        : "Claude: richiesta rifiutata (" + String(err.message).slice(0, 160) + ").";
+    } else if (err instanceof Anthropic.APIError) {
+      reason = "Claude: servizio non disponibile (errore " + err.status + ").";
+    } else {
+      reason = "Claude: errore di connessione.";
     }
-    if (err instanceof Anthropic.AuthenticationError) {
-      console.error("Claude authentication failed");
-      return json({ code: "not_configured", error: "Chiave di Claude non valida." }, 503);
-    }
-    if (err instanceof Anthropic.BadRequestError) {
-      console.error("Claude bad request", err.message);
-      return json({ code: "invalid_request", error: "Richiesta non valida." }, 400);
-    }
-    if (err instanceof Anthropic.APIError) {
-      console.error("Claude API error", err.status, err.message);
-      return json({ code: "upstream_error", error: "Servizio AI non disponibile." }, 502);
-    }
-    console.error("ai failed", err);
-    return json({ code: "upstream_error", error: "Servizio AI non disponibile." }, 502);
+    console.error("claude failed", reason, err?.message);
+    // Keep the app working: write the note with Cloudflare's model and say why.
+    if (env.AI) return runWorkersAI(env, messages, quick, reason);
+    return json({ code: "upstream_error", error: reason }, 502);
   }
 }

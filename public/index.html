@@ -411,9 +411,10 @@ function parseJSON(t){try{return JSON.parse(t)}catch{}
   throw {code:"invalid_json"}}
 const sampleFn=Object.assign(async(input,opts={})=>{
   const d=await api("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({input,tier:opts.modelTier==="quick"?"quick":"default"})});
-  const text=String(d.text||"");opts.onText?.({text,delta:text});return {text,truncated:!!d.truncated}},
+  const text=String(d.text||"");if(d.warning)showWarning(d.warning);opts.onText?.({text,delta:text});return {text,truncated:!!d.truncated}},
   {json:async(input,opts={})=>{const {text}=await sampleFn(input+"\n\nRispondi solo con JSON valido, senza testo prima o dopo.",opts);return parseJSON(text)}});
-const errMsg=e=>({locked:"Serve il codice di accesso: inseriscilo in alto.",not_configured:"La riscrittura non è ancora attiva: manca la chiave di Claude sul server.",rate_limited:"Troppe richieste: riprova tra poco.",refused:"L'AI non ha elaborato questo testo: prova a riformularlo.",too_large:"Il file è troppo grande (massimo 25 MB).",invalid_json:"Risposta non valida dall'AI: riprova.",offline:"Sei offline: controlla la connessione e riprova."}[e?.code]||"Qualcosa non è andato: riprova tra poco.");
+const errMsg=e=>({locked:"Serve il codice di accesso: inseriscilo in alto.",not_configured:"La riscrittura non è ancora attiva: manca la chiave di Claude sul server.",rate_limited:"Troppe richieste: riprova tra poco.",refused:"L'AI non ha elaborato questo testo: prova a riformularlo.",too_large:"Il file è troppo grande (massimo 25 MB).",invalid_json:"Risposta non valida dall'AI: riprova.",offline:"Sei offline: controlla la connessione e riprova."}[e?.code]||e?.message||"Qualcosa non è andato: riprova tra poco.");
+function showWarning(w){const m="Nota scritta con l'AI di Cloudflare. "+w;for(const id of ["dStatus","status"]){const el=document.getElementById(id);if(el)el.textContent=m}}
 function showLock(){$("lockBox").hidden=false;$("codeIn").focus()}
 $("codeSave").onclick=()=>{const c=$("codeIn").value.trim();if(!c)return;raw.set("code",c);$("lockBox").hidden=true;$("status").textContent="Codice salvato. Ora puoi usare Dictax."};
 $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
