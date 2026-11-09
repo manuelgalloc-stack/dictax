@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { json, checkAccess } from "../../lib/util.js";
+import { json, checkAccess, claudeKey } from "../../lib/util.js";
 
 // Rewriting, titles, fidelity check, super notes and "chat with notes" all go
 // through this one endpoint. The page sends the full prompt (or chat turns).
@@ -54,7 +54,7 @@ export async function onRequestPost({ request, env }) {
   const denied = checkAccess(request, env);
   if (denied) return denied;
 
-  if (!env.ANTHROPIC_API_KEY && !env.AI) {
+  if (!claudeKey(env) && !env.AI) {
     return json({ code: "not_configured", error: "Nessun modello AI configurato sul server." }, 503);
   }
 
@@ -77,12 +77,12 @@ export async function onRequestPost({ request, env }) {
   const quick = body?.tier === "quick";
 
   // Without a Claude key, use an open model on Cloudflare Workers AI (no extra key needed).
-  if (!env.ANTHROPIC_API_KEY) {
+  if (!claudeKey(env)) {
     return runWorkersAI(env, messages, quick);
   }
 
   const model = env.CLAUDE_MODEL || "claude-opus-5-5";
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const client = new Anthropic({ apiKey: claudeKey(env) });
 
   const params = {
     model,
