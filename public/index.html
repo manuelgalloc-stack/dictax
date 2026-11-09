@@ -438,12 +438,12 @@ function show(v){["mode","home","detail","merge","ask","voice"].forEach(x=>$("v-
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
-const MAX_SEC=15*60;
+const MAX_SEC=12*60;
 const W=$("wave");for(let i=0;i<22;i++)W.append(document.createElement("i"));
 let t0=0,tick=null,level=0,audioCtx=null,raf=null;
 function setWave(on){[...W.children].forEach((b,i)=>b.style.height=on?(6+Math.min(1,level*1.6+0.15*Math.abs(Math.sin(Date.now()/180+i)))*24)+"px":(6+((i*7)%5)*2)+"px")}
 setWave(false);
-function startClock(){t0=Date.now();tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("timer").textContent=String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");setWave(true);if(s>=MAX_SEC&&recOn){$("status").textContent="Hai raggiunto i 15 minuti: registrazione fermata.";mr?.stop()}},150)}
+function startClock(){t0=Date.now();tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("timer").textContent=String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");setWave(true);if(s>=MAX_SEC&&recOn){$("status").textContent="Hai raggiunto i 12 minuti: registrazione fermata.";mr?.stop()}},150)}
 function stopClock(){clearInterval(tick);setWave(false)}
 function startMeter(stream){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();const an=audioCtx.createAnalyser();an.fftSize=256;audioCtx.createMediaStreamSource(stream).connect(an);const d=new Uint8Array(an.frequencyBinCount);
   const loop=()=>{an.getByteTimeDomainData(d);let m=0;for(const v of d)m=Math.max(m,Math.abs(v-128));level=m/128;raf=requestAnimationFrame(loop)};loop()}catch{}}
@@ -464,9 +464,28 @@ $("mic").onclick=async()=>{
   mr.onstop=()=>{stream.getTracks().forEach(t=>t.stop());stopMeter();setRec(false);const blob=new Blob(chunks,{type:mr.mimeType||type||"audio/webm"});if(blob.size)transcribe(blob)};
   mr.start(1000);$("status").textContent="";setRec(true);startMeter(stream);
 };
+/* Converte qualsiasi audio (webm, mp4, m4a, mp3…) in WAV mono 16 kHz, il formato più sicuro per la trascrizione */
+async function decodeAudio(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;const ctx=new AC();
+  const buf=await blob.arrayBuffer();
+  try{return await new Promise((res,rej)=>{const p=ctx.decodeAudioData(buf,res,rej);if(p&&p.then)p.then(res,rej)})}
+  finally{try{ctx.close()}catch{}}}
+async function toWav(blob){
+  const decoded=await decodeAudio(blob);
+  const rate=16000,len=Math.max(1,Math.ceil(decoded.duration*rate));
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  const off=new OAC(1,len,rate);const src=off.createBufferSource();src.buffer=decoded;src.connect(off.destination);src.start(0);
+  const data=(await off.startRendering()).getChannelData(0);
+  const v=new DataView(new ArrayBuffer(44+data.length*2));const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  w(0,"RIFF");v.setUint32(4,36+data.length*2,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,data.length*2,true);
+  for(let i=0;i<data.length;i++){const x=Math.max(-1,Math.min(1,data[i]));v.setInt16(44+i*2,x<0?x*0x8000:x*0x7fff,true)}
+  return new Blob([v],{type:"audio/wav"})}
 async function transcribe(blob){
-  if(blob.size>25*1024*1024){$("status").textContent=errMsg({code:"too_large"});return}
-  $("state").textContent="trascrivo…";$("status").textContent="Sto trascrivendo l'audio…";$("mic").disabled=true;$("uploadBtn").disabled=true;
+  $("state").textContent="trascrivo…";$("status").textContent="Preparo l'audio…";$("mic").disabled=true;$("uploadBtn").disabled=true;
+  try{blob=await toWav(blob)}catch(e){console.warn("Conversione audio non riuscita, invio il file originale",e)}
+  if(blob.size>25*1024*1024){$("status").textContent=errMsg({code:"too_large"});$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false;return}
+  $("status").textContent="Sto trascrivendo l'audio…";
   try{const r=await api("/api/transcribe?lang=it",{method:"POST",headers:{"content-type":blob.type||"application/octet-stream"},body:blob});
     const t=String(r.text||"").trim();
     if(!t){$("status").textContent="Non ho sentito parole: riprova più vicino al microfono.";return}
