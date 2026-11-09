@@ -4,7 +4,8 @@ import { json } from "../../lib/util.js";
 export function onRequestGet({ env }) {
   return json({
     transcribe: Boolean(env.AI),
-    rewrite: Boolean(env.ANTHROPIC_API_KEY),
+    rewrite: Boolean(env.ANTHROPIC_API_KEY || env.AI),
+    rewriteEngine: env.ANTHROPIC_API_KEY ? "claude" : env.AI ? "cloudflare" : "none",
     locked: Boolean(env.ACCESS_CODE),
   });
 }

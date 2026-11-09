@@ -32,12 +32,30 @@ function cleanTurns(input) {
   return out;
 }
 
+async function runWorkersAI(env, messages, quick) {
+  const model = env.CF_TEXT_MODEL || "@cf/google/gemma-4-26b-a4b-it";
+  try {
+    const out = await env.AI.run(model, {
+      messages: [{ role: "system", content: SYSTEM }, ...messages],
+      max_tokens: quick ? 1000 : 4000,
+      chat_template_kwargs: { enable_thinking: false },
+    });
+    const choice = out?.choices?.[0];
+    const text = String(choice?.message?.content ?? out?.response ?? "").trim();
+    if (!text) return json({ code: "empty_completion", error: "Nessuna risposta." }, 502);
+    return json({ text, truncated: choice?.finish_reason === "length" });
+  } catch (err) {
+    console.error("workers ai failed", err);
+    return json({ code: "upstream_error", error: "Servizio AI non disponibile." }, 502);
+  }
+}
+
 export async function onRequestPost({ request, env }) {
   const denied = checkAccess(request, env);
   if (denied) return denied;
 
-  if (!env.ANTHROPIC_API_KEY) {
-    return json({ code: "not_configured", error: "Manca la chiave di Claude sul server." }, 503);
+  if (!env.ANTHROPIC_API_KEY && !env.AI) {
+    return json({ code: "not_configured", error: "Nessun modello AI configurato sul server." }, 503);
   }
 
   let body;
@@ -57,6 +75,12 @@ export async function onRequestPost({ request, env }) {
   }
 
   const quick = body?.tier === "quick";
+
+  // Without a Claude key, use an open model on Cloudflare Workers AI (no extra key needed).
+  if (!env.ANTHROPIC_API_KEY) {
+    return runWorkersAI(env, messages, quick);
+  }
+
   const model = env.CLAUDE_MODEL || "claude-opus-5-5";
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 

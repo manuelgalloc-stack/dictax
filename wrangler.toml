@@ -11,3 +11,5 @@ binding = "AI"
 # Cloudflare dashboard: Settings > Variables and Secrets.
 [vars]
 CLAUDE_MODEL = "claude-opus-5-5"
+# Used for rewriting when ANTHROPIC_API_KEY is not set
+CF_TEXT_MODEL = "@cf/google/gemma-4-26b-a4b-it"
