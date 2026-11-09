@@ -229,7 +229,6 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
         </div>
       </details>
       <div class="row tight" id="folderRow"><label class="lbl" for="newCat" style="flex:none">Salva in</label><select id="newCat" style="flex:1;min-width:0"></select></div>
-      <div class="row tight" id="jobRow"><label class="lbl" for="job" style="flex:none">Il mio lavoro</label><select id="job" style="flex:1;min-width:0"></select></div>
       <span class="lbl" id="fmtLabel">Trasforma in</span>
       <div class="chips" id="formats"></div>
       <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI <span class="pro planBadge"></span></label>
@@ -389,11 +388,10 @@ function loadMode(){
   st=store.get("style",{level:"media",ws:mode==="creator"?"mio":"chiaro",len:2});
   customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
   $("useFid").checked=store.get("fid",true);
-  job=mode==="note"?store.get("job","generico"):"generico";if(!JOBS[job])job="generico";
+  job="generico";
   selected=new Set(store.get("formats",M().def).filter(k=>fmts().includes(k)));cat="Tutte";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
 }
 const fmts=()=>[...JOBS[job].f,...M().formats];
-function renderJobs(){$("job").innerHTML="";for(const[k,j]of Object.entries(JOBS)){const o=document.createElement("option");o.value=k;o.textContent=j.n;o.selected=k===job;$("job").append(o)}}
 const folders=()=>[...M().folders,...customFolders];
 const examples=()=>EXAMPLES[mode].filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
 const allNotes=()=>[...store.get("notes",[]),...examples()];
@@ -427,7 +425,7 @@ function applyMode(){
   document.querySelectorAll("#modesw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder=M().ph;$("fmtLabel").textContent=M().fmtLabel;$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
-  $("voiceToggle").hidden=mode!=="creator";$("jobRow").hidden=mode!=="note";renderJobs();$("useVoice").checked=mode==="creator"&&st.ws==="mio";
+  $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
@@ -521,7 +519,6 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
   $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
 
 /* Formati */
-$("job").onchange=e=>{job=e.target.value;store.set("job",job);selected=new Set(JOBS[job].f.length?JOBS[job].f:M().def);store.set("formats",[...selected]);renderChips()};
 function renderChips(){$("formats").innerHTML="";fmts().forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};$("formats").append(c)})}
 
 /* Cartelle, ricerca, lista */
