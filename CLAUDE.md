@@ -12,7 +12,7 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 ## Product rules
 - One app with a **Creator** switch: the base (Note) has the standard formats, styles and folders; turning Creator on adds social formats, extra styles, content folders and the brand-voice tab. Notes are shared (storage prefix `dx1_main_`).
 - Keep the UI simple and large (big buttons and icons); advanced settings live under "Altre opzioni".
-- Creation flow: record (or type) -> the "Che cos'è?" sheet asks the type: **Nota** (green, clean text), **Attività** (blue, to-do list), **Contenuto** (purple, social formats; Creator only). Optional **Cliente** per note; the home list filters by type and by client (dropdown). No folders.
+- Creation flow: record (or type) -> the "Che cos'è?" sheet asks the type: **Nota** (green, clean text), **Attività** (blue, to-do list), **Contenuto** (purple, social formats; Creator only). Second step "Come la scrivo?": **Semplice / Media / Elaborata** (rewrite level, remembered). Optional **Cliente** per note; the home list filters by type and by client (dropdown). No folders.
 - "Pro" features are free for now but marked with the `.planBadge` label so they can be gated later.
 - Brand: white background, green accent `#1e9a55`, fonts Young Serif / Figtree / JetBrains Mono.
 - Do not copy AudioPen's texts, illustrations or look; functional ideas only.

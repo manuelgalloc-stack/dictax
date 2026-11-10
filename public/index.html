@@ -200,6 +200,12 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .t-nota{background:var(--t-nota)}.t-attivita{background:var(--t-attivita)}.t-contenuto{background:var(--t-contenuto)}
 .btn.t-contenuto{background:var(--t-contenuto)}
 #contentPick .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
+.levelBtns{display:grid;gap:10px;margin-top:8px}
+.levelBtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:18px;padding:16px 18px;cursor:pointer;font:inherit;color:var(--fg)}
+.levelBtn b{font-size:20px;line-height:1.2}
+.levelBtn small{font-size:15px;color:var(--muted)}
+.levelBtn[aria-current="true"]{border-color:var(--lvl,var(--accent));background:var(--paper)}
+.levelBtn:hover{border-color:var(--lvl,var(--accent))}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -348,15 +354,20 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <p class="preview" id="sheetPreview"></p>
     <label class="lbl" for="sClient">Cliente (facoltativo)</label>
     <input type="text" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
-    <div class="typeBtns">
+    <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
       <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>Attività</b><small>Elenco di cose da fare</small></button>
       <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
     </div>
-    <div id="contentPick" hidden>
-      <span class="lbl">Per quali canali?</span>
-      <div class="chips" id="formats" style="margin-block:8px 12px"></div>
-      <button class="btn big t-contenuto" id="contentGo">Crea contenuti</button>
+    <div id="levelStep" hidden>
+      <div id="contentPick" hidden><span class="lbl" id="channelsLbl">Per quali canali?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div></div>
+      <span class="lbl">Come la scrivo?</span>
+      <div class="levelBtns">
+        <button class="levelBtn" data-l="leggera"><b>Semplice</b><small>Toglie solo esitazioni e ripetizioni, lascia le tue parole</small></button>
+        <button class="levelBtn" data-l="media"><b>Media</b><small>Riordina e migliora le frasi</small></button>
+        <button class="levelBtn" data-l="completa"><b>Elaborata</b><small>Riscrive tutto da capo, in modo più curato</small></button>
+      </div>
+      <button class="back" id="levelBack" style="margin-top:12px">← Cambia tipo</button>
     </div>
     <button class="back" id="sheetCancel" style="align-self:center">Annulla</button>
   </div>
@@ -403,7 +414,7 @@ const MODES={
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
 const JOBS={generico:{n:"Uso generale",f:[]},commerciale:{n:"Commerciale",f:["visita"]},avvocato:{n:"Avvocato",f:["pratica","lettera"]},terapeuta:{n:"Terapeuta / psicologo",f:["seduta"]},scrittore:{n:"Scrittore / giornalista",f:["bozza"]},memorie:{n:"Scrivo le mie memorie",f:["memorie"]},immobiliare:{n:"Agente immobiliare",f:["scheda","annuncio"]}};
-const LEVELS={leggera:{n:"Leggera",h:"Pulisce esitazioni e ripetizioni, lascia le tue parole.",p:"Riscrittura leggera: togli solo esitazioni e ripetizioni, conserva il più possibile le parole originali."},media:{n:"Media",h:"Riordina e migliora le frasi, mantiene il senso.",p:"Riscrittura media: riordina e migliora le frasi mantenendo il senso e parte delle espressioni originali."},completa:{n:"Completa",h:"Riscrive tutto da capo nello stile scelto.",p:"Riscrittura completa: riscrivi liberamente da capo, nello stile scelto."}};
+const LEVELS={leggera:{n:"Semplice",h:"Pulisce esitazioni e ripetizioni, lascia le tue parole.",p:"Riscrittura leggera: togli solo esitazioni e ripetizioni, conserva il più possibile le parole originali."},media:{n:"Media",h:"Riordina e migliora le frasi, mantiene il senso.",p:"Riscrittura media: riordina e migliora le frasi mantenendo il senso e parte delle espressioni originali."},completa:{n:"Elaborata",h:"Riscrive tutto da capo nello stile scelto.",p:"Riscrittura completa: riscrivi liberamente da capo, nello stile scelto."}};
 const LENS=[["Molto breve","circa un terzo dell'originale"],["Breve","più corto dell'originale"],["Simile","più o meno come l'originale"],["Più ricco","un po' più lungo, sviluppando le idee"],["Esteso","molto più sviluppato, senza inventare fatti"]];
 const EXAMPLES={
   note:[
@@ -685,12 +696,19 @@ async function makeMeta(n,src){
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const promptFor=(k,tr)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
-  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";$("contentPick").hidden=true;$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
+  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
-document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==="contenuto"){$("contentPick").hidden=false;$("contentGo").scrollIntoView({block:"nearest"});return}createNote(t,TYPES[t].f)});
-$("contentGo").onclick=()=>{const f=SOCIAL.filter(k=>selected.has(k));if(!f.length){$("contentGo").textContent="Scegli almeno un canale";setTimeout(()=>$("contentGo").textContent="Crea contenuti",1600);return}createNote("contenuto",f)};
+let pendingType=null;
+function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
+document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+  $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Per quali canali?";$("sheetTitle").textContent=TYPES[pendingType].n;
+  $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
+$("levelBack").onclick=showTypeStep;
+document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pendingType;if(!t)return;let f=TYPES[t].f;
+  if(t==="contenuto"){f=SOCIAL.filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno un canale qui sotto";return}}
+  st.level=b.dataset.l;saveStyle();createNote(t,f)});
 $("go").onclick=openSheet;
 async function createNote(type,formats){
   const tr=$("transcript").value.trim();const client=$("sClient").value.trim();closeSheet();
