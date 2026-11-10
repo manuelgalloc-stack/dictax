@@ -211,7 +211,10 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .mlBtn:disabled{opacity:.6;cursor:wait}
 .card.ml{border:2px solid var(--t-contenuto)}
 .card.ml .fmt{color:var(--t-contenuto)}
+.note .meta .d{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+.note .meta .d::before{content:"🕒 ";filter:grayscale(1)}
 .note .meta .d.old{color:var(--danger)}
+.note .meta .d.old::before{content:"⚠ ";filter:none}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
