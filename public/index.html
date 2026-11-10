@@ -206,6 +206,12 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .levelBtn small{font-size:15px;color:var(--muted)}
 .levelBtn[aria-current="true"]{border-color:var(--lvl,var(--accent));background:var(--paper)}
 .levelBtn:hover{border-color:var(--lvl,var(--accent))}
+.proTag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--t-contenuto);color:#fff;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.mlBtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:2px solid var(--t-contenuto);background:var(--surface);color:var(--t-contenuto);font:inherit;font-weight:700;font-size:15px;padding:11px 14px;border-radius:14px;cursor:pointer;text-align:left}
+.mlBtn:disabled{opacity:.6;cursor:wait}
+.card.ml{border:2px solid var(--t-contenuto)}
+.card.ml .fmt{color:var(--t-contenuto)}
+.note .meta .d.old{color:var(--danger)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -254,6 +260,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
           <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
           <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
 
+          <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
           <span class="lbl">Quanto riscrivere</span>
           <div class="seg" id="level"></div>
           <p class="help" id="levelHelp"></p>
@@ -449,8 +456,23 @@ if(!raw.get("main_merged",false)){const byId=new Map();["note","creator"].forEac
 const M=()=>MODES[mode];
 const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},attivita:{n:"Attività",f:["todo"],color:"var(--t-attivita)"},contenuto:{n:"Contenuto",f:[],color:"var(--t-contenuto)"}};
 const SOCIAL=MODES.creator.formats.filter(k=>!MODES.note.formats.includes(k));
+const ML="__ml";const baseK=k=>k.endsWith(ML)?k.slice(0,-ML.length):k;
+const fmtName=k=>(FORMATS[baseK(k)]?.n||k)+(k.endsWith(ML)?" · voce ManuLab":"");
+const CREATOR_PRO=true; // gratis per ora: in futuro sarà attivo solo per chi paga Creator Pro
+const MANULAB_VOICE=`Riscrivi con la voce ManuLab: una persona competente che parla a un cliente reale. Diretta, umana, specifica, persuasiva senza sembrare costruita da un copywriter.
+Regole:
+- Apertura a triplo gancio: chiarisci subito l'argomento, apri una domanda (un problema, un beneficio o un dettaglio inatteso), poi ribalta l'aspettativa restando in tema. Niente saluti né frasi che potrebbero aprire qualunque contenuto.
+- Ritmo parlato: frasi brevissime alternate a frasi più distese, paragrafi di una o due frasi. Deve potersi leggere ad alta voce senza inciampi.
+- Dai del tu al lettore. Usa domande che il pubblico si pone davvero, per aprire o chiudere un passaggio.
+- Una sola idea principale. Ogni concetto ancorato a un esempio concreto o a una situazione quotidiana: problema, esempio, lezione pratica.
+- Al massimo un'obiezione detta ad alta voce con la sua risposta, solo se rende visibile un dubbio reale.
+- Al massimo una o due leve persuasive (dimostrazione, beneficio specifico, contrasto prima/dopo, riduzione del rischio). Mai inventare numeri, recensioni, risultati, scadenze o disponibilità limitate.
+- Chiudi con una sola azione richiesta, conseguenza naturale del testo e legata al beneficio. Mai chiusure generiche come "Cosa ne pensi?".
+- Parole semplici, niente gergo; ironia leggera ammessa.
+Da evitare: tono da guru o motivatore, clickbait, aggettivi vuoti (rivoluzionario, incredibile, imperdibile), troppi punti esclamativi, emoji o grassetto, linguaggio aziendale freddo, colpevolizzare il pubblico, promesse assolute (soprattutto su salute, nutrizione ed estetica).
+Controllo finale: se un concorrente potesse pubblicarlo cambiando solo il nome, rendilo più specifico.`;
 function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
-let tfilter="tutte",cfilter="";
+let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7);
 const clients=()=>[...new Set(allNotes().map(n=>(n.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
@@ -605,7 +627,7 @@ $("search").oninput=e=>{query=e.target.value.trim().toLowerCase();renderList()};
 function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
 function noteCard(n,el){
   el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
-  el.querySelector(".d").textContent=fmtDate(n.at)+(n.ex?" · esempio":"");el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
+  const days=Math.max(0,Math.floor((Date.now()-n.at)/864e5));const dEl=el.querySelector(".d");dEl.textContent=fmtDate(n.at)+" · "+(days===0?"oggi":days===1?"ieri":days+" giorni fa")+(n.ex?" · esempio":"");if(days>oldDays){dEl.classList.add("old");dEl.title="Aggiunta più di "+oldDays+" giorni fa"}el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
   if(n.client){const c=document.createElement("span");c.className="pill client";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
@@ -624,9 +646,12 @@ function saveNote(n){
 /* Dettaglio */
 function outCard(k,text,n){const d=document.createElement("article");d.className="card";
   d.innerHTML='<div class="head"><span class="fmt"></span><button class="btn ghost sm">Copia</button></div><div class="txt"></div><div class="fid"></div>';
-  d.querySelector(".fmt").textContent=FORMATS[k]?.n||k;const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
+  d.querySelector(".fmt").textContent=fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
   b.onclick=()=>copyText(t.textContent,b,t);
   const c={el:d,txt:t,fid:d.querySelector(".fid")};
+  if(n&&mode==="creator"&&CREATOR_PRO&&SOCIAL.includes(k)){const mb=document.createElement("button");mb.className="mlBtn";
+    const lbl=(k+ML in n.out)?"↻ Rifai con la voce ManuLab":"✨ Riscrivi con la voce ManuLab";mb.innerHTML='<span></span><span class="proTag">Creator Pro</span>';mb.firstChild.textContent=lbl;
+    mb.onclick=()=>mlRewrite(n,k,mb,d);d.append(mb)}
   if(n&&fidOn()){if(n.fid?.[k])showFid(c,n.fid[k],n.out[k]);else{const cb=document.createElement("button");cb.className="btn ghost sm";cb.textContent="Controlla che ogni frase venga da te";cb.onclick=()=>runFid(n,k,c).then(()=>saveNote(n));c.fid.append(cb)}}
   return c}
 
@@ -658,13 +683,19 @@ async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="S
   try{const{text}=await sampleFn(promptFor(k,n.tr),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.textContent="+ "+FORMATS[k].n}}
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
-function openNote(n){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  renderHead();$("dOut").innerHTML="";for(const[k,t]of Object.entries(n.out))$("dOut").append(outCard(k,t,n).el);$("dOrig").textContent=n.tr;show("detail")}
+async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textContent;btn.disabled=true;btn.firstChild.textContent="Sto scrivendo con la voce ManuLab…";
+  const c=outCard(key,"Sto pensando…");const prev=[...$("dOut").children].find(e=>e.dataset.k===key);prev?prev.replaceWith(c.el):anchor.after(c.el);
+  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${n.client?`\nIl contenuto è per il cliente/brand: ${n.client}.`:""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
+    n.out[key]=text;if(n.fid)delete n.fid[key];saveNote(n);if(cur===n)openNote(n,true)}
+  catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.firstChild.textContent=old}}
+function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.endsWith(ML)).forEach(k=>{out.push(k);if(k+ML in n.out)out.push(k+ML)});ks.filter(k=>k.endsWith(ML)&&!out.includes(k)).forEach(k=>out.push(k));return out}
+function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
+  renderHead();$("dOut").innerHTML="";for(const k of orderedOut(n)){const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}$("dOrig").textContent=n.tr;if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
   return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ntipo: ${TYPES[typeOf(n)].n}\ncliente: ${n.client||""}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
-    Object.entries(n.out).map(([k,t])=>`## ${FORMATS[k]?.n||k}\n\n${t}\n`).join("\n")+`\n## Trascrizione\n\n${n.tr}\n`}
+    orderedOut(n).map(k=>[k,n.out[k]]).map(([k,t])=>`## ${fmtName(k)}\n\n${t}\n`).join("\n")+`\n## Trascrizione\n\n${n.tr}\n`}
 $("mdCopy").onclick=()=>copyText(toMarkdown(cur),$("mdCopy"));
 $("mdSave").onclick=()=>{const name=(cur.title.replace(/[\\/:*?"<>|]/g,"").slice(0,80)||"nota")+".md";
   const url=URL.createObjectURL(new Blob([toMarkdown(cur)],{type:"text/markdown;charset=utf-8"}));
@@ -684,7 +715,7 @@ $("appendGo").onclick=async()=>{
   if(!sampleFn)return $("aStatus").textContent="La riscrittura con l'AI non è disponibile in questa vista.";
   $("appendGo").disabled=true;cur.tr+="\n\n"+add;cur.fid={};$("dOrig").textContent=cur.tr;$("dOut").innerHTML="";const jobs=[];
   try{for(const k of Object.keys(cur.out)){const c=outCard(k,"Sto riscrivendo…");$("dOut").append(c.el);
-      const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[k]?.p||k}.\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
+      const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[baseK(k)]?.p||k}.${k.endsWith(ML)?"\n"+MANULAB_VOICE:""}\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
     await Promise.all(jobs);saveNote(cur);$("addText").value="";$("aStatus").textContent="Nota aggiornata.";
   }catch(e){$("aStatus").textContent=errMsg(e)}
   finally{$("appendGo").disabled=false}
@@ -722,7 +753,7 @@ async function createNote(type,formats){
     for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(promptFor(k,tr),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
-    await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;renderHead();
+    await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;if(cur===n)openNote(n);
     $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
   }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
   finally{$("go").disabled=false}
@@ -784,6 +815,7 @@ $("analyze").onclick=async()=>{
 };
 
 /* Avvio */
+$("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
 loadMode();applyMode();show("home");
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
