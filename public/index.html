@@ -19,7 +19,7 @@
 :root{
   --bg:#ffffff; --surface:#ffffff; --paper:#f5f9f5; --fg:#13211a; --muted:#61756a; --line:#dde8de;
   --deck:#17261e; --deck-fg:#e3efe6; --deck-muted:#8ea596;
-  --accent:#1e9a55; --accent-strong:#137240; --accent-soft:#d9efe0; --on-accent:#ffffff; --danger:#b3261e; --warn-bg:#fff2c2; --warn-fg:#7a5600;
+  --accent:#1e9a55; --accent-strong:#137240; --accent-soft:#d9efe0; --on-accent:#ffffff; --danger:#b3261e; --t-nota:#1e9a55; --t-attivita:#2f6fdb; --t-contenuto:#8a4fd8; --warn-bg:#fff2c2; --warn-fg:#7a5600;
   --serif:"Young Serif",Georgia,serif; --body:"Figtree",ui-sans-serif,system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
 }
 *{box-sizing:border-box}
@@ -176,6 +176,36 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .dock button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;padding:8px 16px;border-radius:18px;min-width:64px}
 .dock button svg{width:26px;height:26px}
 @media (max-width:380px){.dock button{padding:8px 10px;min-width:56px}}
+
+/* Tipi di nota: colori, foglio "Che cos'è?", filtri */
+.note{border-left:6px solid var(--line)}
+.note[data-type="nota"]{border-left-color:var(--t-nota)}
+.note[data-type="attivita"]{border-left-color:var(--t-attivita)}
+.note[data-type="contenuto"]{border-left-color:var(--t-contenuto)}
+.note[data-type="nota"] .meta .cat{color:var(--t-nota)}
+.note[data-type="attivita"] .meta .cat{color:var(--t-attivita)}
+.note[data-type="contenuto"] .meta .cat{color:var(--t-contenuto)}
+.pill.client{background:var(--surface);border:1px solid var(--line);color:var(--fg)}
+.sheetWrap{position:fixed;inset:0;background:rgba(10,25,15,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:26px 26px 0 0;display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto;
+  padding:22px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.sheet>*{flex:none}
+.sheet h2{font:400 28px/1.15 var(--serif);margin:0}
+.sheet .preview{margin:0;color:var(--muted);font-size:15px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.typeBtns{display:grid;gap:10px}
+.typeBtn{display:grid;grid-template-columns:auto 1fr;column-gap:16px;align-items:center;text-align:left;border:0;border-radius:20px;padding:18px 20px;color:#fff;cursor:pointer;font:inherit}
+.typeBtn svg{grid-row:1/3;width:34px;height:34px}
+.typeBtn b{font-size:21px;line-height:1.2}
+.typeBtn small{font-size:15px;opacity:.92}
+.t-nota{background:var(--t-nota)}.t-attivita{background:var(--t-attivita)}.t-contenuto{background:var(--t-contenuto)}
+.btn.t-contenuto{background:var(--t-contenuto)}
+#contentPick .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.typeTabs{display:flex;gap:8px;flex-wrap:wrap}
+.typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
+.typeTabs .dot{width:11px;height:11px;border-radius:50%;flex:none}
+.typeTabs button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+#clientFilter{flex:1;min-width:170px;width:auto}
 </style>
 </head>
 <body>
@@ -208,16 +238,13 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <div class="spacer"></div>
 
     <div class="composer" id="composer">
-      <label class="lbl" for="transcript">Detta, scrivi o incolla</label>
-      <textarea id="transcript" rows="5"></textarea>
-      <span class="lbl" id="fmtLabel">Trasforma in</span>
-      <div class="chips" id="formats"></div>
-      <button class="btn big" id="go">Trasforma</button>
+      <label class="lbl" for="transcript">Oppure scrivi o incolla</label>
+      <textarea id="transcript" rows="3"></textarea>
+      <button class="btn big" id="go">Crea nota</button>
       <div class="status" id="status" aria-live="polite"></div>
       <details class="style" id="styleBox">
         <summary>Altre opzioni <span id="styleSum"></span></summary>
         <div class="body">
-      <div class="row tight" id="folderRow"><label class="lbl" for="newCat" style="flex:none">Salva in</label><select id="newCat" style="flex:1;min-width:0"></select></div>
           <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
           <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
 
@@ -240,13 +267,11 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
       </details>
     </div>
 
-    <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
-    <div class="tabs" id="tabs" role="toolbar" aria-label="Cartelle"></div>
-    <div class="row tight" id="newFolder" hidden>
-      <input type="text" id="nfName" placeholder="Nome della nuova cartella" aria-label="Nome della nuova cartella">
-      <button class="btn sm" id="nfSave">Crea</button>
-      <button class="btn ghost sm" id="nfCancel">Annulla</button>
+    <div class="filters">
+      <div class="typeTabs" id="tabs" role="toolbar" aria-label="Tipo di nota"></div>
+      <select id="clientFilter" aria-label="Filtra per cliente"></select>
     </div>
+    <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
     <div class="list" id="list"></div>
   </section>
 
@@ -255,12 +280,13 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <button class="back" id="back">← Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
     <div class="organize" id="dOrg">
-      <div><label class="lbl" for="dFolder">Cartella</label><select id="dFolder"></select></div>
-      <div><label class="lbl" for="dTag">Aggiungi tag</label><div class="row tight"><input type="text" id="dTag" placeholder="es. cliente"><button class="btn sm" id="dTagAdd">+</button></div></div>
+      <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
+      <div><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
     </div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
     <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
+    <div class="card" id="moreFmt"><span class="lbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn ghost sm" id="mdCopy">Copia in Markdown</button>
       <button class="btn ghost sm" id="mdSave">Esporta per Obsidian (.md)</button>
@@ -278,6 +304,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
   <section id="v-merge" class="app" style="gap:14px" hidden>
     <h1>Super nota <span class="pro planBadge"></span></h1>
     <p class="lead" id="mLead"></p>
+    <div class="row tight"><label class="lbl" for="mClient" style="flex:none">Note di</label><select id="mClient" style="flex:1;min-width:0"></select></div>
     <div class="list" id="mList"></div>
     <div class="composer">
       <label class="lbl" for="mHow">Istruzioni (facoltative)</label>
@@ -314,6 +341,27 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <div class="voice-grid" id="voiceSum"></div>
   </section>
 </div>
+
+<div class="sheetWrap" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">Che cos'è?</h2>
+    <p class="preview" id="sheetPreview"></p>
+    <label class="lbl" for="sClient">Cliente (facoltativo)</label>
+    <input type="text" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
+    <div class="typeBtns">
+      <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
+      <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>Attività</b><small>Elenco di cose da fare</small></button>
+      <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
+    </div>
+    <div id="contentPick" hidden>
+      <span class="lbl">Per quali canali?</span>
+      <div class="chips" id="formats" style="margin-block:8px 12px"></div>
+      <button class="btn big t-contenuto" id="contentGo">Crea contenuti</button>
+    </div>
+    <button class="back" id="sheetCancel" style="align-self:center">Annulla</button>
+  </div>
+</div>
+<datalist id="clientList"></datalist>
 
 <div class="dock" id="dock" hidden><nav aria-label="Sezioni" id="dockNav"></nav></div>
 
@@ -359,19 +407,19 @@ const LEVELS={leggera:{n:"Leggera",h:"Pulisce esitazioni e ripetizioni, lascia l
 const LENS=[["Molto breve","circa un terzo dell'originale"],["Breve","più corto dell'originale"],["Simile","più o meno come l'originale"],["Più ricco","un po' più lungo, sviluppando le idee"],["Esteso","molto più sviluppato, senza inventare fatti"]];
 const EXAMPLES={
   note:[
-    {id:"exn1",ex:true,at:Date.now()-864e5,cat:"Lavoro",title:"Cose da chiedere al commercialista",tags:["tasse","scadenze"],
+    {id:"exn1",ex:true,type:"attivita",client:"",at:Date.now()-864e5,cat:"Lavoro",title:"Cose da chiedere al commercialista",tags:["tasse","scadenze"],
      tr:"allora devo ricordarmi di chiedere al commercialista ehm la scadenza dell'IVA trimestrale, se posso scaricare il computer nuovo che ho preso a settembre, e poi devo mandargli le fatture di ottobre entro venerdì, sennò slitta tutto.",
      out:{todo:"• Chiedere la scadenza dell'IVA trimestrale\n• Chiedere se il computer acquistato a settembre è deducibile\n• Inviare le fatture di ottobre entro venerdì"}},
-    {id:"exn2",ex:true,at:Date.now()-4*864e5,cat:"Diario",title:"Una mattina senza telefono",tags:["abitudini"],
+    {id:"exn2",ex:true,type:"nota",client:"",at:Date.now()-4*864e5,cat:"Diario",title:"Una mattina senza telefono",tags:["abitudini"],
      tr:"oggi ho provato a non guardare il telefono per la prima ora, all'inizio strano, poi mi sono accorto che avevo la testa più libera e ho scritto la scaletta del progetto in mezz'ora.",
      out:{pulito:"Oggi ho provato a non guardare il telefono per la prima ora della giornata. All'inizio è stato strano, poi mi sono accorto di avere la testa più libera. In mezz'ora ho scritto tutta la scaletta del progetto."}}
   ],
   creator:[
-    {id:"exc1",ex:true,at:Date.now()-864e5,cat:"Contenuti",title:"Due minuti in macchina valgono una settimana di post",tags:["social","produttività"],
+    {id:"exc1",ex:true,type:"contenuto",client:"",at:Date.now()-864e5,cat:"Contenuti",title:"Due minuti in macchina valgono una settimana di post",tags:["social","produttività"],
      tr:"allora ehm volevo dire che tanti piccoli imprenditori pensano che per fare contenuti servano ore, invece io la mattina in macchina registro un vocale di due minuti con un'idea e da lì tiro fuori il post, la caption, a volte lo script del reel. L'idea ce l'hai già, ti manca il tempo di scriverla. Quindi smetti di aspettare il momento perfetto e parla.",
      out:{linkedin:"Non ti manca la creatività. Ti manca il tempo per scrivere.\n\nOgni mattina, in macchina, registro un vocale di due minuti. Da lì nascono il post, la caption e spesso lo script del reel.\n\nL'idea ce l'hai già. Serve solo un modo veloce per tirarla fuori.\n\nSmetti di aspettare il momento perfetto. Parla.\n\nTu come catturi le tue idee?",
           instagram:"2 minuti in macchina = una settimana di contenuti 🎙️\nL'idea ce l'hai già: ti manca solo il tempo di scriverla.\n\n👉 Salva il post e provalo domani mattina.\n\n#contentcreation #imprenditori #socialmediatips #produttività #personalbranding"}},
-    {id:"exc2",ex:true,at:Date.now()-3*864e5,cat:"Clienti",title:"Ristorante sul lago: idee per il lancio del menu",tags:["cliente","ristorazione"],
+    {id:"exc2",ex:true,type:"contenuto",client:"Ristorante sul Lago",at:Date.now()-3*864e5,cat:"Clienti",title:"Ristorante sul lago: idee per il lancio del menu",tags:["cliente","ristorazione"],
      tr:"cliente ristorante sul lago, a marzo esce il menu di primavera, vogliono far vedere i piatti e lo chef, magari un reel dietro le quinte in cucina e un carosello con i piatti nuovi.",
      out:{idee:"1. Reel dietro le quinte: lo chef prepara il piatto simbolo del menu di primavera\n2. Carosello: i 5 piatti nuovi, una slide per piatto\n3. Post: la storia dello chef e del lago\n4. Stories: sondaggio \"quale piatto proveresti per primo?\"\n5. Reel: dal mercato al piatto, gli ingredienti di stagione"}}
   ]
@@ -388,6 +436,11 @@ if(!raw.get("main_merged",false)){const byId=new Map();["note","creator"].forEac
   const fo=[...new Set([...raw.get("note_folders",[]),...raw.get("creator_folders",[])])];if(fo.length)raw.set("main_folders",fo);
   raw.set("main_merged",true)}
 const M=()=>MODES[mode];
+const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},attivita:{n:"Attività",f:["todo"],color:"var(--t-attivita)"},contenuto:{n:"Contenuto",f:[],color:"var(--t-contenuto)"}};
+const SOCIAL=MODES.creator.formats.filter(k=>!MODES.note.formats.includes(k));
+function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
+let tfilter="tutte",cfilter="";
+const clients=()=>[...new Set(allNotes().map(n=>(n.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
 function loadMode(){
@@ -395,7 +448,7 @@ function loadMode(){
   customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
   $("useFid").checked=store.get("fid",true);
   job="generico";
-  selected=new Set(store.get("formats",M().def).filter(k=>fmts().includes(k)));cat="Tutte";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
+  selected=new Set(store.get("cformats",["linkedin","instagram"]).filter(k=>SOCIAL.includes(k)));tfilter="tutte";cfilter="";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
 }
 const fmts=()=>[...JOBS[job].f,...M().formats];
 const folders=()=>[...M().folders,...customFolders];
@@ -429,7 +482,7 @@ function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
   $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
-  $("transcript").placeholder=M().ph;$("fmtLabel").textContent=M().fmtLabel;$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
+  $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
@@ -496,7 +549,7 @@ async function transcribe(blob){
     const t=String(r.text||"").trim();
     if(!t){$("status").textContent="Non ho sentito parole: riprova più vicino al microfono.";return}
     const prev=$("transcript").value.trim();$("transcript").value=(prev?prev+"\n\n":"")+t;
-    $("status").textContent="Trascrizione pronta. Scegli i formati e premi Trasforma.";
+    $("status").textContent="";openSheet();
   }catch(e){$("status").textContent=errMsg(e)}
   finally{$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false}}
 $("reset").onclick=()=>{if(recOn){mr.onstop=null;mr.stop();mr.stream?.getTracks().forEach(t=>t.stop());stopMeter();setRec(false)}$("timer").textContent="00:00";$("transcript").value="";$("status").textContent=""};
@@ -525,35 +578,37 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
   $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
 
 /* Formati */
-function renderChips(){const F=$("formats");F.innerHTML="";const base=MODES.note.formats;const add=k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};F.append(c)};
-  fmts().filter(k=>base.includes(k)).forEach(add);const extra=fmts().filter(k=>!base.includes(k));if(extra.length){const h=document.createElement("span");h.className="chipHead";h.innerHTML=ICONS_SPARK+"Creator";F.append(h);extra.forEach(add)}}
+function renderChips(){const F=$("formats");F.innerHTML="";SOCIAL.forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
 const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
 /* Cartelle, ricerca, lista */
-function renderNewCat(){const sel=$("newCat"),keep=sel.value||store.get("newCat","auto");sel.innerHTML="";[["auto","Scegli in automatico"],...folders().map(f=>[f,f])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.append(o)});sel.value=[...sel.options].some(o=>o.value===keep)?keep:"auto"}
-$("newCat").onchange=e=>store.set("newCat",e.target.value);
-function renderTabs(){renderNewCat();$("tabs").innerHTML="";["Tutte",...folders()].forEach(c=>{const b=document.createElement("button");b.textContent=c;b.setAttribute("aria-pressed",c===cat);b.onclick=()=>{cat=c;renderTabs();renderList()};$("tabs").append(b)});
-  const a=document.createElement("button");a.className="add";a.textContent="+ Cartella";a.onclick=()=>{$("newFolder").hidden=false;$("nfName").focus()};$("tabs").append(a)}
-$("nfCancel").onclick=()=>{$("newFolder").hidden=true};
-$("nfSave").onclick=()=>{const n=$("nfName").value.trim();if(!n||folders().includes(n))return;customFolders.push(n);store.set("folders",customFolders);$("nfName").value="";$("newFolder").hidden=true;cat=n;renderTabs();renderList()};
+function renderTabs(){const T=$("tabs");T.innerHTML="";
+  const opts=[["tutte","Tutte",""],["nota","Note",TYPES.nota.color],["attivita","Attività",TYPES.attivita.color]];if(mode==="creator")opts.push(["contenuto","Contenuti",TYPES.contenuto.color]);
+  if(!opts.some(o=>o[0]===tfilter))tfilter="tutte";
+  opts.forEach(([v,t,c])=>{const b=document.createElement("button");b.setAttribute("aria-pressed",v===tfilter);if(c){const d=document.createElement("span");d.className="dot";d.style.background=c;b.append(d)}b.append(t);b.onclick=()=>{tfilter=v;renderTabs();renderList()};T.append(b)});
+  const cl=clients(),S=$("clientFilter");S.innerHTML="";[["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
+  if(!cl.includes(cfilter))cfilter="";S.value=cfilter;S.hidden=!cl.length;
+  const D=$("clientList");D.innerHTML="";cl.forEach(c=>{const o=document.createElement("option");o.value=c;D.append(o)})}
+$("clientFilter").onchange=e=>{cfilter=e.target.value;renderList()};
 $("search").oninput=e=>{query=e.target.value.trim().toLowerCase();renderList()};
 function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
 function noteCard(n,el){
-  el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;
-  el.querySelector(".d").textContent=fmtDate(n.at)+(n.ex?" · esempio":"");el.querySelector(".cat").textContent=n.cat;
+  el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
+  el.querySelector(".d").textContent=fmtDate(n.at)+(n.ex?" · esempio":"");el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
+  if(n.client){const c=document.createElement("span");c.className="pill client";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
 }
-const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.cat].join(" ").toLowerCase();
+const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){const L=$("list");L.innerHTML="";
-  const ns=allNotes().filter(n=>(cat==="Tutte"||n.cat===cat)&&(!query||haystack(n).includes(query)));
-  if(!ns.length){L.innerHTML=`<div class="empty">${query?"Nessuna nota trovata.":"Nessuna nota in questa cartella."}</div>`;return}
+  const ns=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!query||haystack(n).includes(query)));
+  if(!ns.length){L.innerHTML=`<div class="empty">${query?"Nessuna nota trovata.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`;return}
   ns.forEach(n=>{const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=()=>openNote(n);L.append(b)})}
 
 function saveNote(n){
-  if(n.ex){exEdits[n.id]={cat:n.cat,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
+  if(n.ex){exEdits[n.id]={type:n.type,client:n.client,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
   else{const ns=store.get("notes",[]);const i=ns.findIndex(x=>x.id===n.id);i<0?ns.unshift(n):ns[i]=n;store.set("notes",ns.slice(0,200))}
-  renderList()}
+  renderTabs();renderList()}
 
 /* Dettaglio */
 function outCard(k,text,n){const d=document.createElement("article");d.className="card";
@@ -582,17 +637,22 @@ async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textCo
 function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
-  $("dFolder").innerHTML="";folders().forEach(f=>{const o=document.createElement("option");o.textContent=f;o.selected=f===cur.cat;$("dFolder").append(o)})}
-$("dFolder").onchange=e=>{cur.cat=e.target.value;saveNote(cur);renderHead()};
-$("dTagAdd").onclick=()=>{const t=$("dTag").value.trim().replace(/^#/,"").toLowerCase();if(!t)return;cur.tags=[...new Set([...(cur.tags||[]),t])];$("dTag").value="";saveNote(cur);renderHead()};
-$("dTag").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("dTagAdd").click()}};
+  const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);
+  $("dClient").value=cur.client||"";renderMore()}
+$("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);renderHead()};
+$("dClient").onchange=e=>{cur.client=e.target.value.trim();saveNote(cur);renderHead()};
+function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
+  list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
+async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
+  try{const{text}=await sampleFn(promptFor(k,n.tr),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
+  catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.textContent="+ "+FORMATS[k].n}}
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
 function openNote(n){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
   renderHead();$("dOut").innerHTML="";for(const[k,t]of Object.entries(n.out))$("dOut").append(outCard(k,t,n).el);$("dOrig").textContent=n.tr;show("detail")}
 
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
-  return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ncartella: ${n.cat}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
+  return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ntipo: ${TYPES[typeOf(n)].n}\ncliente: ${n.client||""}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
     Object.entries(n.out).map(([k,t])=>`## ${FORMATS[k]?.n||k}\n\n${t}\n`).join("\n")+`\n## Trascrizione\n\n${n.tr}\n`}
 $("mdCopy").onclick=()=>copyText(toMarkdown(cur),$("mdCopy"));
 $("mdSave").onclick=()=>{const name=(cur.title.replace(/[\\/:*?"<>|]/g,"").slice(0,80)||"nota")+".md";
@@ -621,41 +681,50 @@ $("appendGo").onclick=async()=>{
 
 /* Trasforma */
 async function makeMeta(n,src){
-  const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "cat": una tra ${JSON.stringify(folders())}, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
-  Object.assign(n,{title:String(meta.title||n.title),cat:folders().includes(meta.cat)?meta.cat:folders()[0],tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
-$("go").onclick=async()=>{
-  const tr=$("transcript").value.trim();
-  if(!tr)return $("status").textContent="Detta, scrivi o incolla qualcosa prima di trasformare.";
-  if(!selected.size)return $("status").textContent="Scegli almeno un formato.";
-  if(!sampleFn)return $("status").textContent="La trasformazione con l'AI non è disponibile in questa vista.";
+  const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
+  Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
+const promptFor=(k,tr)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
+  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";$("contentPick").hidden=true;$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
+function closeSheet(){$("sheet").hidden=true}
+$("sheetCancel").onclick=closeSheet;
+$("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
+document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==="contenuto"){$("contentPick").hidden=false;$("contentGo").scrollIntoView({block:"nearest"});return}createNote(t,TYPES[t].f)});
+$("contentGo").onclick=()=>{const f=SOCIAL.filter(k=>selected.has(k));if(!f.length){$("contentGo").textContent="Scegli almeno un canale";setTimeout(()=>$("contentGo").textContent="Crea contenuti",1600);return}createNote("contenuto",f)};
+$("go").onclick=openSheet;
+async function createNote(type,formats){
+  const tr=$("transcript").value.trim();const client=$("sClient").value.trim();closeSheet();
+  if(!tr)return;
   $("go").disabled=true;const jobs=[];
-  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},cat:folders()[0],title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
-  $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("dStatus").textContent="";show("detail");
+  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},type,client,title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
+  $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("moreFmt").hidden=true;$("dStatus").textContent="";show("detail");
   const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
   try{
-    await makeMeta(n,tr);if($("newCat").value!=="auto")n.cat=$("newCat").value;renderHead();
-    for(const k of fmts().filter(k=>selected.has(k))){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
-      const{text}=await sampleFn(`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`,{onText:({text})=>{c.txt.textContent=text}});
+    await makeMeta(n,tr);renderHead();$("moreFmt").hidden=true;
+    for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
+      const{text}=await sampleFn(promptFor(k,tr),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
     await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;renderHead();
-    $("transcript").value="";$("status").textContent="";
+    $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
   }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
   finally{$("go").disabled=false}
-};
+}
 
 /* Super nota */
 function renderMerge(){const L=$("mList");L.innerHTML="";
+  const S=$("mClient");S.innerHTML="";[["","Scegli tu"],...clients().map(c=>[c,"Tutte le note di "+c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
   allNotes().forEach(n=>{const l=document.createElement("label");l.className="pick";const c=document.createElement("input");c.type="checkbox";c.checked=picked.has(n.id);c.onchange=()=>{c.checked?picked.add(n.id):picked.delete(n.id)};
-    const d=document.createElement("div");const b=document.createElement("b");b.textContent=n.title;const s=document.createElement("small");s.textContent=fmtDate(n.at)+" · "+n.cat+(n.ex?" · esempio":"");d.append(b,s);l.append(c,d);L.append(l)})}
+    const d=document.createElement("div");const b=document.createElement("b");b.textContent=n.title;const s=document.createElement("small");s.textContent=fmtDate(n.at)+" · "+TYPES[typeOf(n)].n+(n.client?" · "+n.client:"")+(n.ex?" · esempio":"");d.append(b,s);l.append(c,d);L.append(l)})}
+$("mClient").onchange=e=>{const c=e.target.value;if(c){picked.clear();allNotes().filter(n=>n.client===c).forEach(n=>picked.add(n.id))}const keep=c;renderMerge();$("mClient").value=keep};
 $("mGo").onclick=async()=>{
   const ns=allNotes().filter(n=>picked.has(n.id));
   if(ns.length<2)return $("mStatus").textContent="Scegli almeno 2 note.";
   if(!sampleFn)return $("mStatus").textContent="L'AI non è disponibile in questa vista.";
   $("mGo").disabled=true;$("mStatus").textContent="Sto unendo le note…";
-  const src=ns.map(n=>`### ${n.title} (${fmtDate(n.at)}, ${n.cat})\n${Object.values(n.out)[0]||""}\nTrascrizione: ${n.tr}`).join("\n\n").slice(0,60000);
+  const src=ns.map(n=>`### ${n.title} (${fmtDate(n.at)}, ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""})\n${Object.values(n.out)[0]||""}\nTrascrizione: ${n.tr}`).join("\n\n").slice(0,60000);
   const how=$("mHow").value.trim();
   const shape=mode==="creator"?`un riassunto, poi "Messaggi chiave" (elenco puntato) e "Contenuti da pubblicare" (elenco puntato con formato consigliato per ciascuno)`:`un riassunto chiaro, poi "Punti chiave" (elenco puntato) e "Prossime azioni" (elenco puntato con eventuali scadenze)`;
-  const n={id:"n"+Date.now(),at:Date.now(),tr:"Super nota creata da: "+ns.map(x=>x.title).join(" · "),out:{},cat:folders()[0],title:"Super nota",tags:["super nota"]};
+  const n={id:"n"+Date.now(),at:Date.now(),tr:"Super nota creata da: "+ns.map(x=>x.title).join(" · "),out:{},type:"nota",client:[...new Set(ns.map(x=>x.client||""))].length===1?(ns[0].client||""):"",title:"Super nota",tags:["super nota"]};
   try{
     const{text}=await sampleFn(`${M().writer} Unisci queste note in un'unica super nota in italiano: ${shape}. ${how?"Istruzioni dell'autore: "+how+".":""}${voiceText()}\nUsa solo le informazioni presenti, non inventare. Niente markdown con asterischi: usa titoli semplici e "•" per gli elenchi.\n\nNOTE:\n${src}`);
     n.out.riassunto=text;
@@ -673,7 +742,7 @@ $("qGo").onclick=async()=>{
   const q=$("q").value.trim();if(!q)return;
   if(!sampleFn){bubble("ai","L'AI non è disponibile in questa vista.");return}
   $("qGo").disabled=true;$("q").value="";$("sugg").innerHTML="";bubble("me",q);const a=bubble("ai","Sto cercando nelle tue note…");
-  const ctx=allNotes().map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — cartella ${n.cat}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
+  const ctx=allNotes().map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — tipo ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
   const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico, usando SOLO le note qui sotto. Cita il titolo della nota da cui prendi l'informazione. Se la risposta non è nelle note, dillo chiaramente. Niente markdown con asterischi.\n\nNOTE DELL'UTENTE:\n${ctx}`;
   turns.push({role:"user",content:q});
   try{const{text}=await sampleFn([{role:"user",content:rules},...turns.slice(-10)],{cache:false,onText:({text})=>{a.textContent=text}});turns.push({role:"assistant",content:text})}
