@@ -215,6 +215,16 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .note .meta .d::before{content:"🕒 ";filter:grayscale(1)}
 .note .meta .d.old{color:var(--danger)}
 .note .meta .d.old::before{content:"⚠ ";filter:none}
+.todoCard{border:2px solid var(--t-attivita)}
+.todoCard .btn{background:var(--t-attivita);font-size:18px;padding:8px 16px}
+.todoProg{font-weight:700;color:var(--t-attivita);font-size:14px}
+.todos{display:flex;flex-direction:column}
+.todo{display:flex;align-items:flex-start;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.todo:last-child{border-bottom:0}
+.todo input{width:24px;height:24px;accent-color:var(--t-attivita);flex:none;margin:1px 0 0}
+.todo span{flex:1;font-size:17px;line-height:1.4;overflow-wrap:anywhere}
+.todo.done span{text-decoration:line-through;color:var(--muted)}
+.todo .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -366,7 +376,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <input type="text" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
     <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
-      <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>Attività</b><small>Elenco di cose da fare</small></button>
+      <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>Attività</b><small>Lista di cose da fare, da spuntare</small></button>
       <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
     </div>
     <div id="levelStep" hidden>
@@ -634,7 +644,7 @@ function noteCard(n,el){
   el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
   const days=Math.max(0,Math.floor((Date.now()-n.at)/864e5));const dEl=el.querySelector(".d");dEl.textContent=fmtDate(n.at)+" · "+(days===0?"oggi":days===1?"ieri":days+" giorni fa")+(n.ex?" · esempio":"");if(days>oldDays){dEl.classList.add("old");dEl.title="Aggiunta più di "+oldDays+" giorni fa"}el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
   if(n.client){const c=document.createElement("span");c.className="pill client";c.textContent=n.client;el.querySelector(".pills").append(c)}
-  el.querySelector("h3").textContent=n.title;el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
+  el.querySelector("h3").textContent=n.title;if(typeOf(n)==="attivita"){const ts=ensureTasks(n),dn=ts.filter(x=>x.done).length,next=ts.find(x=>!x.done);el.querySelector("p").textContent=ts.length?(dn===ts.length?`✓ Tutte fatte (${ts.length})`:`☐ ${dn} su ${ts.length} fatte · prossima: ${next.t}`):"Nessuna attività";}else el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
@@ -644,7 +654,7 @@ function renderList(){const L=$("list");L.innerHTML="";
   ns.forEach(n=>{const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=()=>openNote(n);L.append(b)})}
 
 function saveNote(n){
-  if(n.ex){exEdits[n.id]={type:n.type,client:n.client,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
+  if(n.ex){exEdits[n.id]={tasks:n.tasks,type:n.type,client:n.client,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
   else{const ns=store.get("notes",[]);const i=ns.findIndex(x=>x.id===n.id);i<0?ns.unshift(n):ns[i]=n;store.set("notes",ns.slice(0,200))}
   renderTabs();renderList()}
 
@@ -694,8 +704,23 @@ async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textC
     n.out[key]=text;if(n.fid)delete n.fid[key];saveNote(n);if(cur===n)openNote(n,true)}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.firstChild.textContent=old}}
 function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.endsWith(ML)).forEach(k=>{out.push(k);if(k+ML in n.out)out.push(k+ML)});ks.filter(k=>k.endsWith(ML)&&!out.includes(k)).forEach(k=>out.push(k));return out}
+function parseTasks(text){return String(text||"").split(/\n+/).map(l=>l.replace(/^\s*([•\-\*☐☑✓]|\d+[.)]|\[[ xX]\])\s*/,"").trim()).filter(Boolean).map(t=>({t,done:false}))}
+function ensureTasks(n){if(!Array.isArray(n.tasks))n.tasks=parseTasks(n.out?.todo);return n.tasks}
+function syncTodo(n){n.out.todo=n.tasks.map(x=>(x.done?"☑ ":"☐ ")+x.t).join("\n")}
+async function extractTasks(src){const r=await sampleFn.json(`Estrai da questa nota le cose concrete da fare. Ogni attività è breve, inizia con un verbo all'infinito e, se nella nota c'è una scadenza, la riporta tra parentesi (es. "Mandare le fatture al commercialista (entro venerdì)"). Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":["...","..."]}.\n\nNOTA:\n${src.slice(0,20000)}`);
+  const a=Array.isArray(r?.attivita)?r.attivita:Array.isArray(r)?r:[];return a.map(x=>String(x).trim()).filter(Boolean).slice(0,40).map(t=>({t,done:false}))}
+function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).length;const d=document.createElement("article");d.className="card todoCard";d.dataset.k="todo";
+  d.innerHTML='<div class="head"><span class="fmt" style="color:var(--t-attivita)">Cose da fare</span><span class="todoProg"></span></div><div class="todos"></div><div class="row tight"><input type="text" placeholder="Aggiungi un\'attività…" aria-label="Nuova attività"><button class="btn sm">+</button></div>';
+  d.querySelector(".todoProg").textContent=tasks.length?`${done} su ${tasks.length} fatte`:"";
+  const L=d.querySelector(".todos"),redraw=()=>{syncTodo(n);saveNote(n);const nd=todoCard(n);d.replaceWith(nd);return nd};
+  tasks.forEach((x,i)=>{const r=document.createElement("label");r.className="todo"+(x.done?" done":"");const c=document.createElement("input");c.type="checkbox";c.checked=x.done;c.onchange=()=>{x.done=c.checked;redraw()};
+    const sp=document.createElement("span");sp.textContent=x.t;const del=document.createElement("button");del.className="x";del.textContent="✕";del.setAttribute("aria-label","Elimina: "+x.t);del.onclick=e=>{e.preventDefault();tasks.splice(i,1);redraw()};r.append(c,sp,del);L.append(r)});
+  if(!tasks.length)L.innerHTML='<p class="status">Nessuna attività. Aggiungine una qui sotto.</p>';
+  const inp=d.querySelector("input[type=text]"),add=()=>{const t=inp.value.trim();if(!t)return;tasks.push({t,done:false});redraw().querySelector("input[type=text]").focus()};
+  d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
+  return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  renderHead();$("dOut").innerHTML="";for(const k of orderedOut(n)){const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}$("dOrig").textContent=n.tr;if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  renderHead();$("dOut").innerHTML="";if(typeOf(n)==="attivita")$("dOut").append(todoCard(n));for(const k of orderedOut(n)){if(k==="todo"&&typeOf(n)==="attivita")continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}$("dOrig").textContent=n.tr;if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
@@ -719,7 +744,8 @@ $("appendGo").onclick=async()=>{
   const add=$("addText").value.trim();if(!cur||!add)return $("aStatus").textContent="Scrivi o detta cosa aggiungere.";
   if(!sampleFn)return $("aStatus").textContent="La riscrittura con l'AI non è disponibile in questa vista.";
   $("appendGo").disabled=true;cur.tr+="\n\n"+add;cur.fid={};$("dOrig").textContent=cur.tr;$("dOut").innerHTML="";const jobs=[];
-  try{for(const k of Object.keys(cur.out)){const c=outCard(k,"Sto riscrivendo…");$("dOut").append(c.el);
+  try{if(typeOf(cur)==="attivita"){const nt=await extractTasks(add);ensureTasks(cur).push(...nt);syncTodo(cur);saveNote(cur);openNote(cur,true);$("addText").value="";$("aStatus").textContent=nt.length?`Aggiunte ${nt.length} attività.`:"Nessuna nuova attività trovata.";return}
+    for(const k of Object.keys(cur.out)){const c=outCard(k,"Sto riscrivendo…");$("dOut").append(c.el);
       const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[baseK(k)]?.p||k}.${k.endsWith(ML)?"\n"+MANULAB_VOICE:""}\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
     await Promise.all(jobs);saveNote(cur);$("addText").value="";$("aStatus").textContent="Nota aggiornata.";
   }catch(e){$("aStatus").textContent=errMsg(e)}
@@ -738,7 +764,7 @@ $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
-document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Per quali canali?";$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
@@ -755,7 +781,8 @@ async function createNote(type,formats){
   const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
   try{
     await makeMeta(n,tr);renderHead();$("moreFmt").hidden=true;
-    for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
+    if(type==="attivita"){const w=document.createElement("p");w.className="status";w.textContent="Sto preparando la lista delle cose da fare…";$("dOut").append(w);n.tasks=await extractTasks(tr);syncTodo(n);w.remove()}
+    else for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(promptFor(k,tr),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
     await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;if(cur===n)openNote(n);
