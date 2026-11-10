@@ -28,12 +28,18 @@ body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 110px}
 .app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .app>section{width:100%}
-.top{display:flex;flex-direction:column;align-items:center;gap:10px}
-.brand{font:400 26px/1 var(--serif);text-align:center;letter-spacing:-.01em}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font:400 30px/1 var(--serif);letter-spacing:-.01em}
 .brand span{color:var(--accent)}
-.modesw{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}
-.modesw button{border:0;background:none;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
-.modesw button[aria-pressed="true"]{background:var(--deck);color:var(--deck-fg)}
+.creatorSw{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:700;padding:9px 16px;border-radius:999px;cursor:pointer}
+.creatorSw[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.creatorSw .knob{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;flex:none}
+.creatorSw .knob::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.creatorSw[aria-pressed="true"] .knob{background:rgba(255,255,255,.35)}
+.creatorSw[aria-pressed="true"] .knob::after{left:16px}
+.chipHead{width:100%;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);margin-top:6px}
+.btn.big{width:100%;font-size:18px;padding:15px 20px;border-radius:16px}
+.sideBtn{display:flex;align-items:center;gap:8px}
 button,select{font-family:var(--body)}
 button:focus-visible,textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:2px}
 
@@ -152,6 +158,24 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 .dock button{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .dock button[aria-current="true"]{background:var(--deck);color:var(--deck-fg)}
 @media (max-width:380px){.dock button{padding:9px 10px;font-size:12px}}
+
+/* Versione semplificata: elementi più grandi */
+body{font-size:16px}
+.deck{padding:26px 18px 58px}
+.deck .side{font-size:15px;font-weight:600;padding:10px;bottom:16px;display:flex;align-items:center;gap:8px;color:var(--deck-fg);opacity:.85}
+.mic{width:96px;height:96px;bottom:-46px}
+.mic svg{width:40px;height:40px}
+.mic .stop{width:30px;height:30px;border-radius:7px}
+.spacer{height:32px}
+.chip{font-size:15px;padding:10px 16px}
+.lbl{font-size:12px}
+.tabs button{font-size:16px;padding:10px 0}
+.composer{padding:18px;gap:14px}
+textarea,input[type=text],input[type=search],select{font-size:16px}
+.dock nav{gap:4px;padding:6px}
+.dock button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;padding:8px 16px;border-radius:18px;min-width:64px}
+.dock button svg{width:26px;height:26px}
+@media (max-width:380px){.dock button{padding:8px 10px;min-width:56px}}
 </style>
 </head>
 <body>
@@ -160,9 +184,7 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 <div class="app">
   <div class="top">
     <div class="brand">Dict<span>ax</span></div>
-    <div class="modesw" id="modesw" role="group" aria-label="Profilo" hidden>
-      <button data-m="note">Note</button><button data-m="creator">Creator</button>
-    </div>
+    <button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button>
   </div>
 
   <!-- CODICE DI ACCESSO -->
@@ -172,45 +194,33 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
     <div class="row tight"><input type="text" id="codeIn" autocomplete="off" autocapitalize="off"><button class="btn sm" id="codeSave">Entra</button></div>
   </div>
 
-  <!-- SCELTA PROFILO -->
-  <section id="v-mode" class="app" style="gap:14px" hidden>
-    <h1>Come vuoi usare Dictax?</h1>
-    <p class="lead">Puoi cambiare profilo quando vuoi dall'interruttore in alto. Ogni profilo ha le sue note.</p>
-    <div class="pickmode">
-      <button class="mcard" data-m="note">
-        <span class="kicker">Profilo Note · Pro</span>
-        <h2>Pensieri, riunioni e appunti in testo chiaro</h2>
-        <ul><li>Testo pulito, email, verbali, liste di attività</li><li>Super note e chat con le tue note</li><li>Cartelle, tag, export per Obsidian</li></ul>
-        <span class="go">Inizia con Note →</span>
-      </button>
-      <button class="mcard" data-m="creator">
-        <span class="kicker">Profilo Creator · per creator e social media manager</span>
-        <h2>Da un vocale a post, caroselli e reel</h2>
-        <ul><li>Più formati social da una sola idea</li><li>Voce di brand per te e per ogni cliente</li><li>Ganci, script, newsletter e idee di contenuto</li></ul>
-        <span class="go">Inizia con Creator →</span>
-      </button>
-    </div>
-  </section>
-
   <!-- HOME -->
   <section id="v-home" class="app" style="gap:18px" hidden>
     <div class="deck">
       <div class="timer" id="timer">00:00</div>
       <div class="wave" id="wave" aria-hidden="true"></div>
       <div class="state" id="state">pronto</div>
-      <button class="side l" id="reset" aria-label="Ricomincia">↺ Ricomincia</button>
-      <button class="side r" id="uploadBtn">⇪ Carica audio</button>
+      <button class="side l" id="reset"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg> Ricomincia</button>
+      <button class="side r" id="uploadBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5"/><path d="M4 15v5h16v-5"/></svg> Carica audio</button>
       <input type="file" id="audioFile" accept="audio/*,video/mp4,video/webm" hidden>
       <button class="mic" id="mic" aria-label="Avvia registrazione"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     </div>
     <div class="spacer"></div>
 
     <div class="composer" id="composer">
-      <label class="lbl" for="transcript">Detta, scrivi o incolla <span class="pro planBadge"></span></label>
+      <label class="lbl" for="transcript">Detta, scrivi o incolla</label>
       <textarea id="transcript" rows="5"></textarea>
+      <span class="lbl" id="fmtLabel">Trasforma in</span>
+      <div class="chips" id="formats"></div>
+      <button class="btn big" id="go">Trasforma</button>
+      <div class="status" id="status" aria-live="polite"></div>
       <details class="style" id="styleBox">
-        <summary>Stile di riscrittura <span id="styleSum"></span></summary>
+        <summary>Altre opzioni <span id="styleSum"></span></summary>
         <div class="body">
+      <div class="row tight" id="folderRow"><label class="lbl" for="newCat" style="flex:none">Salva in</label><select id="newCat" style="flex:1;min-width:0"></select></div>
+          <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
+          <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
+
           <span class="lbl">Quanto riscrivere</span>
           <div class="seg" id="level"></div>
           <p class="help" id="levelHelp"></p>
@@ -226,17 +236,8 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
           <label class="lbl" for="len">Lunghezza</label>
           <input type="range" id="len" min="0" max="4" step="1">
           <p class="help" id="lenHelp"></p>
-        </div>
+                </div>
       </details>
-      <div class="row tight" id="folderRow"><label class="lbl" for="newCat" style="flex:none">Salva in</label><select id="newCat" style="flex:1;min-width:0"></select></div>
-      <span class="lbl" id="fmtLabel">Trasforma in</span>
-      <div class="chips" id="formats"></div>
-      <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI <span class="pro planBadge"></span></label>
-      <div class="row">
-        <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Con la mia voce di brand</label>
-        <button class="btn" id="go">Trasforma</button>
-      </div>
-      <div class="status" id="status" aria-live="polite"></div>
     </div>
 
     <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
@@ -348,8 +349,8 @@ const MODES={
     tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
-  creator:{badge:"Creator · gratis",formats:["linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["linkedin","instagram"],styles:["mio","diretto","amichevole","professionale","ironico","ispirazionale"],folders:["Idee","Contenuti","Clienti","Pubblicati"],
-    tabs:[["home","Contenuti"],["merge","Unisci"],["ask","Chiedi"],["voice","Voce brand"]],writer:"Sei un copywriter e social media manager italiano.",fmtLabel:"Crea per",
+  creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
+    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["voice","Voce brand"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
@@ -379,8 +380,13 @@ const EX_VOICE={tono:"Diretto, pratico, da pari a pari",lessico:"Parole semplici
 
 const $=id=>document.getElementById(id);
 const raw={get(k,d){try{const v=localStorage.getItem("dx1_"+k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem("dx1_"+k,JSON.stringify(v))}catch{}}};
-let mode=raw.get("mode",null);
-const store={get:(k,d)=>raw.get(mode+"_"+k,d),set:(k,v)=>raw.set(mode+"_"+k,v)};
+let mode=raw.get("mode","note");if(!["note","creator"].includes(mode))mode="note";
+const store={get:(k,d)=>raw.get("main_"+k,d),set:(k,v)=>raw.set("main_"+k,v)};
+if(!raw.get("main_merged",false)){const byId=new Map();["note","creator"].forEach(m=>raw.get(m+"_notes",[]).forEach(n=>{if(!byId.has(n.id))byId.set(n.id,n)}));
+  if(byId.size)raw.set("main_notes",[...byId.values()].sort((a,b)=>b.at-a.at));
+  const cs=[...raw.get("note_cstyles",[]),...raw.get("creator_cstyles",[])];if(cs.length)raw.set("main_cstyles",cs);
+  const fo=[...new Set([...raw.get("note_folders",[]),...raw.get("creator_folders",[])])];if(fo.length)raw.set("main_folders",fo);
+  raw.set("main_merged",true)}
 const M=()=>MODES[mode];
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
@@ -393,7 +399,7 @@ function loadMode(){
 }
 const fmts=()=>[...JOBS[job].f,...M().formats];
 const folders=()=>[...M().folders,...customFolders];
-const examples=()=>EXAMPLES[mode].filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
+const examples=()=>(mode==="creator"?[...EXAMPLES.note,...EXAMPLES.creator]:EXAMPLES.note).filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
 const allNotes=()=>[...store.get("notes",[]),...examples()];
 const allStyles=()=>{const o={};M().styles.forEach(k=>o[k]=BASE_STYLES[k]);customStyles.forEach(s=>o[s.id]={n:s.n,rule:s.rule,custom:true});return o};
 /* Server di Dictax */
@@ -419,20 +425,20 @@ $("codeSave").onclick=()=>{const c=$("codeIn").value.trim();if(!c)return;raw.set
 $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
 
 /* Profili */
-function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode();show("home")}
+function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
-  $("modesw").hidden=false;$("dock").hidden=false;
-  document.querySelectorAll("#modesw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));
+  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder=M().ph;$("fmtLabel").textContent=M().fmtLabel;$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
-  $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
+  $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
-document.querySelectorAll("#modesw button,.mcard").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+const ICONS={note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l6 4V6l-6 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg>'};
+$("creatorSw").onclick=()=>{const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;setMode(mode==="creator"?"note":"creator");show(v&&M().tabs.some(t=>t[0]===v)?v:"home")};
 
 /* Viste */
-function show(v){["mode","home","detail","merge","ask","voice"].forEach(x=>$("v-"+x).hidden=x!==v);
+function show(v){["home","detail","merge","ask","voice"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
   if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
@@ -519,7 +525,9 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
   $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
 
 /* Formati */
-function renderChips(){$("formats").innerHTML="";fmts().forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};$("formats").append(c)})}
+function renderChips(){const F=$("formats");F.innerHTML="";const base=MODES.note.formats;const add=k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("formats",[...selected]);renderChips()};F.append(c)};
+  fmts().filter(k=>base.includes(k)).forEach(add);const extra=fmts().filter(k=>!base.includes(k));if(extra.length){const h=document.createElement("span");h.className="chipHead";h.innerHTML=ICONS_SPARK+"Creator";F.append(h);extra.forEach(add)}}
+const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
 /* Cartelle, ricerca, lista */
 function renderNewCat(){const sel=$("newCat"),keep=sel.value||store.get("newCat","auto");sel.innerHTML="";[["auto","Scegli in automatico"],...folders().map(f=>[f,f])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.append(o)});sel.value=[...sel.options].some(o=>o.value===keep)?keep:"auto"}
@@ -689,7 +697,7 @@ $("analyze").onclick=async()=>{
 };
 
 /* Avvio */
-if(mode&&MODES[mode]){loadMode();applyMode();show("home")}else{show("mode")}
+loadMode();applyMode();show("home");
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
   if(!h.rewrite)$("status").textContent="Per ora puoi registrare e trascrivere. La riscrittura con l'AI si attiva quando sul server c'è la chiave di Claude.";
