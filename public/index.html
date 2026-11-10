@@ -458,6 +458,8 @@ const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},attivita:{n:"Att
 const SOCIAL=MODES.creator.formats.filter(k=>!MODES.note.formats.includes(k));
 const ML="__ml";const baseK=k=>k.endsWith(ML)?k.slice(0,-ML.length):k;
 const fmtName=k=>(FORMATS[baseK(k)]?.n||k)+(k.endsWith(ML)?" · voce ManuLab":"");
+const KW_FORMATS=["linkedin","instagram","carosello","reel","tiktok"];
+const kwRule=k=>KW_FORMATS.includes(baseK(k))?"\nIn fondo, dopo una riga vuota, aggiungi una riga con 5-8 parole chiave di ricerca pertinenti al contenuto (senza #), separate da \" | \", per esempio: lavoro da remoto | produttività | smart working | organizzazione del tempo":"";
 const CREATOR_PRO=true; // gratis per ora: in futuro sarà attivo solo per chi paga Creator Pro
 const MANULAB_VOICE=`Riscrivi con la voce ManuLab: una persona competente che parla a un cliente reale. Diretta, umana, specifica, persuasiva senza sembrare costruita da un copywriter.
 Regole:
@@ -685,7 +687,7 @@ async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="S
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
 async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textContent;btn.disabled=true;btn.firstChild.textContent="Sto scrivendo con la voce ManuLab…";
   const c=outCard(key,"Sto pensando…");const prev=[...$("dOut").children].find(e=>e.dataset.k===key);prev?prev.replaceWith(c.el):anchor.after(c.el);
-  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${n.client?`\nIl contenuto è per il cliente/brand: ${n.client}.`:""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
+  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${kwRule(k)}${n.client?`\nIl contenuto è per il cliente/brand: ${n.client}.`:""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
     n.out[key]=text;if(n.fid)delete n.fid[key];saveNote(n);if(cur===n)openNote(n,true)}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.firstChild.textContent=old}}
 function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.endsWith(ML)).forEach(k=>{out.push(k);if(k+ML in n.out)out.push(k+ML)});ks.filter(k=>k.endsWith(ML)&&!out.includes(k)).forEach(k=>out.push(k));return out}
@@ -725,7 +727,7 @@ $("appendGo").onclick=async()=>{
 async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
-const promptFor=(k,tr)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
   $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
