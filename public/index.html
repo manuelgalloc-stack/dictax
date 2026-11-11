@@ -503,6 +503,8 @@ Regole:
 - Chiudi con una sola azione richiesta, conseguenza naturale del testo e legata al beneficio. Mai chiusure generiche come "Cosa ne pensi?".
 - Parole semplici, niente gergo; ironia leggera ammessa.
 Da evitare: tono da guru o motivatore, clickbait, aggettivi vuoti (rivoluzionario, incredibile, imperdibile), troppi punti esclamativi, emoji o grassetto, linguaggio aziendale freddo, colpevolizzare il pubblico, promesse assolute (soprattutto su salute, nutrizione ed estetica).
+- Deve incuriosire: chi legge le prime righe deve voler sapere come va a finire.
+- Scrivi per la nicchia precisa del cliente/brand: usa i problemi, le situazioni, il linguaggio e gli esempi tipici del suo settore e del suo pubblico, non frasi valide per chiunque. Se la nicchia non è indicata, ricavala dalla nota.
 Controllo finale: se un concorrente potesse pubblicarlo cambiando solo il nome, rendilo più specifico.`;
 function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
 let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7);
@@ -713,7 +715,7 @@ $("dClient").onchange=e=>{cur.client=e.target.value.trim();saveNote(cur);renderH
 function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
   list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
 async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
-  try{const{text}=await sampleFn(promptFor(k,n.tr),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
+  try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.textContent="+ "+FORMATS[k].n}}
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
 async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textContent;btn.disabled=true;btn.firstChild.textContent="Sto scrivendo con la voce ManuLab…";
@@ -775,7 +777,7 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${cl&&useML(k)?`\nIl contenuto è per il cliente/brand: ${cl}.`:""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
   $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
@@ -802,7 +804,7 @@ async function createNote(type,formats){
     await makeMeta(n,tr);renderHead();$("moreFmt").hidden=true;
     if(type==="attivita"){const w=document.createElement("p");w.className="status";w.textContent="Sto preparando la lista delle cose da fare…";$("dOut").append(w);n.tasks=await extractTasks(tr);syncTodo(n);w.remove()}
     else for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
-      const{text}=await sampleFn(promptFor(k,tr),{onText:({text})=>{c.txt.textContent=text}});
+      const{text}=await sampleFn(promptFor(k,tr,n.client),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
     await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;if(cur===n)openNote(n);
     $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
