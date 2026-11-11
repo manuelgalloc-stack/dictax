@@ -71,7 +71,7 @@ button:focus-visible,textarea:focus,input:focus,select:focus{outline:2px solid v
 /* Composer e controlli */
 .composer{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-textarea,input[type=text],input[type=search],select{width:100%;font:15px/1.5 var(--body);color:var(--fg);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 13px;resize:vertical}
+textarea,input[type=text],input[type=search],input[type=number],input[type=date],select{width:100%;font:15px/1.5 var(--body);color:var(--fg);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 13px;resize:vertical}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);background:var(--paper);color:var(--fg);font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -171,7 +171,7 @@ body{font-size:16px}
 .lbl{font-size:12px}
 .tabs button{font-size:16px;padding:10px 0}
 .composer{padding:18px;gap:14px}
-textarea,input[type=text],input[type=search],select{font-size:16px}
+textarea,input[type=text],input[type=search],input[type=number],input[type=date],select{font-size:16px}
 .dock nav{gap:4px;padding:6px}
 .dock button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;padding:8px 16px;border-radius:18px;min-width:64px}
 .dock button svg{width:26px;height:26px}
@@ -226,6 +226,36 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .todo.done span{text-decoration:line-through;color:var(--muted)}
 .todo .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
 body.noClients .cliOpt{display:none!important}
+.mSum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mSum div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 10px;min-width:0}
+.mSum small{display:block;font-size:13px;color:var(--muted);font-weight:600}
+.mSum b{display:block;font-size:18px;margin-top:2px;overflow-wrap:anywhere}
+.mIn{color:var(--accent-strong)}.mOut{color:var(--danger)}
+.mKind{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mKind button{border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:14px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;color:var(--fg)}
+.mKind button[data-k=in][aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
+.mKind button[data-k=out][aria-pressed=true]{border-color:var(--danger);background:#fbe4e2;color:var(--danger)}
+.mGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mGrid>*{min-width:0}
+.mGrid input,.mGrid select{width:100%}
+.mMonth{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mMonth b{font-size:18px;text-transform:capitalize}
+.mMonth button{border:1px solid var(--line);background:var(--surface);border-radius:12px;width:44px;height:40px;font-size:18px;cursor:pointer;color:var(--fg)}
+.mChart svg{width:100%;height:auto;max-height:240px;display:block}
+.mLeg{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:6px}
+.mLeg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.mCat{display:grid;grid-template-columns:minmax(0,1.3fr) 1.5fr auto;gap:8px;align-items:center;font-size:14px;margin-top:6px}
+.mCat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mCat .bar{height:10px;border-radius:5px;background:var(--danger);opacity:.75}
+.mList{display:flex;flex-direction:column}
+.mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.mRow:last-child{border-bottom:0}
+.mRow div{flex:1;min-width:0}
+.mRow div b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}
+.mRow div small{color:var(--muted);font-size:13px}
+.mRow>span{font-weight:700;white-space:nowrap}
+.mRow .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
+.mTips{white-space:pre-wrap;line-height:1.5;font-size:16px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -372,6 +402,27 @@ body.noClients .cliOpt{display:none!important}
     </div>
   </section>
 
+  <!-- CONTI: entrate e uscite -->
+  <section id="v-conti" class="app" style="gap:14px" hidden>
+    <h1>Entrate e uscite</h1>
+    <div class="mMonth"><button id="mPrev" aria-label="Mese precedente">‹</button><b id="mMonthLbl"></b><button id="mNext" aria-label="Mese successivo">›</button></div>
+    <div class="mSum"><div><small>Entrate</small><b class="mIn" id="mTotIn"></b></div><div><small>Uscite</small><b class="mOut" id="mTotOut"></b></div><div><small>Saldo</small><b id="mTotBal"></b></div></div>
+    <div class="composer">
+      <div class="mKind"><button data-k="in" aria-pressed="false">+ Entrata</button><button data-k="out" aria-pressed="true">− Uscita</button></div>
+      <div class="mGrid">
+        <div><label class="lbl" for="mAmt">Importo €</label><input type="number" id="mAmt" inputmode="decimal" min="0" step="0.01" placeholder="0,00"></div>
+        <div><label class="lbl" for="mDate">Data</label><input type="date" id="mDate"></div>
+      </div>
+      <div><label class="lbl" for="mCat">Categoria</label><select id="mCat"></select></div>
+      <div><label class="lbl" for="mDesc">Descrizione (facoltativa)</label><input type="text" id="mDesc" placeholder="Es. Fattura cliente Rossi"></div>
+      <div class="row"><span class="status" id="mStat" aria-live="polite"></span><button class="btn" id="mAdd">Aggiungi</button></div>
+    </div>
+    <div class="card mChart"><div class="head"><span class="fmt">Ultimi 6 mesi</span></div><div id="mChart"></div><div class="mLeg"><span><i style="background:var(--accent)"></i>Entrate</span><span><i style="background:var(--danger)"></i>Uscite</span></div></div>
+    <div class="card" id="mCatsBox"><div class="head"><span class="fmt">Dove vanno i soldi questo mese</span></div><div id="mCats"></div></div>
+    <div class="card"><div class="head"><span class="fmt">Movimenti del mese</span></div><div class="mList" id="mMoves"></div></div>
+    <div class="card"><div class="head"><span class="fmt">Consigli</span><span class="pro planBadge"></span></div><p class="mTips status" id="mTips">Premi il pulsante: Dictax legge i tuoi movimenti e ti dà qualche consiglio pratico.</p><button class="btn" id="mTipsGo" style="align-self:flex-start">Dammi dei consigli</button></div>
+  </section>
+
   <!-- VOCE (solo Creator) -->
   <section id="v-voice" class="app" style="gap:14px" hidden>
     <h1>Voce di brand <span class="pro planBadge"></span></h1>
@@ -445,11 +496,11 @@ const FORMATS={
 const BASE_STYLES={chiaro:{n:"Chiaro e semplice"},descrittivo:{n:"Descrittivo"},elenco:{n:"A elenco"},professionale:{n:"Professionale"},amichevole:{n:"Amichevole"},mio:{n:"Come scrivo io"},diretto:{n:"Diretto"},ironico:{n:"Ironico"},ispirazionale:{n:"Ispirazionale"}};
 const MODES={
   note:{badge:"Pro · gratis",formats:["pulito","email","todo","verbale","riassunto","diario"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio"],folders:["Idee","Lavoro","Personale","Diario"],
-    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
   creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
-    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["voice","Voce brand"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"],["voice","Voce"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
@@ -557,13 +608,57 @@ function applyMode(){
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
-const ICONS={note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l6 4V6l-6 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg>'};
+const ICONS={conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l6 4V6l-6 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg>'};
 $("creatorSw").onclick=()=>{const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;setMode(mode==="creator"?"note":"creator");show(v&&M().tabs.some(t=>t[0]===v)?v:"home")};
 
+/* Conti: entrate e uscite (salvate solo su questo dispositivo) */
+const MCATS={in:["Clienti","Stipendio","Vendite","Rimborsi","Altro"],out:["Casa","Spesa","Trasporti","Bollette","Lavoro e strumenti","Pubblicità","Tasse","Svago","Abbonamenti","Altro"]};
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+let mKind="out",mMonth=today().slice(0,7);
+const money=()=>store.get("money",[]),saveMoney=a=>store.set("money",a);
+const eur=v=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(v);
+const monthLbl=m=>new Date(m+"-15").toLocaleDateString("it-IT",{month:"long",year:"numeric"});
+const shiftM=(m,d)=>{const t=new Date(m+"-15");t.setMonth(t.getMonth()+d);return t.toISOString().slice(0,7)};
+const tot=(a,k)=>a.filter(x=>x.k===k).reduce((s,x)=>s+x.v,0);
+function mSetKind(k){mKind=k;document.querySelectorAll(".mKind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));$("mCat").innerHTML="";MCATS[k].forEach(c=>{const o=document.createElement("option");o.textContent=c;$("mCat").append(o)})}
+document.querySelectorAll(".mKind button").forEach(b=>b.onclick=()=>mSetKind(b.dataset.k));
+$("mPrev").onclick=()=>{mMonth=shiftM(mMonth,-1);renderMoney()};$("mNext").onclick=()=>{mMonth=shiftM(mMonth,1);renderMoney()};
+$("mAdd").onclick=()=>{const v=parseFloat(String($("mAmt").value).replace(",","."));if(!(v>0)){$("mStat").textContent="Scrivi un importo.";$("mAmt").focus();return}
+  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d});saveMoney(a);
+  $("mAmt").value="";$("mDesc").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta.";mMonth=d.slice(0,7);renderMoney()};
+function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate").value)$("mDate").value=today();
+  const all=money(),cur=all.filter(x=>x.d.slice(0,7)===mMonth),i=tot(cur,"in"),o=tot(cur,"out");
+  $("mMonthLbl").textContent=monthLbl(mMonth);$("mTotIn").textContent=eur(i);$("mTotOut").textContent=eur(o);$("mTotBal").textContent=eur(i-o);$("mTotBal").className=i-o<0?"mOut":"mIn";
+  // grafico 6 mesi
+  const ms=[...Array(6)].map((_,j)=>shiftM(mMonth,j-5)),data=ms.map(m=>{const a=all.filter(x=>x.d.slice(0,7)===m);return{m,i:tot(a,"in"),o:tot(a,"out")}});
+  const mx=Math.max(1,...data.flatMap(x=>[x.i,x.o])),W=360,H=170,base=H-24,gw=W/6,bw=gw*0.3;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entrate e uscite degli ultimi 6 mesi"><line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="var(--line)"/>`;
+  data.forEach((x,j)=>{const cx=gw*j+gw/2,hi=(x.i/mx)*(base-10),ho=(x.o/mx)*(base-10);
+    svg+=`<rect x="${cx-bw-1}" y="${base-hi}" width="${bw}" height="${hi}" rx="3" fill="var(--accent)"><title>Entrate ${monthLbl(x.m)}: ${eur(x.i)}</title></rect><rect x="${cx+1}" y="${base-ho}" width="${bw}" height="${ho}" rx="3" fill="var(--danger)"><title>Uscite ${monthLbl(x.m)}: ${eur(x.o)}</title></rect>`;
+    svg+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="12" fill="var(--muted)" font-weight="${x.m===mMonth?700:400}">${new Date(x.m+"-15").toLocaleDateString("it-IT",{month:"short"})}</text>`});
+  $("mChart").innerHTML=svg+"</svg>";
+  // categorie di uscita
+  const byC={};cur.filter(x=>x.k==="out").forEach(x=>byC[x.c]=(byC[x.c]||0)+x.v);const cs=Object.entries(byC).sort((a,b)=>b[1]-a[1]);
+  $("mCats").innerHTML="";if(!cs.length)$("mCats").innerHTML='<p class="status">Nessuna uscita in questo mese.</p>';
+  cs.forEach(([c,v])=>{const r=document.createElement("div");r.className="mCat";r.innerHTML='<span></span><div class="bar"></div><b></b>';r.children[0].textContent=c;r.children[1].style.width=Math.max(4,v/cs[0][1]*100)+"%";r.children[2].textContent=eur(v)+" · "+Math.round(v/o*100)+"%";$("mCats").append(r)});
+  // movimenti
+  const L=$("mMoves");L.innerHTML="";const rows=cur.slice().sort((a,b)=>b.d.localeCompare(a.d));
+  if(!rows.length)L.innerHTML='<p class="status">Nessun movimento in questo mese. Aggiungine uno qui sopra.</p>';
+  rows.forEach(x=>{const r=document.createElement("div");r.className="mRow";r.innerHTML='<div><b></b><small></small></div><span></span><button class="x">✕</button>';
+    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+x.c;
+    const sp=r.querySelector("span");sp.textContent=(x.k==="in"?"+":"−")+eur(x.v);sp.className=x.k==="in"?"mIn":"mOut";
+    const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
+$("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").textContent="Aggiungi prima qualche entrata o uscita.";return}
+  const ms=[...Array(3)].map((_,j)=>shiftM(mMonth,j-2));const sum=ms.map(m=>{const a=all.filter(x=>x.d.slice(0,7)===m),c={};a.filter(x=>x.k==="out").forEach(x=>c[x.c]=(c[x.c]||0)+x.v);
+    return `${monthLbl(m)}: entrate ${eur(tot(a,"in"))}, uscite ${eur(tot(a,"out"))}. Uscite per categoria: ${Object.entries(c).map(([k,v])=>k+" "+eur(v)).join(", ")||"nessuna"}. Movimenti: ${a.slice(0,60).map(x=>(x.k==="in"?"+":"-")+x.v+" "+x.c+(x.t?" ("+x.t+")":"")).join("; ")}`}).join("\n");
+  const b=$("mTipsGo");b.disabled=true;$("mTips").textContent="Sto leggendo i tuoi conti…";
+  try{const{text}=await sampleFn(`Sei un consulente di finanza personale e per piccole attività, pratico e gentile. Ecco i movimenti di una persona negli ultimi 3 mesi:\n${sum}\n\nDai 3-5 consigli concreti e brevi basati solo su questi numeri (dove si spende di più, cosa tagliare, come va il saldo, se le entrate sono costanti, quanto mettere da parte). Usa cifre in euro quando aiuta. Linguaggio semplice, niente gergo, niente consigli di investimento su prodotti specifici. Elenco puntato con "•", senza markdown, in italiano.`,{onText:({text})=>{$("mTips").textContent=text}});$("mTips").textContent=text}
+  catch(e){$("mTips").textContent=errMsg(e)}finally{b.disabled=false}};
+
 /* Viste */
-function show(v){["home","detail","merge","ask","voice"].forEach(x=>$("v-"+x).hidden=x!==v);
+function show(v){["home","detail","merge","ask","voice","conti"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
-  if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+  if(v==="conti")renderMoney();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
