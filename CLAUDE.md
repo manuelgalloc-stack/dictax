@@ -7,7 +7,8 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 - `functions/api/*.js`: Cloudflare Pages Functions. `transcribe.js` (Workers AI Whisper, `env.AI`), `ai.js` (Claude via `@anthropic-ai/sdk`, key in secret `ANTHROPIC_API_KEY`), `health.js`.
 - `lib/util.js`: shared helpers (JSON responses, optional `ACCESS_CODE` gate via `x-access-code` header).
 - `wrangler.toml`: Pages config (source of truth for bindings and vars; secrets live in the Cloudflare dashboard).
-- Data is in `localStorage` (prefix `dx1_main_`). Supabase auth and DB are planned next.
+- Data is in `localStorage` (prefix `dx1_main_`), synced to Supabase when signed in.
+- Supabase project `dictax` (ref `kzrxedaahwgltzrbuctl`, eu-west-1): email sign-in (magic link or 6-digit code, no password) via supabase-js UMD loaded on demand; table `public.user_data(user_id,key,value jsonb,updated_at)` with RLS own-rows. The `raw.set` hook marks `SYNC` keys dirty and pushes; pull merges `main_notes`/`main_money` by id (newer `up` wins, tombstones in `main_dels`), other keys last-write-wins. Account button `#accBtn` top right, view `#v-account`.
 
 ## Product rules
 - One app with a **Creator** switch: the base (Note) has the standard formats, styles and folders; turning Creator on adds social formats, extra styles, content folders and the brand-voice tab. Notes are shared (storage prefix `dx1_main_`).

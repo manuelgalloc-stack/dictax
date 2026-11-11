@@ -71,7 +71,7 @@ button:focus-visible,textarea:focus,input:focus,select:focus{outline:2px solid v
 /* Composer e controlli */
 .composer{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-textarea,input[type=text],input[type=search],input[type=number],input[type=date],select{width:100%;font:15px/1.5 var(--body);color:var(--fg);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 13px;resize:vertical}
+textarea,input[type=text],input[type=email],input[type=search],input[type=number],input[type=date],select{width:100%;font:15px/1.5 var(--body);color:var(--fg);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 13px;resize:vertical}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chip{border:1px solid var(--line);background:var(--paper);color:var(--fg);font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -171,7 +171,7 @@ body{font-size:16px}
 .lbl{font-size:12px}
 .tabs button{font-size:16px;padding:10px 0}
 .composer{padding:18px;gap:14px}
-textarea,input[type=text],input[type=search],input[type=number],input[type=date],select{font-size:16px}
+textarea,input[type=text],input[type=email],input[type=search],input[type=number],input[type=date],select{font-size:16px}
 .dock nav{gap:4px;padding:6px}
 .dock button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;padding:8px 16px;border-radius:18px;min-width:64px}
 .dock button svg{width:26px;height:26px}
@@ -256,6 +256,10 @@ body.noClients .cliOpt{display:none!important}
 .mRow>span{font-weight:700;white-space:nowrap}
 .mRow .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
 .mTips{white-space:pre-wrap;line-height:1.5;font-size:16px}
+.topR{display:flex;align-items:center;gap:8px}
+.accBtn{position:relative;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}
+.accBtn.on{border-color:var(--accent);color:var(--accent-strong)}
+.accBtn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -284,7 +288,7 @@ body.noClients .cliOpt{display:none!important}
 <div class="app">
   <div class="top">
     <div class="brand">Dict<span>ax</span></div>
-    <button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button>
+    <div class="topR"><button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button><button class="accBtn" id="accBtn" aria-label="Il tuo account" title="Il tuo account"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div>
   </div>
 
   <!-- CODICE DI ACCESSO -->
@@ -399,6 +403,29 @@ body.noClients .cliOpt{display:none!important}
       <label class="lbl" for="q">La tua domanda</label>
       <textarea id="q" rows="2"></textarea>
       <div class="row"><button class="btn ghost sm" id="qReset">Nuova chat</button><button class="btn" id="qGo">Chiedi</button></div>
+    </div>
+  </section>
+
+  <!-- ACCOUNT -->
+  <section id="v-account" class="app" style="gap:14px" hidden>
+    <button class="back" id="accBack">← Indietro</button>
+    <h1>Il tuo account</h1>
+    <div id="accOut" style="display:flex;flex-direction:column;gap:14px">
+      <p class="lead">Entra con la tua email: così ritrovi note, conti e voce di brand sia sul telefono sia sul computer. Niente password.</p>
+      <div class="composer">
+        <label class="lbl" for="accEmail">La tua email</label>
+        <input type="email" id="accEmail" autocomplete="email" inputmode="email" placeholder="nome@esempio.it">
+        <div class="row"><span class="status" id="accStat" aria-live="polite"></span><button class="btn" id="accSend">Mandami il link</button></div>
+        <div id="accCodeBox" hidden style="display:flex;flex-direction:column;gap:10px">
+          <p class="help">Apri l'email e tocca il link <b>da questo dispositivo</b>. Se nell'email c'è un codice di 6 cifre, puoi scriverlo qui.</p>
+          <div class="row tight"><input type="text" id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Codice"><button class="btn" id="accVerify">Entra</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="accIn" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><div class="head"><span class="fmt">Sei dentro come</span></div><b id="accMail" style="font-size:18px;overflow-wrap:anywhere"></b><p class="status" id="accSync"></p></div>
+      <div class="row"><button class="btn ghost" id="accLogout">Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
+      <p class="help">Uscendo, le note restano su questo dispositivo. Entrando con la stessa email su un altro telefono o computer, ritrovi tutto.</p>
     </div>
   </section>
 
@@ -624,7 +651,7 @@ function mSetKind(k){mKind=k;document.querySelectorAll(".mKind button").forEach(
 document.querySelectorAll(".mKind button").forEach(b=>b.onclick=()=>mSetKind(b.dataset.k));
 $("mPrev").onclick=()=>{mMonth=shiftM(mMonth,-1);renderMoney()};$("mNext").onclick=()=>{mMonth=shiftM(mMonth,1);renderMoney()};
 $("mAdd").onclick=()=>{const v=parseFloat(String($("mAmt").value).replace(",","."));if(!(v>0)){$("mStat").textContent="Scrivi un importo.";$("mAmt").focus();return}
-  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d});saveMoney(a);
+  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d});saveMoney(a);
   $("mAmt").value="";$("mDesc").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta.";mMonth=d.slice(0,7);renderMoney()};
 function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate").value)$("mDate").value=today();
   const all=money(),cur=all.filter(x=>x.d.slice(0,7)===mMonth),i=tot(cur,"in"),o=tot(cur,"out");
@@ -647,7 +674,7 @@ function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate
   rows.forEach(x=>{const r=document.createElement("div");r.className="mRow";r.innerHTML='<div><b></b><small></small></div><span></span><button class="x">✕</button>';
     r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+x.c;
     const sp=r.querySelector("span");sp.textContent=(x.k==="in"?"+":"−")+eur(x.v);sp.className=x.k==="in"?"mIn":"mOut";
-    const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
+    const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;addDel(x.id);saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
 $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").textContent="Aggiungi prima qualche entrata o uscita.";return}
   const ms=[...Array(3)].map((_,j)=>shiftM(mMonth,j-2));const sum=ms.map(m=>{const a=all.filter(x=>x.d.slice(0,7)===m),c={};a.filter(x=>x.k==="out").forEach(x=>c[x.c]=(c[x.c]||0)+x.v);
     return `${monthLbl(m)}: entrate ${eur(tot(a,"in"))}, uscite ${eur(tot(a,"out"))}. Uscite per categoria: ${Object.entries(c).map(([k,v])=>k+" "+eur(v)).join(", ")||"nessuna"}. Movimenti: ${a.slice(0,60).map(x=>(x.k==="in"?"+":"-")+x.v+" "+x.c+(x.t?" ("+x.t+")":"")).join("; ")}`}).join("\n");
@@ -655,8 +682,51 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
   try{const{text}=await sampleFn(`Sei un consulente di finanza personale e per piccole attività, pratico e gentile. Ecco i movimenti di una persona negli ultimi 3 mesi:\n${sum}\n\nDai 3-5 consigli concreti e brevi basati solo su questi numeri (dove si spende di più, cosa tagliare, come va il saldo, se le entrate sono costanti, quanto mettere da parte). Usa cifre in euro quando aiuta. Linguaggio semplice, niente gergo, niente consigli di investimento su prodotti specifici. Elenco puntato con "•", senza markdown, in italiano.`,{onText:({text})=>{$("mTips").textContent=text}});$("mTips").textContent=text}
   catch(e){$("mTips").textContent=errMsg(e)}finally{b.disabled=false}};
 
+/* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
+const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
+const SYNC=new Set(["main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
+raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
+function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
+function syncMsg(m){const e=$("accSync");if(e)e.textContent=m}
+function loadSb(){if(sb)return Promise.resolve(sb);return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=SB_LIB;sc.onload=()=>{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
+  sb.auth.onAuthStateChange((ev,ses)=>{const was=user?.id;user=ses?.user||null;renderAccount();if(user&&user.id!==was)syncAll()});ok(sb)};sc.onerror=()=>ko(new Error("offline"));document.head.append(sc)})}
+async function syncPush(){if(!user)return;const t=raw.get("syncT",{}),done=raw.get("syncDone",{}),rows=[];
+  for(const k of SYNC){if((t[k]||0)>(done[k]||0)){const v=raw.get(k,undefined);if(v!==undefined)rows.push({user_id:user.id,key:k,value:v,updated_at:new Date(t[k]).toISOString()})}}
+  if(!rows.length){syncMsg("Tutto sincronizzato ✓");return}
+  const{error}=await sb.from("user_data").upsert(rows);if(error){syncMsg("Non riesco a salvare online: riprovo più tardi.");return}
+  rows.forEach(r=>done[r.key]=t[r.key]);rawSet("syncDone",done);syncMsg("Sincronizzato ✓ alle "+new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}))}
+async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_data").select("key,value,updated_at");if(error){syncMsg("Non riesco a leggere i dati online.");return}
+  lastPull=Date.now();if(raw.get("syncUser","")!==user.id){rawSet("syncUser",user.id);rawSet("syncDone",{})}let changed=false;const t=raw.get("syncT",{}),done=raw.get("syncDone",{});const remote=Object.fromEntries(data.map(r=>[r.key,r]));
+  const dels=new Set([...raw.get("main_dels",[]),...(remote.main_dels?.value||[])]);const dl=[...dels].slice(-3000);
+  if(JSON.stringify(dl)!==JSON.stringify(raw.get("main_dels",[])))raw.set("main_dels",dl);
+  for(const k of LISTS){const loc=raw.get(k,[]),rem=remote[k]?.value||[],m=new Map();for(const x of [...rem,...loc]){if(!x||!x.id)continue;const o=m.get(x.id);if(!o||(x.up||x.at||0)>=(o.up||o.at||0))m.set(x.id,x)}
+    let arr=[...m.values()].filter(x=>!dels.has(x.id));if(k==="main_notes")arr.sort((a,b)=>(b.at||0)-(a.at||0));
+    if(JSON.stringify(arr)!==JSON.stringify(loc)){raw.set(k,arr);changed=true;t[k]=raw.get("syncT",{})[k]}else if(JSON.stringify(arr)!==JSON.stringify(rem)||!remote[k]&&arr.length){t[k]=Date.now()}}
+  for(const k of SYNC){if(LISTS.includes(k))continue;if(k==="main_dels"){t[k]=raw.get("syncT",{})[k]||t[k];if(!remote[k]&&dl.length)t[k]=t[k]||Date.now();continue}
+    if(!remote[k]){if(raw.get(k,undefined)!==undefined&&!t[k])t[k]=Date.now();continue}const rt=Date.parse(remote[k].updated_at);if(rt>(t[k]||0)){rawSet(k,remote[k].value);t[k]=rt;done[k]=rt;changed=true}}
+  rawSet("syncT",t);rawSet("syncDone",done);
+  if(changed){loadMode();applyMode();if(!$("v-conti").hidden)renderMoney()}}
+async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
+function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||""}
+$("accBtn").onclick=async()=>{show("account");renderAccount();try{await loadSb()}catch{$("accStat").textContent="Serve la connessione a internet."}};
+$("accBack").onclick=()=>show("home");
+$("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(email)){$("accStat").textContent="Scrivi un'email valida.";$("accEmail").focus();return}
+  const b=$("accSend");b.disabled=true;$("accStat").textContent="Invio in corso…";
+  try{await loadSb();const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+"/",shouldCreateUser:true}});
+    if(error){$("accStat").textContent=/rate|limit|seconds/i.test(error.message)?"Troppe email in poco tempo: aspetta qualche minuto e riprova.":"Non sono riuscito a mandare l'email: "+error.message;return}
+    raw.set("accEmail",email);$("accStat").textContent="Email inviata a "+email+".";$("accCodeBox").hidden=false;b.textContent="Rimanda"}
+  catch{$("accStat").textContent="Serve la connessione a internet."}finally{b.disabled=false}};
+$("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""),email=$("accEmail").value.trim();if(token.length<6){$("accStat").textContent="Il codice ha 6 cifre.";return}
+  const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: fatti mandare una nuova email.":"Fatto!";if(!error)show("account")};
+$("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount()};
+$("accSyncNow").onclick=()=>syncAll();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&user&&Date.now()-lastPull>30000)syncAll()});
+$("accEmail").value=raw.get("accEmail","");
+if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash))loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account")}).catch(()=>{});
+
 /* Viste */
-function show(v){["home","detail","merge","ask","voice","conti"].forEach(x=>$("v-"+x).hidden=x!==v);
+function show(v){["home","detail","merge","ask","voice","conti","account"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
   if(v==="conti")renderMoney();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
@@ -770,7 +840,7 @@ function renderList(){const L=$("list");L.innerHTML="";
   if(!ns.length){L.innerHTML=`<div class="empty">${query?"Nessuna nota trovata.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`;return}
   ns.forEach(n=>{const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=()=>openNote(n);L.append(b)})}
 
-function saveNote(n){
+function saveNote(n){n.up=Date.now();
   if(n.ex){exEdits[n.id]={tasks:n.tasks,type:n.type,client:n.client,tags:n.tags,out:n.out,tr:n.tr,fid:n.fid};store.set("exedits",exEdits)}
   else{const ns=store.get("notes",[]);const i=ns.findIndex(x=>x.id===n.id);i<0?ns.unshift(n):ns[i]=n;store.set("notes",ns.slice(0,200))}
   renderTabs();renderList()}
@@ -850,7 +920,7 @@ $("mdSave").onclick=()=>{const name=(cur.title.replace(/[\\/:*?"<>|]/g,"").slice
   $("dStatus").textContent="File scaricato: mettilo nella cartella del tuo vault Obsidian."};
 $("del").onclick=()=>{if($("del").textContent==="Elimina"){$("del").textContent="Conferma eliminazione";return}
   if(cur.ex){exEdits[cur.id]={...(exEdits[cur.id]||{}),deleted:true};store.set("exedits",exEdits)}
-  else store.set("notes",store.get("notes",[]).filter(x=>x.id!==cur.id));
+  else{addDel(cur.id);store.set("notes",store.get("notes",[]).filter(x=>x.id!==cur.id))}
   renderList();show("home")};
 
 /* Prompt comuni */
