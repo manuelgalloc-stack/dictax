@@ -394,7 +394,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <input type="text" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
     <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
-      <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>Attività</b><small>Lista di cose da fare, da spuntare</small></button>
+      <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>To-do list</b><small>Lista di cose da fare, da spuntare</small></button>
       <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
     </div>
     <div id="levelStep" hidden>
@@ -418,7 +418,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 const FORMATS={
   pulito:{n:"Testo pulito",p:"il pensiero riscritto in modo chiaro e scorrevole, senza ripetizioni"},
   email:{n:"Email",p:"email con riga 'Oggetto: ...', saluto, corpo chiaro e firma"},
-  todo:{n:"Attività",p:"elenco puntato delle azioni concrete e delle scadenze emerse dalla nota"},
+  todo:{n:"To-do list",p:"elenco puntato delle azioni concrete e delle scadenze emerse dalla nota"},
   verbale:{n:"Verbale riunione",p:"verbale con sezioni 'Decisioni', 'Chi fa cosa' e 'Scadenze', in elenchi puntati"},
   riassunto:{n:"Riassunto",p:"riassunto breve seguito da 'Punti chiave' (elenco puntato) e 'Prossime azioni' (elenco puntato)"},
   diario:{n:"Pagina di diario",p:"pagina di diario in prima persona, riflessiva e ordinata"},
@@ -485,12 +485,12 @@ if(!raw.get("main_merged",false)){const byId=new Map();["note","creator"].forEac
   const fo=[...new Set([...raw.get("note_folders",[]),...raw.get("creator_folders",[])])];if(fo.length)raw.set("main_folders",fo);
   raw.set("main_merged",true)}
 const M=()=>MODES[mode];
-const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},attivita:{n:"Attività",f:["todo"],color:"var(--t-attivita)"},contenuto:{n:"Contenuto",f:[],color:"var(--t-contenuto)"}};
+const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},attivita:{n:"To-do list",f:["todo"],color:"var(--t-attivita)"},contenuto:{n:"Contenuto",f:[],color:"var(--t-contenuto)"}};
 const SOCIAL=MODES.creator.formats.filter(k=>!MODES.note.formats.includes(k));
 const ML="__ml";const baseK=k=>k.endsWith(ML)?k.slice(0,-ML.length):k;
 const fmtName=k=>(FORMATS[baseK(k)]?.n||k)+(k.endsWith(ML)?" · voce ManuLab":"");
 const KW_FORMATS=["linkedin","instagram","carosello","reel","tiktok"];
-const kwRule=k=>KW_FORMATS.includes(baseK(k))?"\nIn fondo, dopo una riga vuota, aggiungi una riga con 5-8 parole chiave di ricerca pertinenti al contenuto (senza #), separate da \" | \", per esempio: lavoro da remoto | produttività | smart working | organizzazione del tempo":"";
+const kwRule=k=>KW_FORMATS.includes(baseK(k))?(/hashtag/.test(FORMATS[baseK(k)].p)?"":"\nIn fondo aggiungi una riga con 3-5 hashtag pertinenti.")+"\nPoi, ancora più in fondo, dopo una riga vuota, aggiungi una riga con 5-8 parole chiave di ricerca pertinenti al contenuto (senza #), separate da \" | \", per esempio: lavoro da remoto | produttività | smart working | organizzazione del tempo":"";
 const CREATOR_PRO=true; // gratis per ora: in futuro sarà attivo solo per chi paga Creator Pro
 const MANULAB_VOICE=`Riscrivi con la voce ManuLab: una persona competente che parla a un cliente reale. Diretta, umana, specifica, persuasiva senza sembrare costruita da un copywriter.
 Regole:
@@ -649,7 +649,7 @@ const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" s
 
 /* Cartelle, ricerca, lista */
 function renderTabs(){const T=$("tabs");T.innerHTML="";
-  const opts=[["tutte","Tutte",""],["nota","Note",TYPES.nota.color],["attivita","Attività",TYPES.attivita.color]];if(mode==="creator")opts.push(["contenuto","Contenuti",TYPES.contenuto.color]);
+  const opts=[["tutte","Tutte",""],["nota","Note",TYPES.nota.color],["attivita","To-do",TYPES.attivita.color]];if(mode==="creator")opts.push(["contenuto","Contenuti",TYPES.contenuto.color]);
   if(!opts.some(o=>o[0]===tfilter))tfilter="tutte";
   opts.forEach(([v,t,c])=>{const b=document.createElement("button");b.setAttribute("aria-pressed",v===tfilter);if(c){const d=document.createElement("span");d.className="dot";d.style.background=c;b.append(d)}b.append(t);b.onclick=()=>{tfilter=v;renderTabs();renderList()};T.append(b)});
   const cl=clients(),S=$("clientFilter");S.innerHTML="";[["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
