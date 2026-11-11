@@ -231,6 +231,20 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .typeTabs .dot{width:11px;height:11px;border-radius:50%;flex:none}
 .typeTabs button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
 #clientFilter{flex:1;min-width:170px;width:auto}
+
+/* Versione desktop: registratore a sinistra, note a destra */
+.homeLeft,.homeRight{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (min-width:980px){
+  .app{max-width:1200px}
+  section.app:not(#v-home){max-width:760px;margin-inline:auto}
+  #v-home{display:grid;grid-template-columns:minmax(360px,420px) minmax(0,1fr);gap:36px;align-items:start}
+  .homeLeft{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
+  .homeRight .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;align-items:start}
+  .homeRight .empty{grid-column:1/-1}
+  .sheetWrap{align-items:center}
+  .sheet{border-radius:26px;max-width:520px;padding-bottom:22px}
+  body{padding-bottom:120px}
+}
 </style>
 </head>
 <body>
@@ -251,6 +265,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 
   <!-- HOME -->
   <section id="v-home" class="app" style="gap:18px" hidden>
+    <div class="homeLeft">
     <div class="deck">
       <div class="timer" id="timer">00:00</div>
       <div class="wave" id="wave" aria-hidden="true"></div>
@@ -293,12 +308,15 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
       </details>
     </div>
 
+    </div>
+    <div class="homeRight">
     <div class="filters">
       <div class="typeTabs" id="tabs" role="toolbar" aria-label="Tipo di nota"></div>
       <select id="clientFilter" aria-label="Filtra per cliente"></select>
     </div>
     <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
     <div class="list" id="list"></div>
+    </div>
   </section>
 
   <!-- DETTAGLIO -->
