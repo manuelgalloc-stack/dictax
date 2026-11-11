@@ -225,6 +225,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
 .todo span{flex:1;font-size:17px;line-height:1.4;overflow-wrap:anywhere}
 .todo.done span{text-decoration:line-through;color:var(--muted)}
 .todo .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
+body.noClients .cliOpt{display:none!important}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -286,6 +287,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
         <summary>Altre opzioni <span id="styleSum"></span></summary>
         <div class="body">
           <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
+          <label class="toggle"><input type="checkbox" id="useClients"> Usa i clienti (etichetta e filtro per cliente)</label>
           <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
 
           <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
@@ -312,7 +314,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <div class="homeRight">
     <div class="filters">
       <div class="typeTabs" id="tabs" role="toolbar" aria-label="Tipo di nota"></div>
-      <select id="clientFilter" aria-label="Filtra per cliente"></select>
+      <select id="clientFilter" class="cliOpt" aria-label="Filtra per cliente"></select>
     </div>
     <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
     <div class="list" id="list"></div>
@@ -325,7 +327,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
     <div class="note" style="cursor:default" id="dHead"></div>
     <div class="organize" id="dOrg">
       <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
-      <div><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
+      <div class="cliOpt"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
     </div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
@@ -348,7 +350,7 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
   <section id="v-merge" class="app" style="gap:14px" hidden>
     <h1>Super nota <span class="pro planBadge"></span></h1>
     <p class="lead" id="mLead"></p>
-    <div class="row tight"><label class="lbl" for="mClient" style="flex:none">Note di</label><select id="mClient" style="flex:1;min-width:0"></select></div>
+    <div class="row tight cliOpt"><label class="lbl" for="mClient" style="flex:none">Note di</label><select id="mClient" style="flex:1;min-width:0"></select></div>
     <div class="list" id="mList"></div>
     <div class="composer">
       <label class="lbl" for="mHow">Istruzioni (facoltative)</label>
@@ -390,8 +392,8 @@ textarea,input[type=text],input[type=search],select{font-size:16px}
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h2 id="sheetTitle">Che cos'è?</h2>
     <p class="preview" id="sheetPreview"></p>
-    <label class="lbl" for="sClient">Cliente (facoltativo)</label>
-    <input type="text" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
+    <label class="lbl cliOpt" for="sClient">Cliente (facoltativo)</label>
+    <input type="text" class="cliOpt" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
     <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
       <button class="typeBtn t-attivita" data-t="attivita"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><b>To-do list</b><small>Lista di cose da fare, da spuntare</small></button>
@@ -507,7 +509,7 @@ Da evitare: tono da guru o motivatore, clickbait, aggettivi vuoti (rivoluzionari
 - Scrivi per la nicchia precisa del cliente/brand: usa i problemi, le situazioni, il linguaggio e gli esempi tipici del suo settore e del suo pubblico, non frasi valide per chiunque. Se la nicchia non è indicata, ricavala dalla nota.
 Controllo finale: se un concorrente potesse pubblicarlo cambiando solo il nome, rendilo più specifico.`;
 function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
-let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7);
+let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7),useClients=raw.get("useClients",true);document.body.classList.toggle("noClients",!useClients);
 const clients=()=>[...new Set(allNotes().map(n=>(n.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
@@ -663,7 +665,7 @@ function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric"
 function noteCard(n,el){
   el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
   const days=Math.max(0,Math.floor((Date.now()-n.at)/864e5));const dEl=el.querySelector(".d");dEl.textContent=fmtDate(n.at)+" · "+(days===0?"oggi":days===1?"ieri":days+" giorni fa")+(n.ex?" · esempio":"");if(days>oldDays){dEl.classList.add("old");dEl.title="Aggiunta più di "+oldDays+" giorni fa"}el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
-  if(n.client){const c=document.createElement("span");c.className="pill client";c.textContent=n.client;el.querySelector(".pills").append(c)}
+  if(n.client){const c=document.createElement("span");c.className="pill client cliOpt";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;if(typeOf(n)==="attivita"){const ts=ensureTasks(n),dn=ts.filter(x=>x.done).length,next=ts.find(x=>!x.done);el.querySelector("p").textContent=ts.length?(dn===ts.length?`✓ Tutte fatte (${ts.length})`:`☐ ${dn} su ${ts.length} fatte · prossima: ${next.t}`):"Nessuna attività";}else el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
 }
@@ -794,7 +796,7 @@ document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pending
   st.level=b.dataset.l;saveStyle();createNote(t,f)});
 $("go").onclick=openSheet;
 async function createNote(type,formats){
-  const tr=$("transcript").value.trim();const client=$("sClient").value.trim();closeSheet();
+  const tr=$("transcript").value.trim();const client=useClients?$("sClient").value.trim():"";closeSheet();
   if(!tr)return;
   $("go").disabled=true;const jobs=[];
   const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},type,client,title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
@@ -868,6 +870,7 @@ $("analyze").onclick=async()=>{
 };
 
 /* Avvio */
+$("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);document.body.classList.toggle("noClients",!useClients);if(!useClients)cfilter="";renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
 loadMode();applyMode();show("home");
 fetch("/api/health").then(r=>r.json()).then(h=>{
