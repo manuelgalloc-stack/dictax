@@ -14,7 +14,7 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 - Keep the UI simple and large (big buttons and icons); advanced settings live under "Altre opzioni".
 - Desktop (>=980px): two columns, recorder/composer on the left (sticky, `.homeLeft`), notes in a card grid on the right (`.homeRight`). Phone layout unchanged.
 - Creation flow: record (or type) -> the "Che cos'è?" sheet asks the type: **Nota** (green, clean text), **To-do list** (internally `attivita`, blue, a real checklist: `n.tasks=[{t,done}]`, tick/add/delete; skips the level step), **Contenuto** (purple, social formats; Creator only). Second step "Come la scrivo?": **Semplice / Media / Elaborata** (rewrite level, remembered). Optional **Cliente** per note; the home list filters by type and by client (dropdown). No folders.
-- **Creator Pro** (free for now, flag `CREATOR_PRO`): on content notes, "Riscrivi con la voce ManuLab" creates a `<format>__ml` version using the `MANULAB_VOICE` rules.
+- **Creator Pro** (free for now, flag `CREATOR_PRO`): every social content (captions, scripts, carousels, ganci...) is written with the `MANULAB_VOICE` rules (Triplo Gancio method) by default, via `useML(k)`. The old "Riscrivi con la voce ManuLab" button is hidden (`if(false&&...)`); re-enable it if the voice becomes a paid extra.
 - Each note shows its date and age ("3 giorni fa"); it turns red after N days (setting in "Altre opzioni", default 7).
 - "Pro" features are free for now but marked with the `.planBadge` label so they can be gated later.
 - Brand: white background, green accent `#1e9a55`, fonts Young Serif / Figtree / JetBrains Mono.
