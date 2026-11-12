@@ -287,6 +287,9 @@ body.noClients .cliOpt{display:none!important}
 .cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
 .cliCard div{flex:1;min-width:0}.cliCard b{display:block;font-size:17px}.cliCard small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
 .posOut{white-space:pre-wrap;line-height:1.5;font-size:15px;min-height:180px}
+.ideaCard{display:flex;flex-direction:column;gap:6px}
+.ideaCard .ph{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t-contenuto)}
+.ideaCard b{font-size:16px}.ideaCard small{color:var(--muted);font-size:14px;line-height:1.4}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -512,6 +515,11 @@ body.noClients .cliOpt{display:none!important}
         <label class="lbl" for="cPos">Posizionamento (puoi modificarlo)</label>
         <textarea id="cPos" class="posOut" rows="12" placeholder="Premi il pulsante qui sopra: il posizionamento comparirà qui."></textarea>
         <div class="row"><button class="btn danger sm" id="cDel">Elimina</button><span class="status" id="cStat" aria-live="polite"></span><button class="btn" id="cSave">Salva cliente</button></div>
+        <div id="cIdeasBox" hidden style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+          <span class="lbl">Idee dal posizionamento</span>
+          <div id="cIdeas" class="list" style="gap:10px"></div>
+          <button class="btn ghost" id="cIdeasGo">💡 Trova le idee</button>
+        </div>
       </div>
     </div>
     <h1 style="margin-top:10px">Voce di brand <span class="pro planBadge"></span></h1>
@@ -820,12 +828,12 @@ function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
     c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
 $("cliNew").onclick=()=>editClient(null);
 const cliForm=()=>({niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
 function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return false}
   const P=cliProfiles();if(cliCur&&cliCur!==nm){delete P[cliCur];store.get("notes",[]).forEach(n=>{if(n.client===cliCur){n.client=nm;saveNote(n)}})}
-  P[nm]=cliForm();store.set("clients",P);cliCur=nm;renderClients();renderList();return true}
+  P[nm]={...cliForm(),ideas:(P[nm]||{}).ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
 $("cSave").onclick=()=>{if(saveClient())$("cStat").textContent="Cliente salvato ✓"};
 $("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
@@ -853,6 +861,21 @@ IDEE PER IL FUNNEL (2 idee TOFU di crescita: errore comune, storytelling, tutori
 Non inventare numeri, recensioni, premi o risultati.`;
   try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false}};
+
+const IDEA_FMT=f=>{f=String(f||"").toLowerCase();return f.includes("reel")||f.includes("video")?"reel":f.includes("carosel")?"carosello":f.includes("tiktok")?"tiktok":f.includes("linkedin")?"linkedin":f.includes("newsletter")||f.includes("email")?"newsletter":"instagram"};
+function renderIdeas(p){const box=$("cIdeasBox"),L=$("cIdeas");box.hidden=!p.pos;L.innerHTML="";const ids=p.ideas||[];$("cIdeasGo").textContent=ids.length?"↻ Trova altre idee":"💡 Trova le idee";
+  ids.forEach(x=>{const c=document.createElement("article");c.className="card ideaCard";c.innerHTML='<span class="ph"></span><b></b><small></small><button class="btn sm" style="align-self:flex-start">Crea il contenuto</button>';
+    c.querySelector(".ph").textContent=[x.fase,FORMATS[IDEA_FMT(x.formato)].n].filter(Boolean).join(" · ");c.querySelector("b").textContent=x.titolo;c.querySelector("small").textContent=x.gancio?"Gancio: "+x.gancio:"";
+    c.querySelector("button").onclick=()=>ideaToContent(x);L.append(c)})}
+$("cIdeasGo").onclick=async()=>{const nm=$("cName").value.trim(),pos=$("cPos").value.trim();if(!nm||!pos)return;const b=$("cIdeasGo");b.disabled=true;b.textContent="Sto cercando le idee…";
+  try{const old=(cliProfiles()[nm]?.ideas||[]).map(x=>x.titolo).join("; ");
+    const r=await sampleFn.json(`Dal posizionamento di questo cliente (${nm}) ricava 6 idee di contenuto social concrete e specifiche per la sua nicchia: 2 TOFU (crescita), 2 MOFU (fidelizzazione), 2 BOFU (vendita). Se il posizionamento contiene già delle idee, usale e migliorale.${old?" Non ripetere queste idee già usate: "+old+".":""} Ogni idea deve incuriosire e superare la regola north-star. Rispondi solo con JSON {"idee":[{"fase":"TOFU|MOFU|BOFU","formato":"Reel|Carosello|Post|Storia|TikTok","titolo":"...","gancio":"prima frase del contenuto","angolo":"perché funziona per questo pubblico, in una frase"}]}.\n\nPOSIZIONAMENTO:\n${pos.slice(0,6000)}`);
+    const ids=(Array.isArray(r?.idee)?r.idee:[]).filter(x=>x&&x.titolo).slice(0,8);if(!ids.length)throw{code:"invalid_json"};
+    if(!saveClient())return;const P=cliProfiles();P[nm].ideas=ids;store.set("clients",P);renderIdeas(P[nm]);$("cStat").textContent="Idee pronte ✓"}
+  catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false;if(b.textContent.startsWith("Sto"))b.textContent="💡 Trova le idee"}};
+async function ideaToContent(x){const nm=$("cName").value.trim();
+  $("transcript").value=`Idea di contenuto ${x.fase||""} per ${nm}: ${x.titolo}.\nGancio da cui partire: ${x.gancio||""}\nAngolo: ${x.angolo||""}`;$("sClient").value=nm;
+  await createNote("contenuto",[IDEA_FMT(x.formato)]);if(cur){cur.st="lavoro";saveNote(cur);renderHead()}}
 
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
