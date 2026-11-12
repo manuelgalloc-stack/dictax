@@ -723,7 +723,7 @@ $("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccoun
 $("accSyncNow").onclick=()=>syncAll();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&user&&Date.now()-lastPull>30000)syncAll()});
 $("accEmail").value=raw.get("accEmail","");
-if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash))loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account")}).catch(()=>{});
+if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
 
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account"].forEach(x=>$("v-"+x).hidden=x!==v);
