@@ -260,6 +260,33 @@ body.noClients .cliOpt{display:none!important}
 .accBtn{position:relative;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}
 .accBtn.on{border-color:var(--accent);color:var(--accent-strong)}
 .accBtn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+.stBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stBtns button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 6px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:var(--fg)}
+.stBtns button[aria-pressed=true][data-s=idea]{border-color:var(--muted);background:var(--paper)}
+.stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
+.stBtns button[aria-pressed=true][data-s=fatto]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
+.pill.st-lavoro{background:#fff4d6;color:#7a5600}
+.pill.st-fatto{background:var(--accent-soft);color:var(--accent-strong)}
+.pill.st-idea{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.calBtn{display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--t-contenuto);color:var(--t-contenuto);background:var(--surface);border-radius:16px;padding:12px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .wd{font-size:12px;color:var(--muted);text-align:center;font-weight:700;padding:2px 0}
+.cal button{min-width:0;aspect-ratio:1/1;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font:inherit;color:var(--fg)}
+.cal button.out{opacity:.35}
+.cal button.today{border-color:var(--accent);border-width:2px}
+.cal button[aria-pressed=true]{background:var(--deck);color:var(--deck-fg)}
+.cal button b{font-size:14px;font-weight:700}
+.cal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
+.cal .dots i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
+.calSum{display:flex;gap:14px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.calSum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.calItem{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.calItem:last-child{border-bottom:0}
+.calItem div{flex:1;min-width:0}.calItem b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}.calItem small{color:var(--muted);font-size:13px}
+.cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
+.cliCard div{flex:1;min-width:0}.cliCard b{display:block;font-size:17px}.cliCard small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.posOut{white-space:pre-wrap;line-height:1.5;font-size:15px;min-height:180px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -346,6 +373,7 @@ body.noClients .cliOpt{display:none!important}
 
     </div>
     <div class="homeRight">
+    <button class="calBtn" id="calOpen" hidden>📅 Calendario contenuti</button>
     <div class="filters">
       <div class="typeTabs" id="tabs" role="toolbar" aria-label="Tipo di nota"></div>
       <select id="clientFilter" class="cliOpt" aria-label="Filtra per cliente"></select>
@@ -362,6 +390,11 @@ body.noClients .cliOpt{display:none!important}
     <div class="organize" id="dOrg">
       <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
       <div class="cliOpt"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
+    </div>
+    <div id="dStBox" hidden style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Stato del contenuto</span>
+      <div class="stBtns"><button data-s="idea">💡 Idea</button><button data-s="lavoro">✎ In creazione</button><button data-s="fatto">✓ Fatto</button></div>
+      <div class="row tight"><label class="lbl" for="dPub" style="flex:none">Data di pubblicazione</label><input type="date" id="dPub" style="flex:1;min-width:0"></div>
     </div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
@@ -404,6 +437,17 @@ body.noClients .cliOpt{display:none!important}
       <textarea id="q" rows="2"></textarea>
       <div class="row"><button class="btn ghost sm" id="qReset">Nuova chat</button><button class="btn" id="qGo">Chiedi</button></div>
     </div>
+  </section>
+
+  <!-- CALENDARIO CONTENUTI -->
+  <section id="v-cal" class="app" style="gap:14px" hidden>
+    <button class="back" id="calBack">← Tutte le note</button>
+    <h1>Calendario contenuti</h1>
+    <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
+    <div class="calSum" id="calSum"></div>
+    <div class="cal" id="calGrid"></div>
+    <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><div id="calList"></div></div>
+    <div class="card" id="calNoDateBox"><div class="head"><span class="fmt">In creazione, senza data</span></div><div id="calNoDate"></div></div>
   </section>
 
   <!-- ACCOUNT -->
@@ -452,7 +496,25 @@ body.noClients .cliOpt{display:none!important}
 
   <!-- VOCE (solo Creator) -->
   <section id="v-voice" class="app" style="gap:14px" hidden>
-    <h1>Voce di brand <span class="pro planBadge"></span></h1>
+    <div class="cliOpt" style="display:flex;flex-direction:column;gap:14px">
+      <h1>Clienti</h1>
+      <p class="lead">Per ogni cliente crea il posizionamento con il sistema ManuLab: Dictax lo usa per scrivere contenuti su misura per la sua nicchia.</p>
+      <div class="list" id="cliList"></div>
+      <button class="btn ghost" id="cliNew">+ Nuovo cliente</button>
+      <div class="composer" id="cliEdit" hidden>
+        <label class="lbl" for="cName">Nome del cliente</label><input type="text" id="cName" placeholder="Es. Ristorante sul Lago">
+        <label class="lbl" for="cNiche">Settore e nicchia</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione">
+        <label class="lbl" for="cTarget">A chi si rivolge</label><input type="text" id="cTarget" placeholder="Es. coppie 30-55 della zona, turisti nel weekend">
+        <label class="lbl" for="cOffer">Cosa vende o offre</label><input type="text" id="cOffer" placeholder="Es. cene, pranzi della domenica, eventi privati">
+        <label class="lbl" for="cZone">Zona (facoltativa)</label><input type="text" id="cZone" placeholder="Es. Agrigento">
+        <label class="lbl" for="cAvoid">Da evitare (facoltativo)</label><input type="text" id="cAvoid" placeholder="Parole, temi o toni da non usare">
+        <button class="btn" id="cGen">✨ Genera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
+        <label class="lbl" for="cPos">Posizionamento (puoi modificarlo)</label>
+        <textarea id="cPos" class="posOut" rows="12" placeholder="Premi il pulsante qui sopra: il posizionamento comparirà qui."></textarea>
+        <div class="row"><button class="btn danger sm" id="cDel">Elimina</button><span class="status" id="cStat" aria-live="polite"></span><button class="btn" id="cSave">Salva cliente</button></div>
+      </div>
+    </div>
+    <h1 style="margin-top:10px">Voce di brand <span class="pro planBadge"></span></h1>
     <p class="lead">Incolla 2 o 3 testi scritti da te o dal tuo cliente. Dictax ricava lo stile e lo usa ogni volta che trasformi una nota.</p>
     <div class="composer">
       <label class="lbl" for="brandName">Nome del profilo</label>
@@ -527,7 +589,7 @@ const MODES={
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
   creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
-    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"],["voice","Voce"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"],["voice","Clienti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
@@ -588,7 +650,7 @@ Da evitare: tono da guru o motivatore, clickbait, aggettivi vuoti (rivoluzionari
 Controllo finale: se un concorrente potesse pubblicarlo cambiando solo il nome, rendilo più specifico.`;
 function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
 let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7),useClients=raw.get("useClients",true);document.body.classList.toggle("noClients",!useClients);
-const clients=()=>[...new Set(allNotes().map(n=>(n.client||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
+const clients=()=>[...new Set([...allNotes().map(n=>(n.client||"").trim()),...Object.keys(store.get("clients",{}))].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
 function loadMode(){
@@ -628,14 +690,14 @@ $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
 /* Profili */
 function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
-  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");
+  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");$("calOpen").hidden=mode!=="creator";
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
-const ICONS={conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4h3l6 4V6l-6 4z"/><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11"/></svg>'};
+const ICONS={conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.9 2.6 2.7 3 5.2"/></svg>'};
 $("creatorSw").onclick=()=>{const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;setMode(mode==="creator"?"note":"creator");show(v&&M().tabs.some(t=>t[0]===v)?v:"home")};
 
 /* Conti: entrate e uscite (salvate solo su questo dispositivo) */
@@ -684,7 +746,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
@@ -725,10 +787,77 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 $("accEmail").value=raw.get("accEmail","");
 if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
 
+/* Stato contenuti e calendario */
+const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto"};
+let calM=today().slice(0,7),calDay="";
+$("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
+$("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
+const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
+function calRow(n){const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
+  r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
+  const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
+function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM);
+  const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
+  $("calSum").innerHTML=`<span><i style="background:var(--accent)"></i>Fatti: ${cnt("fatto")}</span><span><i style="background:#e0a100"></i>In creazione: ${cnt("lavoro")}</span><span><i style="background:var(--muted)"></i>Idee: ${cnt("idea")}</span>`;
+  const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
+  const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
+    const b=document.createElement("button");b.innerHTML="<b></b><span class='dots'></span>";b.querySelector("b").textContent=d.getDate();if(ds.slice(0,7)!==calM)b.classList.add("out");if(ds===td)b.classList.add("today");b.setAttribute("aria-pressed",ds===calDay);
+    const items=all.filter(n=>n.pub===ds);items.slice(0,4).forEach(n=>{const x=document.createElement("i");x.className=n.st||"idea";b.querySelector(".dots").append(x)});b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+items.length+" contenuti");
+    b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
+  const L=$("calList");L.innerHTML="";const list=(calDay?all.filter(n=>n.pub===calDay):inM).slice().sort((a,b)=>a.pub.localeCompare(b.pub));
+  $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
+  if(!list.length)L.innerHTML='<p class="status">Nessun contenuto con questa data. Apri un contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
+  const nd=all.filter(n=>!n.pub&&n.st==="lavoro");$("calNoDateBox").hidden=!nd.length;$("calNoDate").innerHTML="";nd.forEach(n=>$("calNoDate").append(calRow(n)))}
+
+/* Clienti e posizionamento (sistema ManuLab) */
+let cliCur=null;
+const cliProfiles=()=>store.get("clients",{});
+function clientCtx(cl){const p=cliProfiles()[cl];let t=`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
+  if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;
+  if(p.pos)t+=`\nPosizionamento del cliente (sistema ManuLab): rispetta i temi, la regola north-star, il tono e le parole da usare o evitare.\n${p.pos.slice(0,5000)}`;return t}
+function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles(),names=clients();
+  if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
+  names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
+    c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
+function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+$("cliNew").onclick=()=>editClient(null);
+const cliForm=()=>({niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
+function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return false}
+  const P=cliProfiles();if(cliCur&&cliCur!==nm){delete P[cliCur];store.get("notes",[]).forEach(n=>{if(n.client===cliCur){n.client=nm;saveNote(n)}})}
+  P[nm]=cliForm();store.set("clients",P);cliCur=nm;renderClients();renderList();return true}
+$("cSave").onclick=()=>{if(saveClient())$("cStat").textContent="Cliente salvato ✓"};
+$("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
+$("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
+  const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";$("cPos").value="";
+  const prompt=`Sei lo stratega di ManuLab, agenzia di contenuti social. Costruisci il posizionamento di questo cliente con il sistema ManuLab.
+Principio guida: chi è specifico batte sempre chi è generico. Regola north-star: se un concorrente dello stesso settore potrebbe dire la stessa cosa cambiando solo il nome, non va bene.
+
+CLIENTE: ${nm}
+Settore e nicchia: ${f.niche}
+Pubblico: ${f.target||"da dedurre dalla nicchia"}
+Offerta: ${f.offer||"da dedurre"}
+Zona: ${f.zone||"non indicata"}
+Da evitare: ${f.avoid||"nulla di specifico"}
+${f.pos?"\nAppunti o versione precedente da migliorare:\n"+f.pos.slice(0,3000)+"\n":""}
+Scrivi in italiano, testo semplice senza markdown (niente #, niente asterischi), con queste sezioni, ognuna con il titolo in maiuscolo su una riga a sé:
+POSIZIONAMENTO IN UNA FRASE
+REGOLA NORTH-STAR (cosa rende questo brand non sostituibile, in una frase)
+PUBBLICO (chi è, in che situazione si trova, 3 problemi concreti che sente e 3 desideri)
+TEMI DI POSIZIONAMENTO (3 o 4 pilastri specifici della nicchia, non generici, ognuno con una riga di spiegazione)
+PRESA DI POSIZIONE (un'opinione netta e riconoscibile del brand, mai un attacco a un concorrente)
+TONO DI VOCE (3 aggettivi e come parla al suo pubblico)
+PAROLE DA USARE
+PAROLE DA EVITARE
+IDEE PER IL FUNNEL (2 idee TOFU di crescita: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee MOFU di fidelizzazione: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee BOFU di vendita: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
+Non inventare numeri, recensioni, premi o risultati.`;
+  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓"}
+  catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false}};
+
 /* Viste */
-function show(v){["home","detail","merge","ask","voice","conti","account"].forEach(x=>$("v-"+x).hidden=x!==v);
+function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
-  if(v==="conti")renderMoney();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+  if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice")renderClients();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
@@ -830,6 +959,7 @@ function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric"
 function noteCard(n,el){
   el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
   const days=Math.max(0,Math.floor((Date.now()-n.at)/864e5));const dEl=el.querySelector(".d");dEl.textContent=fmtDate(n.at)+" · "+(days===0?"oggi":days===1?"ieri":days+" giorni fa")+(n.ex?" · esempio":"");if(days>oldDays){dEl.classList.add("old");dEl.title="Aggiunta più di "+oldDays+" giorni fa"}el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
+  if(typeOf(n)==="contenuto"&&(n.st||n.pub)){const c=document.createElement("span");const stt=n.st||"idea";c.className="pill st-"+stt;c.textContent=ST[stt]+(n.pub?" · "+fmtDate(n.pub+"T12:00"):"");el.querySelector(".pills").append(c)}
   if(n.client){const c=document.createElement("span");c.className="pill client cliOpt";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;if(typeOf(n)==="attivita"){const ts=ensureTasks(n),dn=ts.filter(x=>x.done).length,next=ts.find(x=>!x.done);el.querySelector("p").textContent=ts.length?(dn===ts.length?`✓ Tutte fatte (${ts.length})`:`☐ ${dn} su ${ts.length} fatte · prossima: ${next.t}`):"Nessuna attività";}else el.querySelector("p").textContent=Object.values(n.out)[0]||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
@@ -876,7 +1006,9 @@ function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
   const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);
-  $("dClient").value=cur.client||"";renderMore()}
+  $("dClient").value=cur.client||"";const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
+document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
+$("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);renderHead()};
 $("dClient").onchange=e=>{cur.client=e.target.value.trim();saveNote(cur);renderHead()};
 function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
@@ -887,7 +1019,7 @@ async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="S
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
 async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textContent;btn.disabled=true;btn.firstChild.textContent="Sto scrivendo con la voce ManuLab…";
   const c=outCard(key,"Sto pensando…");const prev=[...$("dOut").children].find(e=>e.dataset.k===key);prev?prev.replaceWith(c.el):anchor.after(c.el);
-  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${kwRule(k)}${n.client?`\nIl contenuto è per il cliente/brand: ${n.client}.`:""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
+  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${kwRule(k)}${n.client?clientCtx(n.client):""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
     n.out[key]=text;if(n.fid)delete n.fid[key];saveNote(n);if(cur===n)openNote(n,true)}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.firstChild.textContent=old}}
 function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.endsWith(ML)).forEach(k=>{out.push(k);if(k+ML in n.out)out.push(k+ML)});ks.filter(k=>k.endsWith(ML)&&!out.includes(k)).forEach(k=>out.push(k));return out}
@@ -944,7 +1076,7 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${cl&&useML(k)?`\nIl contenuto è per il cliente/brand: ${cl}.`:""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${cl&&useML(k)?clientCtx(cl):""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
   $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
