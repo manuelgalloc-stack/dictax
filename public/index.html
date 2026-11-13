@@ -323,9 +323,8 @@ body:not(.solo) .soloOnly{display:none!important}
 <div class="app">
   <div class="top">
     <div class="brand">Dict<span>ax</span></div>
-    <div class="topR"><button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button><button class="accBtn" id="accBtn" aria-label="Il tuo account" title="Il tuo account"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div>
+    <div class="topR"><button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button><button class="accBtn" id="accBtn" aria-label="Il tuo profilo" title="Il tuo profilo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div>
   </div>
-  <div class="kindSeg" id="kindSeg" hidden role="group" aria-label="Come usi Creator"><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Gestisco clienti</button></div>
 
   <!-- CODICE DI ACCESSO -->
   <div class="composer" id="lockBox" hidden>
@@ -463,7 +462,12 @@ body:not(.solo) .soloOnly{display:none!important}
   <!-- ACCOUNT -->
   <section id="v-account" class="app" style="gap:14px" hidden>
     <button class="back" id="accBack">← Indietro</button>
-    <h1>Il tuo account</h1>
+    <h1>Il tuo profilo</h1>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Come usi Creator?</span>
+      <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Creator"><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Gestisco clienti</button></div>
+      <p class="help" id="kindHelp"></p>
+    </div>
     <div id="accOut" style="display:flex;flex-direction:column;gap:14px">
       <p class="lead">Entra con la tua email: così ritrovi note, conti e voce di brand sia sul telefono sia sul computer. Niente password.</p>
       <div class="composer">
@@ -890,11 +894,11 @@ async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me
 
 /* Creator: singolo o gestione clienti */
 const qClientOn=()=>mode==="creator"&&!isSolo()&&useClients&&clients().length>0;
-function applyKind(){const cre=mode==="creator";$("kindSeg").hidden=!cre;document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
+function applyKind(){$("kindHelp").textContent=(ckind==="solo"?"Crei contenuti per te: niente clienti, il tuo posizionamento vale per tutti i contenuti.":"Crei contenuti per i clienti: ognuno ha il suo posizionamento e in Chiedi scegli per chi.")+(mode==="creator"?"":" Vale quando Creator è acceso.");document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
   if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===ckind));
   const vb=document.querySelector('#dockNav button[data-view=voice] span');if(vb)vb.textContent=isSolo()?"Brand":"Clienti"}
 document.querySelectorAll("#kindSeg button").forEach(b=>b.onclick=()=>{ckind=b.dataset.k;raw.set("ckind",ckind);applyKind();renderList();
-  const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;if(v==="voice")show("voice");if(v==="ask")show("ask")});
+});
 function renderQClient(){const on=qClientOn();$("qClientRow").hidden=!on;if(!on)return;const S=$("qClient"),cur0=S.value;S.innerHTML='<option value="">Tutti i clienti</option>';
   clients().forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;S.append(o)});S.value=clients().includes(cur0)?cur0:"";renderSugg()}
 $("qClient").onchange=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
