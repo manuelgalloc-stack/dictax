@@ -473,10 +473,10 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="composer">
         <label class="lbl" for="accEmail">La tua email</label>
         <input type="email" id="accEmail" autocomplete="email" inputmode="email" placeholder="nome@esempio.it">
-        <div class="row"><span class="status" id="accStat" aria-live="polite"></span><button class="btn" id="accSend">Mandami il link</button></div>
+        <div class="row"><span class="status" id="accStat" aria-live="polite"></span><button class="btn" id="accSend">Mandami il codice</button></div>
         <div id="accCodeBox" hidden style="display:flex;flex-direction:column;gap:10px">
-          <p class="help">Apri l'email e tocca il link <b>da questo dispositivo</b>. Se nell'email c'è un codice di 6 cifre, puoi scriverlo qui.</p>
-          <div class="row tight"><input type="text" id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Codice"><button class="btn" id="accVerify">Entra</button></div>
+          <p class="help">Ti è arrivata un'email da <b>Dictax</b> con un codice: scrivilo qui. Puoi aprire l'email anche su un altro dispositivo.</p>
+          <div class="row tight"><input type="text" id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Codice a 6 cifre" style="font-size:22px;letter-spacing:4px;text-align:center"><button class="btn" id="accVerify">Entra</button></div>
         </div>
       </div>
     </div>
@@ -808,12 +808,13 @@ $("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@
   const b=$("accSend");b.disabled=true;$("accStat").textContent="Invio in corso…";
   try{await loadSb();const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+"/",shouldCreateUser:true}});
     if(error){$("accStat").textContent=/rate|limit|seconds/i.test(error.message)?"Troppe email in poco tempo: aspetta qualche minuto e riprova.":"Non sono riuscito a mandare l'email: "+error.message;return}
-    raw.set("accEmail",email);$("accStat").textContent="Email inviata a "+email+".";$("accCodeBox").hidden=false;b.textContent="Rimanda"}
+    raw.set("accEmail",email);$("accStat").textContent="Codice inviato a "+email+".";$("accCodeBox").hidden=false;b.textContent="Rimanda il codice";setTimeout(()=>$("accCode").focus(),50)}
   catch{$("accStat").textContent="Serve la connessione a internet."}finally{b.disabled=false}};
-$("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""),email=$("accEmail").value.trim();if(token.length<6){$("accStat").textContent="Il codice ha 6 cifre.";return}
-  const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: fatti mandare una nuova email.":"Fatto!";if(!error)show("account")};
+$("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""),email=$("accEmail").value.trim();if(token.length<6){$("accStat").textContent="Scrivi il codice che trovi nell'email.";return}
+  const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: controlla di usare l'ultima email arrivata, oppure fatti mandare un nuovo codice.":"Fatto!";if(!error)show("account")};
 $("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount()};
 $("accSyncNow").onclick=()=>syncAll();
+$("accCode").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("accVerify").click()}};$("accEmail").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("accSend").click()}};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&user&&Date.now()-lastPull>30000)syncAll()});
 $("accEmail").value=raw.get("accEmail","");
 if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
