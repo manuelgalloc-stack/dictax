@@ -290,6 +290,11 @@ body.noClients .cliOpt{display:none!important}
 .ideaCard{display:flex;flex-direction:column;gap:6px}
 .ideaCard .ph{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t-contenuto)}
 .ideaCard b{font-size:16px}.ideaCard small{color:var(--muted);font-size:14px;line-height:1.4}
+.kindSeg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:5px}
+.kindSeg button{border:0;background:none;border-radius:12px;padding:11px 6px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:var(--muted)}
+.kindSeg button[aria-pressed=true]{background:var(--surface);color:var(--t-contenuto);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+body.solo .agencyOnly{display:none!important}
+body:not(.solo) .soloOnly{display:none!important}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -320,6 +325,7 @@ body.noClients .cliOpt{display:none!important}
     <div class="brand">Dict<span>ax</span></div>
     <div class="topR"><button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button><button class="accBtn" id="accBtn" aria-label="Il tuo account" title="Il tuo account"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div>
   </div>
+  <div class="kindSeg" id="kindSeg" hidden role="group" aria-label="Come usi Creator"><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Gestisco clienti</button></div>
 
   <!-- CODICE DI ACCESSO -->
   <div class="composer" id="lockBox" hidden>
@@ -432,6 +438,7 @@ body.noClients .cliOpt{display:none!important}
   <!-- CHIEDI -->
   <section id="v-ask" class="app" style="gap:14px" hidden>
     <h1>Chiedi alle tue note <span class="pro planBadge"></span></h1>
+    <div class="row tight" id="qClientRow" hidden><label class="lbl" for="qClient" style="flex:none">Per quale cliente?</label><select id="qClient" style="flex:1;min-width:0"></select></div>
     <p class="lead">Fai una domanda: Dictax risponde usando solo quello che hai registrato in questo profilo.</p>
     <div class="sugg" id="sugg"></div>
     <div class="chat" id="chat"></div>
@@ -499,13 +506,14 @@ body.noClients .cliOpt{display:none!important}
 
   <!-- VOCE (solo Creator) -->
   <section id="v-voice" class="app" style="gap:14px" hidden>
-    <div class="cliOpt" style="display:flex;flex-direction:column;gap:14px">
-      <h1>Clienti</h1>
-      <p class="lead">Per ogni cliente crea il posizionamento con il sistema ManuLab: Dictax lo usa per scrivere contenuti su misura per la sua nicchia.</p>
-      <div class="list" id="cliList"></div>
-      <button class="btn ghost" id="cliNew">+ Nuovo cliente</button>
+    <div id="cliSec" style="display:flex;flex-direction:column;gap:14px">
+      <h1 class="agencyOnly">Clienti</h1><h1 class="soloOnly">Il mio posizionamento</h1>
+      <p class="lead agencyOnly">Per ogni cliente crea il posizionamento con il sistema ManuLab: Dictax lo usa per scrivere contenuti su misura per la sua nicchia.</p>
+      <p class="lead soloOnly">Descrivi di cosa parli e a chi: Dictax crea il tuo posizionamento con il sistema ManuLab e lo usa in tutti i tuoi contenuti.</p>
+      <div class="list agencyOnly" id="cliList"></div>
+      <button class="btn ghost agencyOnly" id="cliNew">+ Nuovo cliente</button>
       <div class="composer" id="cliEdit" hidden>
-        <label class="lbl" for="cName">Nome del cliente</label><input type="text" id="cName" placeholder="Es. Ristorante sul Lago">
+        <label class="lbl agencyOnly" for="cName">Nome del cliente</label><input type="text" class="agencyOnly" id="cName" placeholder="Es. Ristorante sul Lago">
         <label class="lbl" for="cNiche">Settore e nicchia</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione">
         <label class="lbl" for="cTarget">A chi si rivolge</label><input type="text" id="cTarget" placeholder="Es. coppie 30-55 della zona, turisti nel weekend">
         <label class="lbl" for="cOffer">Cosa vende o offre</label><input type="text" id="cOffer" placeholder="Es. cene, pranzi della domenica, eventi privati">
@@ -514,7 +522,7 @@ body.noClients .cliOpt{display:none!important}
         <button class="btn" id="cGen">✨ Genera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
         <label class="lbl" for="cPos">Posizionamento (puoi modificarlo)</label>
         <textarea id="cPos" class="posOut" rows="12" placeholder="Premi il pulsante qui sopra: il posizionamento comparirà qui."></textarea>
-        <div class="row"><button class="btn danger sm" id="cDel">Elimina</button><span class="status" id="cStat" aria-live="polite"></span><button class="btn" id="cSave">Salva cliente</button></div>
+        <div class="row"><button class="btn danger sm agencyOnly" id="cDel">Elimina</button><span class="status" id="cStat" aria-live="polite"></span><button class="btn" id="cSave">Salva cliente</button></div>
         <div id="cIdeasBox" hidden style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
           <span class="lbl">Idee dal posizionamento</span>
           <div id="cIdeas" class="list" style="gap:10px"></div>
@@ -657,8 +665,8 @@ Da evitare: tono da guru o motivatore, clickbait, aggettivi vuoti (rivoluzionari
 - Scrivi per la nicchia precisa del cliente/brand: usa i problemi, le situazioni, il linguaggio e gli esempi tipici del suo settore e del suo pubblico, non frasi valide per chiunque. Se la nicchia non è indicata, ricavala dalla nota.
 Controllo finale: se un concorrente potesse pubblicarlo cambiando solo il nome, rendilo più specifico.`;
 function typeOf(n){if(TYPES[n.type])return n.type;const ks=Object.keys(n.out||{});if(ks.some(k=>SOCIAL.includes(k)))return "contenuto";if(ks.length&&ks.every(k=>k==="todo"))return "attivita";return "nota"}
-let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7),useClients=raw.get("useClients",true);document.body.classList.toggle("noClients",!useClients);
-const clients=()=>[...new Set([...allNotes().map(n=>(n.client||"").trim()),...Object.keys(store.get("clients",{}))].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
+let tfilter="tutte",cfilter="",oldDays=raw.get("oldDays",7),useClients=raw.get("useClients",true),ckind=raw.get("ckind","agency");
+const clients=()=>[...new Set([...allNotes().map(n=>(n.client||"").trim()),...Object.keys(store.get("clients",{})).filter(k=>k!=="__me")].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"it"));
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
 function loadMode(){
@@ -698,11 +706,11 @@ $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
 /* Profili */
 function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
-  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");$("calOpen").hidden=mode!=="creator";
+  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=mode!=="creator";
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
-  $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=n;b.onclick=()=>show(v);$("dockNav").append(b)});
+  $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=v==="voice"&&isSolo()?"Brand":n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
 const ICONS={conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.9 2.6 2.7 3 5.2"/></svg>'};
@@ -754,7 +762,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
@@ -821,7 +829,10 @@ function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents()
 /* Clienti e posizionamento (sistema ManuLab) */
 let cliCur=null;
 const cliProfiles=()=>store.get("clients",{});
-function clientCtx(cl){const p=cliProfiles()[cl];let t=`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
+const isSolo=()=>mode==="creator"&&ckind==="solo";
+const clientsOn=()=>useClients&&!isSolo();
+const ctxFor=cl=>cl?clientCtx(cl):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
+function clientCtx(cl){const p=cliProfiles()[cl];let t=cl==="__me"?"\nIl contenuto è per il brand personale dell'autore (creator).":`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
   if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;
   if(p.pos)t+=`\nPosizionamento del cliente (sistema ManuLab): rispetta i temi, la regola north-star, il tono e le parole da usare o evitare.\n${p.pos.slice(0,5000)}`;return t}
 function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles(),names=clients();
@@ -841,7 +852,7 @@ $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm|
   const prompt=`Sei lo stratega di ManuLab, agenzia di contenuti social. Costruisci il posizionamento di questo cliente con il sistema ManuLab.
 Principio guida: chi è specifico batte sempre chi è generico. Regola north-star: se un concorrente dello stesso settore potrebbe dire la stessa cosa cambiando solo il nome, non va bene.
 
-CLIENTE: ${nm}
+CLIENTE: ${nm==="__me"?"il creator stesso (brand personale)":nm}
 Settore e nicchia: ${f.niche}
 Pubblico: ${f.target||"da dedurre dalla nicchia"}
 Offerta: ${f.offer||"da dedurre"}
@@ -873,14 +884,25 @@ $("cIdeasGo").onclick=async()=>{const nm=$("cName").value.trim(),pos=$("cPos").v
     const ids=(Array.isArray(r?.idee)?r.idee:[]).filter(x=>x&&x.titolo).slice(0,8);if(!ids.length)throw{code:"invalid_json"};
     if(!saveClient())return;const P=cliProfiles();P[nm].ideas=ids;store.set("clients",P);renderIdeas(P[nm]);$("cStat").textContent="Idee pronte ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false;if(b.textContent.startsWith("Sto"))b.textContent="💡 Trova le idee"}};
-async function ideaToContent(x){const nm=$("cName").value.trim();
-  $("transcript").value=`Idea di contenuto ${x.fase||""} per ${nm}: ${x.titolo}.\nGancio da cui partire: ${x.gancio||""}\nAngolo: ${x.angolo||""}`;$("sClient").value=nm;
+async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me"?"":nm0;
+  $("transcript").value=`Idea di contenuto ${x.fase||""}${nm?" per "+nm:""}: ${x.titolo}.\nGancio da cui partire: ${x.gancio||""}\nAngolo: ${x.angolo||""}`;$("sClient").value=nm;
   await createNote("contenuto",[IDEA_FMT(x.formato)]);if(cur){cur.st="lavoro";saveNote(cur);renderHead()}}
+
+/* Creator: singolo o gestione clienti */
+const qClientOn=()=>mode==="creator"&&!isSolo()&&useClients&&clients().length>0;
+function applyKind(){const cre=mode==="creator";$("kindSeg").hidden=!cre;document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
+  if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===ckind));
+  const vb=document.querySelector('#dockNav button[data-view=voice] span');if(vb)vb.textContent=isSolo()?"Brand":"Clienti"}
+document.querySelectorAll("#kindSeg button").forEach(b=>b.onclick=()=>{ckind=b.dataset.k;raw.set("ckind",ckind);applyKind();renderList();
+  const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;if(v==="voice")show("voice");if(v==="ask")show("ask")});
+function renderQClient(){const on=qClientOn();$("qClientRow").hidden=!on;if(!on)return;const S=$("qClient"),cur0=S.value;S.innerHTML='<option value="">Tutti i clienti</option>';
+  clients().forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;S.append(o)});S.value=clients().includes(cur0)?cur0:"";renderSugg()}
+$("qClient").onchange=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
 
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
-  if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice")renderClients();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+  if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice"){renderClients();if(isSolo())editClient("__me")}if(v==="ask")renderQClient();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
@@ -1042,7 +1064,7 @@ async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="S
 document.querySelectorAll("#dSeg button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#dSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("dOut").hidden=b.dataset.p!=="out";$("dOrigBox").hidden=b.dataset.p!=="orig"});
 async function mlRewrite(n,k,btn,anchor){const key=k+ML,old=btn.firstChild.textContent;btn.disabled=true;btn.firstChild.textContent="Sto scrivendo con la voce ManuLab…";
   const c=outCard(key,"Sto pensando…");const prev=[...$("dOut").children].find(e=>e.dataset.k===key);prev?prev.replaceWith(c.el):anchor.after(c.el);
-  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${kwRule(k)}${n.client?clientCtx(n.client):""}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
+  try{const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[k].p}.${kwRule(k)}${ctxFor(n.client)}\nMantieni le idee della nota originale, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA ORIGINALE (trascrizione):\n${n.tr}\n\nTESTO DA RISCRIVERE:\n${n.out[k]}`,{onText:({text})=>{c.txt.textContent=text}});
     n.out[key]=text;if(n.fid)delete n.fid[key];saveNote(n);if(cur===n)openNote(n,true)}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.firstChild.textContent=old}}
 function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.endsWith(ML)).forEach(k=>{out.push(k);if(k+ML in n.out)out.push(k+ML)});ks.filter(k=>k.endsWith(ML)&&!out.includes(k)).forEach(k=>out.push(k));return out}
@@ -1099,7 +1121,7 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${cl&&useML(k)?clientCtx(cl):""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl):""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
   $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
@@ -1116,7 +1138,7 @@ document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pending
   st.level=b.dataset.l;saveStyle();createNote(t,f)});
 $("go").onclick=openSheet;
 async function createNote(type,formats){
-  const tr=$("transcript").value.trim();const client=useClients?$("sClient").value.trim():"";closeSheet();
+  const tr=$("transcript").value.trim();const client=clientsOn()?$("sClient").value.trim():"";closeSheet();
   if(!tr)return;
   $("go").disabled=true;const jobs=[];
   const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},type,client,title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
@@ -1159,15 +1181,17 @@ $("mGo").onclick=async()=>{
 };
 
 /* Chiedi alle note */
-function renderSugg(){$("sugg").innerHTML="";if(turns.length)return;M().sugg.forEach(s=>{const b=document.createElement("button");b.className="chip";b.textContent=s;b.onclick=()=>{$("q").value=s;$("qGo").click()};$("sugg").append(b)})}
+function renderSugg(){$("sugg").innerHTML="";if(turns.length)return;const qc=qClientOn()?$("qClient").value:"";(qc?[`Dammi 3 idee di contenuto per ${qc}`,`Cosa ho già fatto per ${qc}?`,`Scrivi una caption Instagram per ${qc}`]:isSolo()?["Dammi 3 idee per i miei prossimi contenuti","Quali idee non ho ancora pubblicato?","Scrivi una caption sul mio tema principale"]:M().sugg).forEach(s=>{const b=document.createElement("button");b.className="chip";b.textContent=s;b.onclick=()=>{$("q").value=s;$("qGo").click()};$("sugg").append(b)})}
 function bubble(cls,t){const d=document.createElement("div");d.className="bub "+cls;d.textContent=t;$("chat").append(d);return d}
 $("qReset").onclick=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
 $("qGo").onclick=async()=>{
   const q=$("q").value.trim();if(!q)return;
   if(!sampleFn){bubble("ai","L'AI non è disponibile in questa vista.");return}
   $("qGo").disabled=true;$("q").value="";$("sugg").innerHTML="";bubble("me",q);const a=bubble("ai","Sto cercando nelle tue note…");
-  const ctx=allNotes().map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — tipo ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
-  const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico, usando SOLO le note qui sotto. Cita il titolo della nota da cui prendi l'informazione. Se la risposta non è nelle note, dillo chiaramente. Niente markdown con asterischi.\n\nNOTE DELL'UTENTE:\n${ctx}`;
+  const qc=qClientOn()?$("qClient").value:"";const pool=qc?allNotes().filter(n=>n.client===qc):allNotes();
+  const ctx=pool.map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — tipo ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
+  const cre=mode==="creator",pc=qc?clientCtx(qc):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
+  const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico. Per le domande sulle note usa SOLO le note qui sotto, cita il titolo della nota da cui prendi l'informazione e, se la risposta non c'è, dillo chiaramente.${cre?` Se ti chiede di creare idee o testi di contenuto, crea contenuti specifici e incuriosenti${qc?" per "+qc:""}, seguendo il posizionamento e scrivendo con la voce ManuLab:\n${MANULAB_VOICE}`:""} Niente markdown con asterischi.${pc?"\n"+pc:""}\n\nNOTE${qc?" DEL CLIENTE "+qc:" DELL'UTENTE"}:\n${ctx||"(nessuna nota)"}`;
   turns.push({role:"user",content:q});
   try{const{text}=await sampleFn([{role:"user",content:rules},...turns.slice(-10)],{cache:false,onText:({text})=>{a.textContent=text}});turns.push({role:"assistant",content:text})}
   catch(e){a.textContent=e?.text||errMsg(e);turns.pop()}
@@ -1190,7 +1214,7 @@ $("analyze").onclick=async()=>{
 };
 
 /* Avvio */
-$("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);document.body.classList.toggle("noClients",!useClients);if(!useClients)cfilter="";renderList()};
+$("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
 loadMode();applyMode();show("home");
 fetch("/api/health").then(r=>r.json()).then(h=>{
