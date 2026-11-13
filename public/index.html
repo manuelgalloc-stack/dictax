@@ -300,6 +300,9 @@ body.solo .agencyOnly{display:none!important}
 body:not(.solo) .soloOnly{display:none!important}
 .homeBtn{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent-strong);font:inherit;font-weight:700;font-size:17px;padding:12px 20px;border-radius:999px;cursor:pointer}
 .homeBtn svg{width:22px;height:22px}
+.cliChips{margin-top:6px}
+.cliChips .chip{font-weight:600}
+.cliChips .chip.new{border-style:dashed;color:var(--accent-strong);background:var(--surface)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -402,7 +405,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="note" style="cursor:default" id="dHead"></div>
     <div class="organize" id="dOrg">
       <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
-      <div class="cliOpt"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
+      <div class="cliOpt" style="grid-column:1/-1"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
     </div>
     <div id="dStBox" hidden style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Stato del contenuto</span>
@@ -568,7 +571,7 @@ body:not(.solo) .soloOnly{display:none!important}
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h2 id="sheetTitle">Che cos'è?</h2>
     <p class="preview" id="sheetPreview"></p>
-    <label class="lbl cliOpt" for="sClient">Cliente (facoltativo)</label>
+    <label class="lbl cliOpt" for="sClient">Per quale cliente? (facoltativo)</label>
     <input type="text" class="cliOpt" id="sClient" list="clientList" placeholder="Es. Ristorante sul Lago" autocomplete="off">
     <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
@@ -922,6 +925,16 @@ function renderQClient(){const on=qClientOn();$("qClientRow").hidden=!on;if(!on)
   clients().forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;S.append(o)});S.value=clients().includes(cur0)?cur0:"";renderSugg()}
 $("qClient").onchange=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
 
+/* Scelta del cliente con un tocco */
+function clientsByUse(){const cnt={};allNotes().forEach(n=>{if(n.client)cnt[n.client]=(cnt[n.client]||0)+(n.up||n.at||0)});return clients().sort((a,b)=>(cnt[b]||0)-(cnt[a]||0)).slice(0,12)}
+function cliChips(inp,onPick){let box=inp.nextElementSibling;if(!box||!box.classList.contains("cliChips")){box=document.createElement("div");box.className="chips cliChips cliOpt";box.setAttribute("role","group");box.setAttribute("aria-label","Scegli il cliente");inp.after(box)}
+  const cur0=inp.value.trim(),list=clientsByUse();box.innerHTML="";if(cur0&&!list.includes(cur0))list.unshift(cur0);
+  if(!list.length){inp.hidden=false;box.hidden=true;return}box.hidden=false;inp.hidden=inp.dataset.new!=="1";
+  const mk=(label,on,fn,cls)=>{const b=document.createElement("button");b.type="button";b.className="chip"+(cls?" "+cls:"");b.textContent=label;b.setAttribute("aria-pressed",on);b.onclick=fn;box.append(b)};
+  mk("Nessuno",!cur0&&inp.dataset.new!=="1",()=>{inp.value="";inp.dataset.new="";onPick("");cliChips(inp,onPick)});
+  list.forEach(c=>mk(c,c===cur0,()=>{inp.value=c;inp.dataset.new="";onPick(c);cliChips(inp,onPick)}));
+  mk("+ Nuovo",false,()=>{inp.dataset.new="1";inp.value="";inp.hidden=false;inp.placeholder="Scrivi il nome del cliente";inp.focus();box.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"))},"new")}
+
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
@@ -1076,11 +1089,11 @@ function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
   const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);
-  $("dClient").value=cur.client||"";const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
+  $("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
 document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);renderHead()};
-$("dClient").onchange=e=>{cur.client=e.target.value.trim();saveNote(cur);renderHead()};
+$("dClient").onchange=e=>{cur.client=e.target.value.trim();e.target.dataset.new="";saveNote(cur);renderHead()};
 function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
   list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
 async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
@@ -1148,7 +1161,7 @@ async function makeMeta(n,src){
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
 const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl):""}\n${styleText()}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
-  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";renderChips();$("sheet").hidden=false}
+  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
