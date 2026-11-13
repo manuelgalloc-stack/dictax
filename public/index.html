@@ -322,6 +322,8 @@ body:not(.solo) .soloOnly{display:none!important}
 .platChips .chip{font-weight:700;font-size:16px;padding:11px 18px}
 .platChips .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
 #archBtnD{color:var(--danger);border:2px solid var(--danger);font-weight:700}
+.fatteTab{color:var(--danger)!important;font-weight:700}
+.fatteTab[aria-pressed="true"]{background:var(--danger)!important;border-color:var(--danger)!important;color:#fff!important}
 .archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:6px}
 .archHead{grid-column:1/-1;font-weight:700;color:var(--muted);font-size:15px}
 .note.isArch{opacity:.75}
@@ -1087,7 +1089,8 @@ const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" s
 function renderTabs(){const T=$("tabs");T.innerHTML="";
   const opts=[["tutte","Tutte",""],["nota","Note",TYPES.nota.color],["attivita","To-do",TYPES.attivita.color]];if(mode==="creator")opts.push(["contenuto","Contenuti",TYPES.contenuto.color]);
   if(!opts.some(o=>o[0]===tfilter))tfilter="tutte";
-  opts.forEach(([v,t,c])=>{const b=document.createElement("button");b.setAttribute("aria-pressed",v===tfilter);if(c){const d=document.createElement("span");d.className="dot";d.style.background=c;b.append(d)}b.append(t);b.onclick=()=>{tfilter=v;renderTabs();renderList()};T.append(b)});
+  opts.forEach(([v,t,c])=>{const b=document.createElement("button");b.setAttribute("aria-pressed",!showArch&&v===tfilter);if(c){const d=document.createElement("span");d.className="dot";d.style.background=c;b.append(d)}b.append(t);b.onclick=()=>{tfilter=v;showArch=false;renderTabs();renderList()};T.append(b)});
+  const nF=allNotes().filter(n=>n.arch).length;if(nF||showArch){const f=document.createElement("button");f.className="fatteTab";f.setAttribute("aria-pressed",showArch);f.textContent=`✓ Fatte ${nF}`;f.onclick=()=>{showArch=!showArch;tfilter="tutte";renderTabs();renderList()};T.append(f)}
   const cl=clients(),S=$("clientFilter");S.innerHTML="";[["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
   if(!cl.includes(cfilter))cfilter="";S.value=cfilter;S.hidden=!cl.length;
   const D=$("clientList");D.innerHTML="";cl.forEach(c=>{const o=document.createElement("option");o.value=c;D.append(o)})}
@@ -1108,14 +1111,14 @@ const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client
 function renderList(){const L=$("list");L.innerHTML="";
   const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const ns=base.filter(n=>query?true:showArch?n.arch:!n.arch);
-  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
+  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
   if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
   ns.forEach(n=>{const w=document.createElement("div");w.className="swipeWrap";const del=document.createElement("button");del.className="swipeDel";del.innerHTML="🗑<span>Elimina</span>";del.setAttribute("aria-label","Elimina "+n.title);
     const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=e=>{if(w.classList.contains("open")){e.preventDefault();closeSwipes();return}openNote(n)};
     del.onclick=()=>{deleteNote(n);renderList()};w.append(del,b);swipeable(w,b,n);L.append(w)});archBtn()}
 function askDelete(n){const W=$("delAsk");W.querySelector("b").textContent="“"+n.title+"”";W.hidden=false;$("delArch").textContent=n.arch?"↩︎ Riapri":"✓ Fatto";$("delArch").onclick=()=>{W.hidden=true;setArch(n,!n.arch)};$("delYes").onclick=()=>{W.hidden=true;deleteNote(n);renderList()};$("delNo").onclick=()=>W.hidden=true;W.onclick=e=>{if(e.target===W)W.hidden=true}}
-function setArch(n,v){n.arch=v;saveNote(n);renderList()}
+function setArch(n,v){n.arch=v;saveNote(n);renderTabs();renderList()}
 function deleteNote(n){if(n.ex){exEdits[n.id]={...(exEdits[n.id]||{}),deleted:true};store.set("exedits",exEdits)}else{addDel(n.id);store.set("notes",store.get("notes",[]).filter(x=>x.id!==n.id))}}
 function closeSwipes(except){document.querySelectorAll(".swipeWrap.open").forEach(w=>{if(w!==except){w.classList.remove("open");w.querySelector(".note").style.transform=""}})}
 function swipeable(w,card,n){let x0=0,y0=0,dx=0,drag=false,lock=null,lp=null;const OPEN=-112;
