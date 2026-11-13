@@ -321,6 +321,7 @@ body:not(.solo) .soloOnly{display:none!important}
 .swipeWrap.open .swipeDel,.swipeWrap.swiping .swipeDel{opacity:1}
 .platChips .chip{font-weight:700;font-size:16px;padding:11px 18px}
 .platChips .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
+#archBtnD{color:var(--danger);border:2px solid var(--danger);font-weight:700}
 .archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:6px}
 .archHead{grid-column:1/-1;font-weight:700;color:var(--muted);font-size:15px}
 .note.isArch{opacity:.75}
@@ -414,7 +415,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="card" id="moreFmt"><span class="lbl" id="moreLbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="share">📤 Condividi</button>
-      <button class="btn ghost" id="archBtnD">🗄 Archivia</button>
+      <button class="btn ghost" id="archBtnD">✓ Fatto</button>
       <button class="btn ghost sm" id="mdSave">Scarica file .md</button>
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
@@ -594,8 +595,8 @@ body:not(.solo) .soloOnly{display:none!important}
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="delTitle">
     <h2 id="delTitle">Cosa vuoi fare?</h2>
     <p class="lead" style="margin:0"><b></b></p>
-    <button class="btn big" id="delArch">🗄 Archivia</button>
-    <button class="btn big" id="delYes" style="background:var(--danger)">🗑 Elimina</button>
+    <button class="btn big" id="delArch" style="background:var(--danger)">✓ Fatto</button>
+    <button class="btn ghost big" id="delYes" style="color:var(--danger);border-color:var(--danger)">🗑 Elimina</button>
     <button class="btn ghost big" id="delNo">Annulla</button>
   </div>
 </div>
@@ -1107,13 +1108,13 @@ const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client
 function renderList(){const L=$("list");L.innerHTML="";
   const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const ns=base.filter(n=>query?true:showArch?n.arch:!n.arch);
-  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`🗄 Archiviate (${nArch})`;a.onclick=()=>{showArch=!showArch;renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
-  if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="🗄 Note archiviate";L.append(h)}
-  if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota archiviata.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
+  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
+  if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
+  if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
   ns.forEach(n=>{const w=document.createElement("div");w.className="swipeWrap";const del=document.createElement("button");del.className="swipeDel";del.innerHTML="🗑<span>Elimina</span>";del.setAttribute("aria-label","Elimina "+n.title);
     const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=e=>{if(w.classList.contains("open")){e.preventDefault();closeSwipes();return}openNote(n)};
     del.onclick=()=>{deleteNote(n);renderList()};w.append(del,b);swipeable(w,b,n);L.append(w)});archBtn()}
-function askDelete(n){const W=$("delAsk");W.querySelector("b").textContent="“"+n.title+"”";W.hidden=false;$("delArch").textContent=n.arch?"↩︎ Togli dall'archivio":"🗄 Archivia";$("delArch").onclick=()=>{W.hidden=true;setArch(n,!n.arch)};$("delYes").onclick=()=>{W.hidden=true;deleteNote(n);renderList()};$("delNo").onclick=()=>W.hidden=true;W.onclick=e=>{if(e.target===W)W.hidden=true}}
+function askDelete(n){const W=$("delAsk");W.querySelector("b").textContent="“"+n.title+"”";W.hidden=false;$("delArch").textContent=n.arch?"↩︎ Riapri":"✓ Fatto";$("delArch").onclick=()=>{W.hidden=true;setArch(n,!n.arch)};$("delYes").onclick=()=>{W.hidden=true;deleteNote(n);renderList()};$("delNo").onclick=()=>W.hidden=true;W.onclick=e=>{if(e.target===W)W.hidden=true}}
 function setArch(n,v){n.arch=v;saveNote(n);renderList()}
 function deleteNote(n){if(n.ex){exEdits[n.id]={...(exEdits[n.id]||{}),deleted:true};store.set("exedits",exEdits)}else{addDel(n.id);store.set("notes",store.get("notes",[]).filter(x=>x.id!==n.id))}}
 function closeSwipes(except){document.querySelectorAll(".swipeWrap.open").forEach(w=>{if(w!==except){w.classList.remove("open");w.querySelector(".note").style.transform=""}})}
@@ -1166,7 +1167,7 @@ function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
   const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);const TC=$("dTypeChips");TC.innerHTML="";[...T.options].forEach(o=>{const b=document.createElement("button");b.type="button";b.className="chip typeChip";b.textContent=o.textContent;b.style.setProperty("--c",TYPES[o.value].color);b.setAttribute("aria-pressed",o.value===T.value);b.onclick=()=>{if(T.value===o.value)return;T.value=o.value;T.dispatchEvent(new Event("change"))};TC.append(b)});
-  $("archBtnD").textContent=cur.arch?"↩︎ Togli dall'archivio":"🗄 Archivia";$("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
+  $("archBtnD").textContent=cur.arch?"↩︎ Riapri":"✓ Fatto";$("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
 document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
