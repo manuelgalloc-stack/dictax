@@ -315,6 +315,8 @@ body:not(.solo) .soloOnly{display:none!important}
 .swipeDel{position:absolute;inset:0 0 0 auto;width:112px;border:0;background:var(--danger);color:#fff;font:inherit;font-weight:700;font-size:15px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;opacity:0;transition:opacity .15s}
 .swipeDel span{font-size:14px}
 .swipeWrap.open .swipeDel,.swipeWrap.swiping .swipeDel{opacity:1}
+.platChips .chip{font-weight:700;font-size:16px;padding:11px 18px}
+.platChips .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -402,7 +404,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
     <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
-    <div class="card" id="moreFmt"><span class="lbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
+    <div class="card" id="moreFmt"><span class="lbl" id="moreLbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="share">📤 Condividi</button>
       <button class="btn ghost sm" id="mdSave">Scarica file .md</button>
@@ -601,7 +603,10 @@ body:not(.solo) .soloOnly{display:none!important}
       <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
     </div>
     <div id="levelStep" hidden>
-      <div id="contentPick" hidden><span class="lbl" id="channelsLbl">Per quali canali?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div></div>
+      <div id="contentPick" hidden>
+        <span class="lbl">Per quale piattaforma?</span><div class="chips platChips" id="platforms" style="margin-block:8px 14px"></div>
+        <span class="lbl" id="channelsLbl">Cosa creo?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div>
+      </div>
       <span class="lbl">Come la scrivo?</span>
       <div class="levelBtns">
         <button class="levelBtn" data-l="leggera"><b>Semplice</b><small>Sistema solo esitazioni e ripetizioni: resta com'è, è la più veloce</small></button>
@@ -807,7 +812,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
@@ -1056,7 +1061,11 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
   $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
 
 /* Formati */
-function renderChips(){const F=$("formats");F.innerHTML="";SOCIAL.forEach(k=>{const c=document.createElement("button");c.className="chip";c.textContent=FORMATS[k].n;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
+const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"]]}};
+let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
+const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
+function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
+  const F=$("formats");F.innerHTML="";PLATFORMS[plat].f.forEach(([k,label])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=label;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
 const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
 /* Cartelle, ricerca, lista */
@@ -1144,7 +1153,7 @@ document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.d
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
 $("dClient").onchange=e=>{cur.client=e.target.value.trim();e.target.dataset.new="";saveNote(cur);renderHead()};
-function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
+function renderMore(){$("moreLbl").textContent=typeOf(cur)==="contenuto"?"Da questo contenuto crea anche":"Crea anche da questa nota";const M2=$("moreChips");M2.innerHTML="";const list0=fmts().filter(k=>!(k in cur.out)),list=typeOf(cur)==="contenuto"?[...list0.filter(k=>SOCIAL.includes(k)),...list0.filter(k=>!SOCIAL.includes(k))]:list0;$("moreFmt").hidden=!list.length;
   list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
 async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
   try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
@@ -1217,11 +1226,11 @@ $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
 document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
-  $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Per quali canali?";$("sheetTitle").textContent=TYPES[pendingType].n;
+  $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
 document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pendingType;if(!t)return;let f=TYPES[t].f;
-  if(t==="contenuto"){f=SOCIAL.filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno un canale qui sotto";return}}
+  if(t==="contenuto"){f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}}
   st.level=b.dataset.l;saveStyle();createNote(t,f)});
 $("go").onclick=openSheet;
 async function createNote(type,formats){
