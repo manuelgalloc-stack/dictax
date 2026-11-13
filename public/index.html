@@ -369,7 +369,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
           <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
           <span class="lbl">Quanto riscrivere</span>
-          <div class="seg" id="level"></div>
+          <div class="seg" id="level" style="grid-template-columns:1fr 1fr"></div>
           <p class="help" id="levelHelp"></p>
           <span class="lbl">Stile <span class="pro planBadge"></span></span>
           <div class="opts" id="wstyle"></div>
@@ -582,9 +582,9 @@ body:not(.solo) .soloOnly{display:none!important}
       <div id="contentPick" hidden><span class="lbl" id="channelsLbl">Per quali canali?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div></div>
       <span class="lbl">Come la scrivo?</span>
       <div class="levelBtns">
-        <button class="levelBtn" data-l="leggera"><b>Semplice</b><small>Toglie solo esitazioni e ripetizioni, lascia le tue parole</small></button>
-        <button class="levelBtn" data-l="media"><b>Media</b><small>Riordina e migliora le frasi</small></button>
-        <button class="levelBtn" data-l="completa"><b>Elaborata</b><small>Riscrive tutto da capo, in modo più curato</small></button>
+        <button class="levelBtn" data-l="leggera"><b>Semplice</b><small>Sistema solo esitazioni e ripetizioni: resta com'è, è la più veloce</small></button>
+        
+        <button class="levelBtn" data-l="completa"><b>Elaborata</b><small>Riordina e riscrive in modo chiaro e curato</small></button>
       </div>
       <button class="back" id="levelBack" style="margin-top:12px">← Cambia tipo</button>
     </div>
@@ -633,7 +633,7 @@ const MODES={
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
 const JOBS={generico:{n:"Uso generale",f:[]},commerciale:{n:"Commerciale",f:["visita"]},avvocato:{n:"Avvocato",f:["pratica","lettera"]},terapeuta:{n:"Terapeuta / psicologo",f:["seduta"]},scrittore:{n:"Scrittore / giornalista",f:["bozza"]},memorie:{n:"Scrivo le mie memorie",f:["memorie"]},immobiliare:{n:"Agente immobiliare",f:["scheda","annuncio"]}};
-const LEVELS={leggera:{n:"Semplice",h:"Pulisce esitazioni e ripetizioni, lascia le tue parole.",p:"Riscrittura leggera: togli solo esitazioni e ripetizioni, conserva il più possibile le parole originali."},media:{n:"Media",h:"Riordina e migliora le frasi, mantiene il senso.",p:"Riscrittura media: riordina e migliora le frasi mantenendo il senso e parte delle espressioni originali."},completa:{n:"Elaborata",h:"Riscrive tutto da capo nello stile scelto.",p:"Riscrittura completa: riscrivi liberamente da capo, nello stile scelto."}};
+const LEVELS={leggera:{n:"Semplice",h:"Sistema solo esitazioni e ripetizioni, lascia le tue parole.",p:"Riscrittura leggera: togli solo esitazioni, intercalari e ripetizioni e sistema la punteggiatura; conserva le parole e l'ordine originali."},completa:{n:"Elaborata",h:"Riordina e riscrive in modo chiaro e curato, nello stile scelto.",p:"Riscrittura elaborata: riordina le idee e riscrivi in modo chiaro, scorrevole e curato, nello stile scelto, senza perdere nessuna idea."}};
 const LENS=[["Molto breve","circa un terzo dell'originale"],["Breve","più corto dell'originale"],["Simile","più o meno come l'originale"],["Più ricco","un po' più lungo, sviluppando le idee"],["Esteso","molto più sviluppato, senza inventare fatti"]];
 const EXAMPLES={
   note:[
@@ -693,7 +693,7 @@ const clients=()=>[...new Set([...allNotes().map(n=>(n.client||"").trim()),...Ob
 let job="generico",st,customStyles,customFolders,exEdits,selected,voice=raw.get("voice",null),cat="Tutte",query="",cur=null,turns=[];
 const picked=new Set();
 function loadMode(){
-  st=store.get("style",{level:"media",ws:mode==="creator"?"mio":"chiaro",len:2});
+  st=store.get("style",{level:"leggera",ws:mode==="creator"?"mio":"chiaro",len:2});if(!LEVELS[st.level])st.level="completa";
   customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
   $("useFid").checked=store.get("fid",true);
   job="generico";
