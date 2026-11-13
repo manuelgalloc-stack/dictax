@@ -282,11 +282,11 @@ body.noClients .cliOpt{display:none!important}
 .cal .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-items:center}
 .cal .dots i{width:10px;height:10px;border-radius:50%;background:var(--dc,var(--muted));flex:none;box-sizing:border-box}
 .cal .dots i.c{width:13px;height:13px;border:2px solid var(--dc,var(--muted));box-shadow:inset 0 0 0 2px var(--surface)}
-.calLeg{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.calLeg{display:flex;gap:6px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
 .calLeg i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:-1px;box-sizing:border-box}
 .calLeg i.c{width:13px;height:13px;border:2px solid var(--fg);background:var(--fg);box-shadow:inset 0 0 0 2px var(--surface)}
 .cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
-.calSum{display:flex;gap:14px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.calSum{display:flex;gap:6px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .calSum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
 .calItem{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer}
 .calItem:last-child{border-bottom:0}
@@ -450,8 +450,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="calBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Calendario contenuti</h1>
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
-    <div class="calSum" id="calSum"></div>
-    <div class="calLeg"><span><i class="c"></i>Contenuto</span><span><i style="background:var(--fg)"></i>Nota o to-do</span></div>
+    <div class="calSum calLeg" id="calSum"></div>
     <div class="cal" id="calGrid"></div>
     <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><div id="calList"></div></div>
     <div class="card" id="calNoDateBox"><div class="head"><span class="fmt">In creazione, senza data</span></div><div id="calNoDate"></div></div>
@@ -875,7 +874,8 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
-  $("calSum").innerHTML=`<span><i style="background:var(--accent)"></i>Fatti: ${cnt("fatto")}</span><span><i style="background:#e0a100"></i>In creazione: ${cnt("lavoro")}</span><span><i style="background:#9aa59e"></i>Idee: ${cnt("idea")}</span>`;
+  const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="border-color:${c};background:${c}"></i>`;
+  $("calSum").innerHTML=`<span>${ring("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${ring("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${ring("#9aa59e")}Idea ${cnt("idea")}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
