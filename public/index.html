@@ -864,7 +864,7 @@ let calM=today().slice(0,7),calDay="";
 $("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
 $("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
 const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
-const ST_C={idea:"#9aa59e",lavoro:"var(--fg)",fatto:"var(--accent)"};
+const ST_C={idea:"#9aa59e",lavoro:"#e0a100",fatto:"var(--accent)"};
 const isoLocal=t=>{const d=new Date(t);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const calDate=n=>typeOf(n)==="contenuto"?(n.pub||""):isoLocal(n.at);
 function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
@@ -875,7 +875,7 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
-  $("calSum").innerHTML=`<span><i style="background:var(--accent)"></i>Fatti: ${cnt("fatto")}</span><span><i style="background:var(--fg)"></i>In creazione: ${cnt("lavoro")}</span><span><i style="background:#9aa59e"></i>Idee: ${cnt("idea")}</span>`;
+  $("calSum").innerHTML=`<span><i style="background:var(--accent)"></i>Fatti: ${cnt("fatto")}</span><span><i style="background:#e0a100"></i>In creazione: ${cnt("lavoro")}</span><span><i style="background:#9aa59e"></i>Idee: ${cnt("idea")}</span>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
