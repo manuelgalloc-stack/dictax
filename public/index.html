@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);
 .app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
 .app>section{width:100%}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font:400 30px/1 var(--serif);letter-spacing:-.01em}
+.brand{font:400 30px/1 var(--serif);letter-spacing:-.01em;background:none;border:0;padding:0;color:inherit;cursor:pointer}
 .brand span{color:var(--accent)}
 .creatorSw{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;font-weight:700;padding:9px 16px;border-radius:999px;cursor:pointer}
 .creatorSw[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
@@ -298,6 +298,8 @@ body.noClients .cliOpt{display:none!important}
 .kindSeg button[aria-pressed=true]{background:var(--surface);color:var(--t-contenuto);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 body.solo .agencyOnly{display:none!important}
 body:not(.solo) .soloOnly{display:none!important}
+.homeBtn{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent-strong);font:inherit;font-weight:700;font-size:17px;padding:12px 20px;border-radius:999px;cursor:pointer}
+.homeBtn svg{width:22px;height:22px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -325,7 +327,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
 <div class="app">
   <div class="top">
-    <div class="brand">Dict<span>ax</span></div>
+    <button class="brand" id="brandHome" aria-label="Dictax, torna a tutte le note">Dict<span>ax</span></button>
     <div class="topR"><button class="creatorSw" id="creatorSw" aria-pressed="false" title="Aggiunge formati social, voce di brand e cartelle per i contenuti"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg> Creator <span class="knob" aria-hidden="true"></span></button><button class="accBtn" id="accBtn" aria-label="Il tuo profilo" title="Il tuo profilo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button></div>
   </div>
 
@@ -396,7 +398,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
   <!-- DETTAGLIO -->
   <section id="v-detail" class="app" style="gap:14px" hidden>
-    <button class="back" id="back">← Tutte le note</button>
+    <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
     <div class="organize" id="dOrg">
       <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
@@ -453,7 +455,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
   <!-- CALENDARIO CONTENUTI -->
   <section id="v-cal" class="app" style="gap:14px" hidden>
-    <button class="back" id="calBack">← Tutte le note</button>
+    <button class="homeBtn" id="calBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Calendario contenuti</h1>
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
     <div class="calSum" id="calSum"></div>
@@ -464,7 +466,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
   <!-- ACCOUNT -->
   <section id="v-account" class="app" style="gap:14px" hidden>
-    <button class="back" id="accBack">← Indietro</button>
+    <button class="homeBtn" id="accBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Il tuo profilo</h1>
     <div style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Come usi Dictax?</span>
@@ -806,7 +808,7 @@ async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_
 async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
 function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||""}
 $("accBtn").onclick=async()=>{show("account");renderAccount();try{await loadSb()}catch{$("accStat").textContent="Serve la connessione a internet."}};
-$("accBack").onclick=()=>show("home");
+$("accBack").onclick=()=>show("home");$("brandHome").onclick=()=>{$("sheet").hidden=true;show("home")};
 $("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(email)){$("accStat").textContent="Scrivi un'email valida.";$("accEmail").focus();return}
   const b=$("accSend");b.disabled=true;$("accStat").textContent="Invio in corso…";
   try{await loadSb();const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+"/",shouldCreateUser:true}});
