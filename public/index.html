@@ -281,10 +281,10 @@ body.noClients .cliOpt{display:none!important}
 .cal button b{font-size:14px;font-weight:700}
 .cal .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-items:center}
 .cal .dots i{width:10px;height:10px;border-radius:50%;background:var(--dc,var(--muted));flex:none;box-sizing:border-box}
-.cal .dots i.c{width:13px;height:13px;border:2px solid var(--dc,var(--muted));box-shadow:inset 0 0 0 2px var(--surface)}
+.cal .dots i.c{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);margin:1px}
 .calLeg{display:flex;gap:6px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
 .calLeg i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:-1px;box-sizing:border-box}
-.calLeg i.c{width:13px;height:13px;border:2px solid var(--fg);background:var(--fg);box-shadow:inset 0 0 0 2px var(--surface)}
+.calLeg i.c{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);margin-left:1px;margin-right:7px}
 .cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
 .calSum{display:flex;gap:6px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .calSum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
@@ -874,7 +874,7 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
-  const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="border-color:${c};background:${c}"></i>`;
+  const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="background:${c}"></i>`;
   $("calSum").innerHTML=`<span>${ring("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${ring("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${ring("#9aa59e")}Idea ${cnt("idea")}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
