@@ -279,8 +279,12 @@ body.noClients .cliOpt{display:none!important}
 .cal button.today{border-color:var(--accent);border-width:2px}
 .cal button[aria-pressed=true]{background:var(--deck);color:var(--deck-fg)}
 .cal button b{font-size:14px;font-weight:700}
-.cal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
-.cal .dots i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.cal .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;align-items:center}
+.cal .dots i{width:10px;height:10px;border-radius:50%;background:var(--dc,var(--muted));flex:none;box-sizing:border-box}
+.cal .dots i.c{width:13px;height:13px;border:2px solid var(--dc,var(--muted));box-shadow:inset 0 0 0 2px var(--surface)}
+.calLeg{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.calLeg i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:-1px;box-sizing:border-box}
+.calLeg i.c{width:13px;height:13px;border:2px solid var(--t-contenuto);background:var(--t-contenuto);box-shadow:inset 0 0 0 2px var(--surface)}
 .cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
 .calSum{display:flex;gap:14px;font-size:14px;color:var(--muted);flex-wrap:wrap}
 .calSum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
@@ -445,6 +449,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <h1>Calendario contenuti</h1>
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
     <div class="calSum" id="calSum"></div>
+    <div class="calLeg"><span><i class="c"></i>Contenuto</span><span><i style="background:var(--t-nota)"></i>Nota</span><span><i style="background:var(--t-attivita)"></i>To-do list</span></div>
     <div class="cal" id="calGrid"></div>
     <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><div id="calList"></div></div>
     <div class="card" id="calNoDateBox"><div class="head"><span class="fmt">In creazione, senza data</span></div><div id="calNoDate"></div></div>
@@ -850,21 +855,28 @@ let calM=today().slice(0,7),calDay="";
 $("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
 $("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
 const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
-function calRow(n){const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
+const ST_C={idea:"var(--muted)",lavoro:"#e0a100",fatto:"var(--accent)"};
+const isoLocal=t=>{const d=new Date(t);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const calDate=n=>typeOf(n)==="contenuto"?(n.pub||""):isoLocal(n.at);
+function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
+    r.querySelector("small").textContent=[new Date(n.at).toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}),n.client||""].filter(Boolean).join(" · ");
+    const p=r.querySelector(".pill");p.textContent=TYPES[typeOf(n)].n;p.style.cssText=`background:${TYPES[typeOf(n)].color};color:#fff`;r.onclick=()=>openNote(n);return r}
+  const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
-function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM);
+function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   $("calSum").innerHTML=`<span><i style="background:var(--accent)"></i>Fatti: ${cnt("fatto")}</span><span><i style="background:#e0a100"></i>In creazione: ${cnt("lavoro")}</span><span><i style="background:var(--muted)"></i>Idee: ${cnt("idea")}</span>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
     const b=document.createElement("button");b.innerHTML="<b></b><span class='dots'></span>";b.querySelector("b").textContent=d.getDate();if(ds.slice(0,7)!==calM)b.classList.add("out");if(ds===td)b.classList.add("today");b.setAttribute("aria-pressed",ds===calDay);
-    const items=all.filter(n=>n.pub===ds);items.slice(0,4).forEach(n=>{const x=document.createElement("i");x.className=n.st||"idea";b.querySelector(".dots").append(x)});b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+items.length+" contenuti");
+    const items=every.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?ST_C[n.st||"idea"]:TYPES[typeOf(n)].color);b.querySelector(".dots").append(x)});
+    const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
-  const L=$("calList");L.innerHTML="";const list=(calDay?all.filter(n=>n.pub===calDay):inM).slice().sort((a,b)=>a.pub.localeCompare(b.pub));
+  const L=$("calList");L.innerHTML="";const list=(calDay?every.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
-  if(!list.length)L.innerHTML='<p class="status">Nessun contenuto con questa data. Apri un contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
+  if(!list.length)L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
   const nd=all.filter(n=>!n.pub&&n.st==="lavoro");$("calNoDateBox").hidden=!nd.length;$("calNoDate").innerHTML="";nd.forEach(n=>$("calNoDate").append(calRow(n)))}
 
 /* Clienti e posizionamento (sistema ManuLab) */
