@@ -324,7 +324,7 @@ body:not(.solo) .soloOnly{display:none!important}
 #archBtnD{color:var(--danger);border:2px solid var(--danger);font-weight:700}
 .fatteTab{color:var(--danger)!important;font-weight:700}
 .fatteTab[aria-pressed="true"]{background:var(--danger)!important;border-color:var(--danger)!important;color:#fff!important}
-.archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:6px}
+.archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:10px;color:var(--danger)!important;border:2px solid var(--danger)!important;font-weight:700;padding:12px 22px}
 .archHead{grid-column:1/-1;font-weight:700;color:var(--muted);font-size:15px}
 .note.isArch{opacity:.75}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -1090,7 +1090,7 @@ function renderTabs(){const T=$("tabs");T.innerHTML="";
   const opts=[["tutte","Tutte",""],["nota","Note",TYPES.nota.color],["attivita","To-do",TYPES.attivita.color]];if(mode==="creator")opts.push(["contenuto","Contenuti",TYPES.contenuto.color]);
   if(!opts.some(o=>o[0]===tfilter))tfilter="tutte";
   opts.forEach(([v,t,c])=>{const b=document.createElement("button");b.setAttribute("aria-pressed",!showArch&&v===tfilter);if(c){const d=document.createElement("span");d.className="dot";d.style.background=c;b.append(d)}b.append(t);b.onclick=()=>{tfilter=v;showArch=false;renderTabs();renderList()};T.append(b)});
-  const nF=allNotes().filter(n=>n.arch).length;if(nF||showArch){const f=document.createElement("button");f.className="fatteTab";f.setAttribute("aria-pressed",showArch);f.textContent=`✓ Fatte ${nF}`;f.onclick=()=>{showArch=!showArch;tfilter="tutte";renderTabs();renderList()};T.append(f)}
+
   const cl=clients(),S=$("clientFilter");S.innerHTML="";[["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
   if(!cl.includes(cfilter))cfilter="";S.value=cfilter;S.hidden=!cl.length;
   const D=$("clientList");D.innerHTML="";cl.forEach(c=>{const o=document.createElement("option");o.value=c;D.append(o)})}
@@ -1111,7 +1111,7 @@ const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client
 function renderList(){const L=$("list");L.innerHTML="";
   const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const ns=base.filter(n=>query?true:showArch?n.arch:!n.arch);
-  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
+  const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
   if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
   ns.forEach(n=>{const w=document.createElement("div");w.className="swipeWrap";const del=document.createElement("button");del.className="swipeDel";del.innerHTML="🗑<span>Elimina</span>";del.setAttribute("aria-label","Elimina "+n.title);
