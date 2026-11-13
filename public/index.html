@@ -290,8 +290,8 @@ body.noClients .cliOpt{display:none!important}
 .ideaCard{display:flex;flex-direction:column;gap:6px}
 .ideaCard .ph{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t-contenuto)}
 .ideaCard b{font-size:16px}.ideaCard small{color:var(--muted);font-size:14px;line-height:1.4}
-.kindSeg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:5px}
-.kindSeg button{border:0;background:none;border-radius:12px;padding:11px 6px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:var(--muted)}
+.kindSeg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:5px}
+.kindSeg button{border:0;background:none;border-radius:12px;padding:10px 4px;font:inherit;font-weight:700;font-size:14px;line-height:1.25;cursor:pointer;color:var(--muted)}
 .kindSeg button[aria-pressed=true]{background:var(--surface);color:var(--t-contenuto);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 body.solo .agencyOnly{display:none!important}
 body:not(.solo) .soloOnly{display:none!important}
@@ -464,8 +464,8 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="back" id="accBack">← Indietro</button>
     <h1>Il tuo profilo</h1>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <span class="lbl">Come usi Creator?</span>
-      <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Creator"><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Gestisco clienti</button></div>
+      <span class="lbl">Come usi Dictax?</span>
+      <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Uso personale</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
       <p class="help" id="kindHelp"></p>
     </div>
     <div id="accOut" style="display:flex;flex-direction:column;gap:14px">
@@ -548,6 +548,17 @@ body:not(.solo) .soloOnly{display:none!important}
   </section>
 </div>
 
+<div class="sheetWrap" id="welcome" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wTitle">
+    <h2 id="wTitle">Benvenuto in Dictax</h2>
+    <p class="lead" style="margin:0">Come userai Dictax? Potrai cambiarlo quando vuoi dal profilo, in alto a destra.</p>
+    <div class="typeBtns">
+      <button class="typeBtn t-nota" data-u="personale"><span style="grid-row:1/3;font-size:30px">📝</span><b>Uso personale</b><small>Note, liste di cose da fare e conti</small></button>
+      <button class="typeBtn t-contenuto" data-u="solo"><span style="grid-row:1/3;font-size:30px">👤</span><b>Creator singolo</b><small>Creo contenuti social per me</small></button>
+      <button class="typeBtn t-attivita" data-u="agency"><span style="grid-row:1/3;font-size:30px">👥</span><b>Creator con clienti</b><small>Creo contenuti per i miei clienti</small></button>
+    </div>
+  </div>
+</div>
 <div class="sheetWrap" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h2 id="sheetTitle">Che cos'è?</h2>
@@ -766,7 +777,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
@@ -894,11 +905,13 @@ async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me
 
 /* Creator: singolo o gestione clienti */
 const qClientOn=()=>mode==="creator"&&!isSolo()&&useClients&&clients().length>0;
-function applyKind(){$("kindHelp").textContent=(ckind==="solo"?"Crei contenuti per te: niente clienti, il tuo posizionamento vale per tutti i contenuti.":"Crei contenuti per i clienti: ognuno ha il suo posizionamento e in Chiedi scegli per chi.")+(mode==="creator"?"":" Vale quando Creator è acceso.");document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
-  if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===ckind));
+const usoNow=()=>mode==="creator"?ckind:"personale";
+function setUso(u){raw.set("uso",u);if(u!=="personale"){ckind=u;raw.set("ckind",u)}const m=u==="personale"?"note":"creator";if(m!==mode)setMode(m);else applyKind();renderList()}
+document.querySelectorAll("#welcome .typeBtn").forEach(b=>b.onclick=()=>{$("welcome").hidden=true;setUso(b.dataset.u);show(b.dataset.u==="agency"?"voice":"home")});
+function applyKind(){const u=usoNow();$("kindHelp").textContent=u==="personale"?"Note, liste e conti. Accendi Creator in alto quando vuoi creare contenuti social.":u==="solo"?"Crei contenuti per te: niente clienti, il tuo posizionamento vale per tutti i contenuti.":"Crei contenuti per i clienti: ognuno ha il suo posizionamento e in Chiedi scegli per chi.";document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
+  if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===u));
   const vb=document.querySelector('#dockNav button[data-view=voice] span');if(vb)vb.textContent=isSolo()?"Brand":"Clienti"}
-document.querySelectorAll("#kindSeg button").forEach(b=>b.onclick=()=>{ckind=b.dataset.k;raw.set("ckind",ckind);applyKind();renderList();
-});
+document.querySelectorAll("#kindSeg button").forEach(b=>b.onclick=()=>{setUso(b.dataset.k);show("account")});
 function renderQClient(){const on=qClientOn();$("qClientRow").hidden=!on;if(!on)return;const S=$("qClient"),cur0=S.value;S.innerHTML='<option value="">Tutti i clienti</option>';
   clients().forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;S.append(o)});S.value=clients().includes(cur0)?cur0:"";renderSugg()}
 $("qClient").onchange=()=>{turns=[];$("chat").innerHTML="";renderSugg()};
@@ -1133,7 +1146,7 @@ $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
-document.querySelectorAll(".typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Per quali canali?";$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
@@ -1220,7 +1233,7 @@ $("analyze").onclick=async()=>{
 /* Avvio */
 $("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
-loadMode();applyMode();show("home");
+loadMode();applyMode();show("home");if(!raw.get("uso",""))$("welcome").hidden=false;
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
   if(!h.rewrite)$("status").textContent="Per ora puoi registrare e trascrivere. La riscrittura con l'AI si attiva quando sul server c'è la chiave di Claude.";
