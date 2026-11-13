@@ -303,6 +303,8 @@ body:not(.solo) .soloOnly{display:none!important}
 .cliChips{margin-top:6px}
 .cliChips .chip{font-weight:600}
 .cliChips .chip.new{border-style:dashed;color:var(--accent-strong);background:var(--surface)}
+.chip.typeChip{font-weight:700}
+.chip.typeChip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -360,31 +362,6 @@ body:not(.solo) .soloOnly{display:none!important}
       <textarea id="transcript" rows="3"></textarea>
       <button class="btn big" id="go">Crea nota</button>
       <div class="status" id="status" aria-live="polite"></div>
-      <details class="style" id="styleBox">
-        <summary>Altre opzioni <span id="styleSum"></span></summary>
-        <div class="body">
-          <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
-          <label class="toggle"><input type="checkbox" id="useClients"> Usa i clienti (etichetta e filtro per cliente)</label>
-          <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
-
-          <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
-          <span class="lbl">Quanto riscrivere</span>
-          <div class="seg" id="level" style="grid-template-columns:1fr 1fr"></div>
-          <p class="help" id="levelHelp"></p>
-          <span class="lbl">Stile <span class="pro planBadge"></span></span>
-          <div class="opts" id="wstyle"></div>
-          <div class="newstyle" id="newStyle" hidden>
-            <label class="lbl" for="nsName">Nome dello stile</label>
-            <input type="text" id="nsName" placeholder="Es. Verbale riunione">
-            <label class="lbl" for="nsRule">Come deve scrivere</label>
-            <textarea id="nsRule" rows="3" placeholder="Es. Elenca decisioni, responsabili e scadenze. Tono formale, niente aggettivi."></textarea>
-            <div class="row"><button class="btn ghost sm" id="nsCancel">Annulla</button><button class="btn sm" id="nsSave">Salva stile</button></div>
-          </div>
-          <label class="lbl" for="len">Lunghezza</label>
-          <input type="range" id="len" min="0" max="4" step="1">
-          <p class="help" id="lenHelp"></p>
-                </div>
-      </details>
     </div>
 
     </div>
@@ -404,7 +381,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
     <div class="organize" id="dOrg">
-      <div><label class="lbl" for="dType">Tipo</label><select id="dType"></select></div>
+      <div style="grid-column:1/-1"><span class="lbl">Tipo</span><select id="dType" hidden></select><div class="chips" id="dTypeChips" role="group" aria-label="Tipo di nota" style="margin-top:6px"></div></div>
       <div class="cliOpt" style="grid-column:1/-1"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
     </div>
     <div id="dStBox" hidden style="display:flex;flex-direction:column;gap:8px">
@@ -417,9 +394,8 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
     <div class="card" id="moreFmt"><span class="lbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
     <div class="row" style="justify-content:flex-start">
-      <button class="btn ghost sm" id="mdCopy">Copia in Markdown</button>
-      <button class="btn ghost sm" id="mdSave">Esporta per Obsidian (.md)</button>
-      <button class="btn danger sm" id="del">Elimina</button>
+      <button class="btn" id="share">📤 Condividi</button>
+      <button class="btn ghost sm" id="mdSave">Scarica file .md</button>
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
     <div class="composer" id="appendBox">
@@ -427,6 +403,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
       <div class="row"><span class="status" id="aStatus" aria-live="polite"></span><button class="btn" id="appendGo">Aggiungi e riscrivi</button></div>
     </div>
+    <button class="btn danger sm" id="del" style="align-self:center;margin-top:10px">Elimina nota</button>
   </section>
 
   <!-- UNISCI -->
@@ -476,6 +453,32 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Uso personale</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
       <p class="help" id="kindHelp"></p>
     </div>
+      <details class="style" id="styleBox" open>
+        <summary>⚙️ Impostazioni <span id="styleSum"></span></summary>
+        <div class="body">
+          <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
+          <label class="toggle"><input type="checkbox" id="useClients"> Usa i clienti (etichetta e filtro per cliente)</label>
+          <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
+
+          <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
+          <span class="lbl">Quanto riscrivere</span>
+          <div class="seg" id="level" style="grid-template-columns:1fr 1fr"></div>
+          <p class="help" id="levelHelp"></p>
+          <span class="lbl">Stile <span class="pro planBadge"></span></span>
+          <div class="opts" id="wstyle"></div>
+          <div class="newstyle" id="newStyle" hidden>
+            <label class="lbl" for="nsName">Nome dello stile</label>
+            <input type="text" id="nsName" placeholder="Es. Verbale riunione">
+            <label class="lbl" for="nsRule">Come deve scrivere</label>
+            <textarea id="nsRule" rows="3" placeholder="Es. Elenca decisioni, responsabili e scadenze. Tono formale, niente aggettivi."></textarea>
+            <div class="row"><button class="btn ghost sm" id="nsCancel">Annulla</button><button class="btn sm" id="nsSave">Salva stile</button></div>
+          </div>
+          <label class="lbl" for="len">Lunghezza</label>
+          <input type="range" id="len" min="0" max="4" step="1">
+          <p class="help" id="lenHelp"></p>
+                </div>
+      </details>
+
     <div id="accOut" style="display:flex;flex-direction:column;gap:14px">
       <p class="lead">Entra con la tua email: così ritrovi note, conti e voce di brand sia sul telefono sia sul computer. Niente password.</p>
       <div class="composer">
@@ -624,11 +627,11 @@ const FORMATS={
 const BASE_STYLES={chiaro:{n:"Chiaro e semplice"},descrittivo:{n:"Descrittivo"},elenco:{n:"A elenco"},professionale:{n:"Professionale"},amichevole:{n:"Amichevole"},mio:{n:"Come scrivo io"},diretto:{n:"Diretto"},ironico:{n:"Ironico"},ispirazionale:{n:"Ispirazionale"}};
 const MODES={
   note:{badge:"Pro · gratis",formats:["pulito","email","todo","verbale","riassunto","diario"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio"],folders:["Idee","Lavoro","Personale","Diario"],
-    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
-    qph:"Es. Cosa devo fare questa settimana?",sugg:["Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
+    qph:"Es. Cosa devo fare questa settimana?",sugg:["Unisci in un riassunto le note di questa settimana","Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
   creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
-    tabs:[["home","Note"],["merge","Unisci"],["ask","Chiedi"],["conti","Conti"],["voice","Clienti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"],["voice","Clienti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
@@ -695,13 +698,13 @@ const picked=new Set();
 function loadMode(){
   st=store.get("style",{level:"leggera",ws:mode==="creator"?"mio":"chiaro",len:2});if(!LEVELS[st.level])st.level="completa";
   customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
-  $("useFid").checked=store.get("fid",true);
+  $("useFid").checked=store.get("fid",false);
   job="generico";
   selected=new Set(store.get("cformats",["linkedin","instagram"]).filter(k=>SOCIAL.includes(k)));tfilter="tutte";cfilter="";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
 }
 const fmts=()=>[...JOBS[job].f,...M().formats];
 const folders=()=>[...M().folders,...customFolders];
-const examples=()=>(mode==="creator"?[...EXAMPLES.note,...EXAMPLES.creator]:EXAMPLES.note).filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
+const examples=()=>store.get("notes",[]).length>=3?[]:(mode==="creator"?[...EXAMPLES.note,...EXAMPLES.creator]:EXAMPLES.note).filter(e=>!exEdits[e.id]?.deleted).map(e=>({...e,...(exEdits[e.id]||{})}));
 const allNotes=()=>[...store.get("notes",[]),...examples()];
 const allStyles=()=>{const o={};M().styles.forEach(k=>o[k]=BASE_STYLES[k]);customStyles.forEach(s=>o[s.id]={n:s.n,rule:s.rule,custom:true});return o};
 /* Server di Dictax */
@@ -935,6 +938,10 @@ function cliChips(inp,onPick){let box=inp.nextElementSibling;if(!box||!box.class
   list.forEach(c=>mk(c,c===cur0,()=>{inp.value=c;inp.dataset.new="";onPick(c);cliChips(inp,onPick)}));
   mk("+ Nuovo",false,()=>{inp.dataset.new="1";inp.value="";inp.hidden=false;inp.placeholder="Scrivi il nome del cliente";inp.focus();box.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"))},"new")}
 
+/* "Ricomincia" solo quando c'è qualcosa da ricominciare */
+function updReset(){const r=$("reset");if(r)r.style.visibility=(recOn||$("transcript").value.trim()||$("timer").textContent!=="00:00")?"visible":"hidden"}
+setInterval(updReset,400);
+
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
@@ -1088,11 +1095,11 @@ async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textCo
 function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
-  const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);
+  const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);const TC=$("dTypeChips");TC.innerHTML="";[...T.options].forEach(o=>{const b=document.createElement("button");b.type="button";b.className="chip typeChip";b.textContent=o.textContent;b.style.setProperty("--c",TYPES[o.value].color);b.setAttribute("aria-pressed",o.value===T.value);b.onclick=()=>{if(T.value===o.value)return;T.value=o.value;T.dispatchEvent(new Event("change"))};TC.append(b)});
   $("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
 document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
-$("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);renderHead()};
+$("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
 $("dClient").onchange=e=>{cur.client=e.target.value.trim();e.target.dataset.new="";saveNote(cur);renderHead()};
 function renderMore(){const M2=$("moreChips");M2.innerHTML="";const list=fmts().filter(k=>!(k in cur.out));$("moreFmt").hidden=!list.length;
   list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
@@ -1128,7 +1135,8 @@ function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
   return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ntipo: ${TYPES[typeOf(n)].n}\ncliente: ${n.client||""}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
     orderedOut(n).map(k=>[k,n.out[k]]).map(([k,t])=>`## ${fmtName(k)}\n\n${t}\n`).join("\n")+`\n## Trascrizione\n\n${n.tr}\n`}
-$("mdCopy").onclick=()=>copyText(toMarkdown(cur),$("mdCopy"));
+$("share").onclick=async()=>{const t=cur.title+"\n\n"+orderedOut(cur).map(k=>cur.out[k]).join("\n\n");
+  if(navigator.share){try{await navigator.share({title:cur.title,text:t});return}catch(e){if(e?.name==="AbortError")return}}copyText(t,$("share"))};
 $("mdSave").onclick=()=>{const name=(cur.title.replace(/[\\/:*?"<>|]/g,"").slice(0,80)||"nota")+".md";
   const url=URL.createObjectURL(new Blob([toMarkdown(cur)],{type:"text/markdown;charset=utf-8"}));
   const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
@@ -1167,7 +1175,7 @@ $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
-document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Per quali canali?";$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
