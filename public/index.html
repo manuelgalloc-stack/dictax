@@ -608,6 +608,8 @@ body:not(.solo) .soloOnly{display:none!important}
         <span class="lbl" id="channelsLbl">Cosa creo?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div>
       </div>
       <button class="btn big" id="contentGo" style="background:var(--t-contenuto);width:100%">✨ Crea contenuto</button>
+      <button class="btn ghost big" id="contentPlain" style="width:100%;margin-top:8px;color:var(--t-contenuto);border-color:var(--t-contenuto)">📝 Annota soltanto (già fatto)</button>
+      <p class="help" style="text-align:center;margin:4px 0 0">Salva il testo così com'è, senza riscriverlo, e lo segna come Fatto oggi.</p>
       <span class="lbl" hidden>Come la scrivo?</span>
       <div class="levelBtns" hidden>
         <button class="levelBtn" data-l="leggera"><b>Semplice</b><small>Sistema solo esitazioni e ripetizioni: resta com'è, è la più veloce</small></button>
@@ -1122,7 +1124,7 @@ function saveNote(n){n.up=Date.now();if(n.at&&n.up-n.at>60000)n.prog=n.up;
 /* Dettaglio */
 function outCard(k,text,n){const d=document.createElement("article");d.className="card";
   d.innerHTML='<div class="head"><span class="fmt"></span><button class="btn ghost sm">Copia</button></div><div class="txt"></div><div class="fid"></div>';
-  d.querySelector(".fmt").textContent=fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
+  d.querySelector(".fmt").textContent=n?.plain&&k==="pulito"?"Il tuo testo":fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
   b.onclick=()=>copyText(t.textContent,b,t);
   const c={el:d,txt:t,fid:d.querySelector(".fid")};
   if(false&&n&&mode==="creator"&&CREATOR_PRO&&SOCIAL.includes(k)){const mb=document.createElement("button");mb.className="mlBtn";
@@ -1231,6 +1233,10 @@ document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.d
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
+$("contentPlain").onclick=()=>{const tr=$("transcript").value.trim();if(!tr)return;const client=clientsOn()?$("sClient").value.trim():"";
+  const labels=PLATFORMS[plat].f.filter(([k])=>selected.has(k)).map(([,l])=>l);const words=tr.replace(/\s+/g," ").split(" ");
+  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{pulito:tr},type:"contenuto",client,title:words.slice(0,7).join(" ")+(words.length>7?"…":""),tags:[PLATFORMS[plat].n,...labels],st:"fatto",pub:today(),plain:true};
+  closeSheet();$("transcript").value="";saveNote(n);renderList();openNote(n)};
 $("contentGo").onclick=()=>{const f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}createNote("contenuto",f)};
 document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pendingType;if(!t)return;let f=TYPES[t].f;
   if(t==="contenuto"){f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}}
