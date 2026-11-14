@@ -1,6 +1,6 @@
 # Dictax
 
-Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for changes in chat; Claude edits the code and pushes to `main`. Cloudflare Pages deploys `main` automatically. Write replies to the owner in Italian, plain language, no jargon.
+Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for changes in chat; Claude edits the code and pushes to `main`. Cloudflare Pages deploys `main` automatically (GitHub app access fixed on 2026-11-14; if a push does not show up, trigger a deploy via the Cloudflare API: POST `/accounts/{id}/pages/projects/dictax/deployments` with an empty form). Write replies to the owner in Italian, plain language, no jargon.
 
 ## Stack
 - `public/index.html`: the whole front end (single file: HTML, CSS, JS). No build step, no framework.
