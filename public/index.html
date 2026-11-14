@@ -327,6 +327,27 @@ body:not(.solo) .soloOnly{display:none!important}
 .archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:10px;color:var(--danger)!important;border:2px solid var(--danger)!important;font-weight:700;padding:12px 22px}
 .archHead{grid-column:1/-1;font-weight:700;color:var(--muted);font-size:15px}
 .note.isArch{opacity:.75}
+.pendBox,.todayBox{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.pendBox{border-color:#e0a100;background:#fff8e6}
+.pendBox .row{gap:8px}
+.todayBox h3{margin:0;font:400 22px/1.1 var(--serif)}
+.todayItem{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;color:inherit;text-align:left;width:100%}
+.todayItem:first-of-type{border-top:0}
+.todayItem span{flex:1;min-width:0;overflow-wrap:anywhere}
+.todayItem small{color:var(--muted);font-size:13px}
+.todayItem .late{color:var(--danger);font-weight:700}
+.planBanner{display:flex;align-items:center;gap:10px;background:#f3ecfd;border:2px solid var(--t-contenuto);color:var(--t-contenuto);border-radius:14px;padding:10px 14px;font-weight:700}
+.planBanner span{flex:1}.planBanner button{border:0;background:none;font-size:18px;color:inherit;cursor:pointer}
+.due{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted);background:var(--paper);white-space:nowrap;cursor:pointer;font-family:inherit}
+.due.late{color:#fff;background:var(--danger);border-color:var(--danger)}
+.due.today{color:#7a5600;background:#fff4d6;border-color:#e0a100}
+.due.add{opacity:.6}
+.icsBtn{border:0;background:none;cursor:pointer;font-size:16px;padding:2px 4px}
+.slideRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-6px 0 14px}
+.audioBox{display:flex;flex-direction:column;gap:6px}.audioBox audio{width:100%}
+.guideCard{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center}
+.guideCard .gIcon{font-size:52px;line-height:1}
+.guideDots{display:flex;gap:6px}.guideDots i{width:8px;height:8px;border-radius:50%;background:var(--line)}.guideDots i.on{background:var(--accent)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .typeTabs{display:flex;gap:8px;flex-wrap:wrap}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
@@ -380,6 +401,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="spacer"></div>
 
     <div class="composer" id="composer">
+      <div class="planBanner" id="planBanner" hidden><span></span><button id="planX" aria-label="Annulla la data">✕</button></div>
       <label class="lbl" for="transcript">Oppure scrivi o incolla</label>
       <textarea id="transcript" rows="3"></textarea>
       <button class="btn big" id="go">Crea nota</button>
@@ -394,6 +416,8 @@ body:not(.solo) .soloOnly{display:none!important}
       <select id="clientFilter" class="cliOpt" aria-label="Filtra per cliente"></select>
     </div>
     <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
+    <div class="pendBox" id="pendBox" hidden><b id="pendTxt"></b><p class="help" style="margin:0">L'audio è salvato su questo telefono: non si perde.</p><div class="row"><button class="btn sm ghost" id="pendDel">Elimina</button><button class="btn sm" id="pendGo">🔁 Trascrivi ora</button></div></div>
+    <div class="todayBox" id="todayBox" hidden><h3>Oggi</h3><div id="todayList"></div></div>
     <div class="list" id="list"></div>
     </div>
   </section>
@@ -463,7 +487,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
     <div class="calSum calLeg" id="calSum"></div>
     <div class="cal" id="calGrid"></div>
-    <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><div id="calList"></div></div>
+    <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><div id="calList"></div></div>
     <div class="card" id="calNoDateBox"><div class="head"><span class="fmt">In creazione, senza data</span></div><div id="calNoDate"></div></div>
   </section>
 
@@ -518,6 +542,13 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="card"><div class="head"><span class="fmt">Sei dentro come</span></div><b id="accMail" style="font-size:18px;overflow-wrap:anywhere"></b><p class="status" id="accSync"></p></div>
       <div class="row"><button class="btn ghost" id="accLogout">Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
       <p class="help">Uscendo, le note restano su questo dispositivo. Entrando con la stessa email su un altro telefono o computer, ritrovi tutto.</p>
+    </div>
+    <div class="card" style="gap:10px">
+      <div class="head"><span class="fmt">I tuoi dati</span></div>
+      <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
+      <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
+      <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
+      <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
   </section>
 
@@ -582,6 +613,14 @@ body:not(.solo) .soloOnly{display:none!important}
   </section>
 </div>
 
+<div class="sheetWrap" id="guide" hidden>
+  <div class="sheet guideCard" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="gIcon" id="guideIcon"></div><h2 id="guideTitle" style="margin:0"></h2><p class="lead" id="guideText" style="margin:0"></p>
+    <div class="guideDots" id="guideDots"></div>
+    <button class="btn big" id="guideNext" style="width:100%">Avanti</button>
+    <button class="back" id="guideSkip" style="align-self:center">Salta</button>
+  </div>
+</div>
 <div class="sheetWrap" id="welcome" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wTitle">
     <h2 id="wTitle">Benvenuto in Dictax</h2>
@@ -617,6 +656,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div id="contentPick" hidden>
         <span class="lbl">Per quale piattaforma?</span><div class="chips platChips" id="platforms" style="margin-block:8px 14px"></div>
         <span class="lbl" id="channelsLbl">Cosa creo?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div>
+        <div class="slideRow" id="slideRow" hidden><span class="lbl" style="margin:0">Quante slide?</span><div class="chips" id="slideChips"></div></div>
       </div>
       <button class="btn big" id="contentGo" style="background:var(--t-contenuto);width:100%">✨ Crea contenuto</button>
       <button class="btn ghost big" id="contentPlain" style="width:100%;margin-top:8px;color:var(--t-contenuto);border-color:var(--t-contenuto)">✍️ Manuale</button>
@@ -897,6 +937,7 @@ function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents()
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?every.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
+  $("calPlan").hidden=!calDay||calDay<today();
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
   if(!list.length)L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
   const nd=all.filter(n=>!n.pub&&n.st==="lavoro");$("calNoDateBox").hidden=!nd.length;$("calNoDate").innerHTML="";nd.forEach(n=>$("calNoDate").append(calRow(n)))}
@@ -967,7 +1008,7 @@ async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me
 const qClientOn=()=>mode==="creator"&&!isSolo()&&useClients&&clients().length>0;
 const usoNow=()=>mode==="creator"?ckind:"personale";
 function setUso(u){raw.set("uso",u);if(u!=="personale"){ckind=u;raw.set("ckind",u)}const m=u==="personale"?"note":"creator";if(m!==mode)setMode(m);else applyKind();renderList()}
-document.querySelectorAll("#welcome .typeBtn").forEach(b=>b.onclick=()=>{$("welcome").hidden=true;setUso(b.dataset.u);show(b.dataset.u==="agency"?"voice":"home")});
+document.querySelectorAll("#welcome .typeBtn").forEach(b=>b.onclick=()=>{$("welcome").hidden=true;setUso(b.dataset.u);show("home");if(!raw.get("guideDone",false))guideShow(0)});
 function applyKind(){const u=usoNow();$("kindHelp").textContent=u==="personale"?"Note, liste e conti. Accendi Creator in alto quando vuoi creare contenuti social.":u==="solo"?"Crei contenuti per te: niente clienti, il tuo posizionamento vale per tutti i contenuti.":"Crei contenuti per i clienti: ognuno ha il suo posizionamento e in Chiedi scegli per chi.";document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
   if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===u));
   const vb=document.querySelector('#dockNav button[data-view=voice] span');if(vb)vb.textContent=isSolo()?"Brand":"Clienti"}
@@ -989,6 +1030,61 @@ function cliChips(inp,onPick){let box=inp.nextElementSibling;if(!box||!box.class
 /* "Ricomincia" solo quando c'è qualcosa da ricominciare */
 function updReset(){const r=$("reset");if(r)r.style.visibility=(recOn||$("transcript").value.trim()||$("timer").textContent!=="00:00")?"visible":"hidden"}
 setInterval(updReset,400);
+
+/* Registrazioni salvate sul telefono (IndexedDB) */
+let lastAudio=null,planDate=null;
+const audDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open("dictax-audio",1);r.onupgradeneeded=()=>r.result.createObjectStore("a");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
+async function audSet(k,b){const d=await audDB();return new Promise((ok,ko)=>{const t=d.transaction("a","readwrite");t.objectStore("a").put(b,k);t.oncomplete=ok;t.onerror=()=>ko(t.error)})}
+async function audGet(k){try{const d=await audDB();return await new Promise(ok=>{const q=d.transaction("a").objectStore("a").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch{return null}}
+async function audDel(k){try{const d=await audDB();d.transaction("a","readwrite").objectStore("a").delete(k)}catch{}}
+async function audKeys(){try{const d=await audDB();return await new Promise(ok=>{const q=d.transaction("a").objectStore("a").getAllKeys();q.onsuccess=()=>ok(q.result||[]);q.onerror=()=>ok([])})}catch{return[]}}
+async function audTrim(){const keep=new Set([...raw.get("audioPend",[]),...store.get("notes",[]).map(n=>n.audio).filter(Boolean)]);const ks=(await audKeys()).filter(k=>!keep.has(k));
+  const used=store.get("notes",[]).filter(n=>n.audio).sort((a,b)=>b.at-a.at).slice(40).map(n=>n.audio);for(const k of ks)audDel(k);for(const k of used)audDel(k)}
+const addPend=k=>{const a=raw.get("audioPend",[]);if(!a.includes(k)){a.push(k);raw.set("audioPend",a)}};
+const delPend=k=>raw.set("audioPend",raw.get("audioPend",[]).filter(x=>x!==k));
+function renderPend(){const a=raw.get("audioPend",[]);$("pendBox").hidden=!a.length;if(a.length)$("pendTxt").textContent=`🎙 ${a.length===1?"1 registrazione":a.length+" registrazioni"} da trascrivere`}
+$("pendGo").onclick=async()=>{const a=raw.get("audioPend",[]);if(!a.length)return;const k=a[0],b=await audGet(k);if(!b){delPend(k);renderPend();return}scrollTo({top:0,behavior:"smooth"});transcribe(b,k)};
+$("pendDel").onclick=()=>{if(!confirm("Eliminare la registrazione non ancora trascritta?"))return;const k=raw.get("audioPend",[])[0];if(k){delPend(k);audDel(k)}renderPend()};
+addEventListener("online",()=>{if(raw.get("audioPend",[]).length&&$("mic").disabled===false)$("pendGo").click()});
+
+/* Ascolta l'audio originale nella nota */
+async function renderAudio(n){let box=$("audioBox");if(!box){box=document.createElement("div");box.id="audioBox";box.className="card audioBox";$("dOrigBox").before(box)}box.hidden=true;box.innerHTML="";
+  if(!n.audio)return;const b=await audGet(n.audio);if(!b||cur!==n)return;const u=URL.createObjectURL(b);box.innerHTML='<span class="fmt">🎧 Audio originale</span><audio controls preload="none"></audio><small class="help" style="margin:0">Salvato solo su questo dispositivo.</small>';box.querySelector("audio").src=u;box.hidden=false}
+
+/* Scadenze delle attività */
+const shortDate=d=>new Date(d+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"});
+const dueState=x=>!x.due?"":x.due<today()?"late":x.due===today()?"today":"";
+function downloadIcs(x,n){const d=x.due.replace(/-/g,""),uid=n.id+"-"+Math.abs([...x.t].reduce((a,c)=>a*31+c.charCodeAt(0)|0,7))+"@dictax";
+  const esc=t=>String(t).replace(/[\\,;]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Dictax//IT","BEGIN:VEVENT","UID:"+uid,"DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z","DTSTART:"+d+"T090000","DTEND:"+d+"T093000","SUMMARY:"+esc(x.t),"DESCRIPTION:"+esc("Da Dictax: "+n.title),"BEGIN:VALARM","TRIGGER:-PT0M","ACTION:DISPLAY","DESCRIPTION:"+esc(x.t),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download="promemoria.ics";document.body.append(a);a.click();a.remove()}
+
+/* Oggi */
+function renderToday(){const td=today(),items=[];
+  allNotes().filter(n=>!n.ex&&!n.arch).forEach(n=>{if(typeOf(n)==="attivita")ensureTasks(n).forEach(x=>{if(!x.done&&x.due&&x.due<=td)items.push({n,t:x.t,s:x.due<td?"In ritardo · "+shortDate(x.due):"Scade oggi",late:x.due<td,o:x.due})});
+    if(typeOf(n)==="contenuto"&&n.pub&&n.pub<=td&&n.st!=="fatto")items.push({n,t:n.title,s:(n.pub<td?"Da pubblicare dal "+shortDate(n.pub):"Da pubblicare oggi")+(n.client?" · "+n.client:""),late:n.pub<td,o:n.pub})});
+  items.sort((a,b)=>a.o.localeCompare(b.o));$("todayBox").hidden=!items.length||showArch;const L=$("todayList");L.innerHTML="";
+  items.slice(0,8).forEach(it=>{const b=document.createElement("button");b.className="todayItem";b.innerHTML="<span><b></b><br><small></small></span>›";b.querySelector("b").textContent=(typeOf(it.n)==="contenuto"?"◆ ":"☐ ")+it.t;const sm=b.querySelector("small");sm.textContent=it.s;if(it.late)sm.classList.add("late");b.onclick=()=>openNote(it.n);L.append(b)})}
+
+/* Pianifica dal calendario */
+function setPlan(d){planDate=d;$("planBanner").hidden=!d;if(d)$("planBanner").querySelector("span").textContent="📅 Nuovo contenuto per "+new Date(d+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}
+$("planX").onclick=()=>setPlan(null);
+$("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay);show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};
+
+/* Guida al primo uso */
+const GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["🗂","Scegli cos'è","Nota, To-do list o Contenuto: Dictax lo sistema al posto tuo."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
+let gi=0;function guideShow(i){gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?"Inizia":"Avanti";$("guide").hidden=false}
+const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true)};
+$("guideNext").onclick=()=>gi<GUIDE.length-1?guideShow(gi+1):guideEnd();$("guideSkip").onclick=guideEnd;
+$("guideAgain").onclick=()=>{show("home");guideShow(0)};
+
+/* I tuoi dati */
+$("dataDl").onclick=()=>{const o={};for(const k of Object.keys(localStorage))if(k.startsWith("dx1_"))try{o[k.slice(4)]=JSON.parse(localStorage.getItem(k))}catch{o[k.slice(4)]=localStorage.getItem(k)}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({app:"Dictax",esportato:new Date().toISOString(),dati:o},null,2)],{type:"application/json"}));a.download="dictax-dati-"+today()+".json";document.body.append(a);a.click();a.remove()};
+$("dataDel").onclick=async()=>{if(!confirm("Eliminare TUTTE le tue note, conti e clienti da questo dispositivo"+(user?" e dal tuo account online":"")+"? Non si può annullare."))return;if(prompt('Per confermare scrivi ELIMINA')!=="ELIMINA")return;
+  try{if(user&&sb){await sb.from("user_data").delete().eq("user_id",user.id);await sb.auth.signOut()}}catch(e){alert("Non sono riuscito a cancellare i dati online: riprova con la connessione attiva.");return}
+  for(const k of Object.keys(localStorage))if(k.startsWith("dx1_")||(k.startsWith("sb-")&&k.endsWith("-auth-token")))localStorage.removeItem(k);try{indexedDB.deleteDatabase("dictax-audio")}catch{}
+  alert("Fatto: i tuoi dati sono stati eliminati.");location.reload()};
 
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
@@ -1040,19 +1136,21 @@ async function toWav(blob){
   v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,data.length*2,true);
   for(let i=0;i<data.length;i++){const x=Math.max(-1,Math.min(1,data[i]));v.setInt16(44+i*2,x<0?x*0x8000:x*0x7fff,true)}
   return new Blob([v],{type:"audio/wav"})}
-async function transcribe(blob){
+async function transcribe(blob,key){
+  if(!key){key="a"+Date.now();try{await audSet(key,blob);addPend(key)}catch(e){key=null}}
+  let done=false;
   $("state").textContent="trascrivo…";$("status").textContent="Preparo l'audio…";$("mic").disabled=true;$("uploadBtn").disabled=true;
-  try{blob=await toWav(blob)}catch(e){console.warn("Conversione audio non riuscita, invio il file originale",e)}
-  if(blob.size>25*1024*1024){$("status").textContent=errMsg({code:"too_large"});$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false;return}
-  $("status").textContent="Sto trascrivendo l'audio…";
-  try{const r=await api("/api/transcribe?lang=it",{method:"POST",headers:{"content-type":blob.type||"application/octet-stream"},body:blob});
-    const t=String(r.text||"").trim();
+  try{let wav=blob;try{wav=await toWav(blob)}catch(e){console.warn("Conversione audio non riuscita, invio il file originale",e)}
+    if(wav.size>25*1024*1024){$("status").textContent=errMsg({code:"too_large"});done=true;return}
+    $("status").textContent="Sto trascrivendo l'audio…";
+    const r=await api("/api/transcribe?lang=it",{method:"POST",headers:{"content-type":wav.type||"application/octet-stream"},body:wav});
+    const t=String(r.text||"").trim();done=true;
     if(!t){$("status").textContent="Non ho sentito parole: riprova più vicino al microfono.";return}
-    const prev=$("transcript").value.trim();$("transcript").value=(prev?prev+"\n\n":"")+t;
+    lastAudio=key;const prev=$("transcript").value.trim();$("transcript").value=(prev?prev+"\n\n":"")+t;
     $("status").textContent="";openSheet();
-  }catch(e){$("status").textContent=errMsg(e)}
-  finally{$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false}}
-$("reset").onclick=()=>{if(recOn){mr.onstop=null;mr.stop();mr.stream?.getTracks().forEach(t=>t.stop());stopMeter();setRec(false)}$("timer").textContent="00:00";$("transcript").value="";$("status").textContent=""};
+  }catch(e){$("status").textContent=key?"Non sono riuscito a trascrivere ("+errMsg(e)+"). La registrazione è salvata: la trovi qui sotto e la trascrivo appena torna la connessione.":errMsg(e)}
+  finally{$("state").textContent="pronto";$("mic").disabled=false;$("uploadBtn").disabled=false;if(key&&done)delPend(key);if(key&&done&&lastAudio!==key)audDel(key);renderPend()}}
+$("reset").onclick=()=>{if(recOn){mr.onstop=null;mr.stop();mr.stream?.getTracks().forEach(t=>t.stop());stopMeter();setRec(false)}$("timer").textContent="00:00";$("transcript").value="";$("status").textContent="";lastAudio=null};
 $("uploadBtn").onclick=()=>$("audioFile").click();
 $("audioFile").onchange=e=>{const f=e.target.files?.[0];e.target.value="";if(f)transcribe(f)};
 
@@ -1078,10 +1176,13 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
   $("nsName").value="";$("nsRule").value="";$("newStyle").hidden=true;saveStyle()};
 
 /* Formati */
+let carN=store.get("carN",7);
+Object.defineProperty(FORMATS.carosello,"p",{get(){return `testo per carosello di ${carN} slide: una riga 'Slide N: ...' per ogni slide, titolo forte sulla prima, CTA sull'ultima. Alla fine aggiungi una sezione 'CONSIGLI GRAFICI' con, slide per slide, che foto o grafica usare (es. foto reale del prodotto in uso, primo piano di un dettaglio, persona che parla in camera, grafica con una sola frase in grande, prima/dopo, schema semplice) e una riga finale su colori e stile coerenti col brand`}});
 const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["reel","Reel"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"]]}};
 let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
 const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
 function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
+  const showSl=platFormats().includes("carosello")&&selected.has("carosello");$("slideRow").hidden=!showSl;const SC=$("slideChips");SC.innerHTML="";[5,6,7,8,10].forEach(v=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v;c.setAttribute("aria-pressed",v===carN);c.onclick=()=>{carN=v;store.set("carN",v);renderChips()};SC.append(c)});
   const F=$("formats");F.innerHTML="";PLATFORMS[plat].f.forEach(([k,label])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=label;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
 const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
@@ -1108,7 +1209,7 @@ function noteCard(n,el){
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill";s.textContent="#"+t;el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
-function renderList(){const L=$("list");L.innerHTML="";
+function renderList(){const L=$("list");L.innerHTML="";renderToday();
   const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const ns=base.filter(n=>query?true:showArch?n.arch:!n.arch);
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
@@ -1190,20 +1291,25 @@ function orderedOut(n){const ks=Object.keys(n.out);const out=[];ks.filter(k=>!k.
 function parseTasks(text){return String(text||"").split(/\n+/).map(l=>l.replace(/^\s*([•\-\*☐☑✓]|\d+[.)]|\[[ xX]\])\s*/,"").trim()).filter(Boolean).map(t=>({t,done:false}))}
 function ensureTasks(n){if(!Array.isArray(n.tasks))n.tasks=parseTasks(n.out?.todo);return n.tasks}
 function syncTodo(n){n.out.todo=n.tasks.map(x=>(x.done?"☑ ":"☐ ")+x.t).join("\n")}
-async function extractTasks(src){const r=await sampleFn.json(`Estrai da questa nota le cose concrete da fare. Ogni attività è breve, inizia con un verbo all'infinito e, se nella nota c'è una scadenza, la riporta tra parentesi (es. "Mandare le fatture al commercialista (entro venerdì)"). Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":["...","..."]}.\n\nNOTA:\n${src.slice(0,20000)}`);
-  const a=Array.isArray(r?.attivita)?r.attivita:Array.isArray(r)?r:[];return a.map(x=>String(x).trim()).filter(Boolean).slice(0,40).map(t=>({t,done:false}))}
+async function extractTasks(src){const td=today(),wd=new Date(td+"T12:00").toLocaleDateString("it-IT",{weekday:"long"});
+  const r=await sampleFn.json(`Oggi è ${wd} ${td}. Estrai da questa nota le cose concrete da fare. Ogni attività è breve e inizia con un verbo all'infinito. Se nella nota c'è una scadenza o un giorno (es. "venerdì", "domani", "entro il 20"), calcola la data e mettila in "scad" nel formato AAAA-MM-GG; altrimenti "scad" è null. Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":[{"t":"...","scad":"AAAA-MM-GG o null"}]}.\n\nNOTA:\n${src.slice(0,20000)}`);
+  const a=Array.isArray(r?.attivita)?r.attivita:Array.isArray(r)?r:[];return a.map(x=>typeof x==="string"?{t:x}:x).filter(x=>x&&String(x.t||"").trim()).slice(0,40).map(x=>({t:String(x.t).trim(),done:false,...(/^\d{4}-\d{2}-\d{2}$/.test(x.scad||"")?{due:x.scad}:{})}))}
 function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).length;const d=document.createElement("article");d.className="card todoCard";d.dataset.k="todo";
   d.innerHTML='<div class="head"><span class="fmt" style="color:var(--t-attivita)">Cose da fare</span><span class="todoProg"></span></div><div class="todos"></div><div class="row tight"><input type="text" placeholder="Aggiungi un\'attività…" aria-label="Nuova attività"><button class="btn sm">+</button></div>';
   d.querySelector(".todoProg").textContent=tasks.length?`${done} su ${tasks.length} fatte`:"";
   const L=d.querySelector(".todos"),redraw=()=>{syncTodo(n);saveNote(n);const nd=todoCard(n);d.replaceWith(nd);return nd};
   tasks.forEach((x,i)=>{const r=document.createElement("label");r.className="todo"+(x.done?" done":"");const c=document.createElement("input");c.type="checkbox";c.checked=x.done;c.onchange=()=>{x.done=c.checked;redraw()};
-    const sp=document.createElement("span");sp.textContent=x.t;const del=document.createElement("button");del.className="x";del.textContent="✕";del.setAttribute("aria-label","Elimina: "+x.t);del.onclick=e=>{e.preventDefault();tasks.splice(i,1);redraw()};r.append(c,sp,del);L.append(r)});
+    const sp=document.createElement("span");sp.textContent=x.t;
+    const du=document.createElement("button");du.type="button";const st=dueState(x);du.className="due"+(x.due?(st&&!x.done?" "+st:""):" add");du.textContent=x.due?"📅 "+shortDate(x.due):"📅";du.setAttribute("aria-label",x.due?"Scadenza "+shortDate(x.due)+", cambia":"Aggiungi una scadenza");
+    const di=document.createElement("input");di.type="date";di.value=x.due||"";di.style.cssText="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none";di.onchange=()=>{if(di.value)x.due=di.value;else delete x.due;redraw()};
+    du.onclick=e=>{e.preventDefault();e.stopPropagation();try{di.showPicker()}catch{di.focus();di.click()}};
+    const ic=document.createElement("button");ic.type="button";ic.className="icsBtn";ic.textContent="🔔";ic.title="Aggiungi al calendario del telefono con promemoria";ic.setAttribute("aria-label","Promemoria nel calendario: "+x.t);ic.hidden=!x.due||x.done;ic.onclick=e=>{e.preventDefault();e.stopPropagation();downloadIcs(x,n)};const del=document.createElement("button");del.className="x";del.textContent="✕";del.setAttribute("aria-label","Elimina: "+x.t);del.onclick=e=>{e.preventDefault();tasks.splice(i,1);redraw()};r.append(c,sp,du,di,ic,del);L.append(r)});
   if(!tasks.length)L.innerHTML='<p class="status">Nessuna attività. Aggiungine una qui sotto.</p>';
   const inp=d.querySelector("input[type=text]"),add=()=>{const t=inp.value.trim();if(!t)return;tasks.push({t,done:false});redraw().querySelector("input[type=text]").focus()};
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  renderHead();$("dOut").innerHTML="";if(typeOf(n)==="attivita")$("dOut").append(todoCard(n));for(const k of orderedOut(n)){if(k==="todo"&&typeOf(n)==="attivita")continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}$("dOrig").textContent=n.tr;if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  renderHead();$("dOut").innerHTML="";if(typeOf(n)==="attivita")$("dOut").append(todoCard(n));for(const k of orderedOut(n)){if(k==="todo"&&typeOf(n)==="attivita")continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
@@ -1254,7 +1360,7 @@ document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.d
 $("levelBack").onclick=showTypeStep;
 $("contentPlain").onclick=()=>{const tr=$("transcript").value.trim();if(!tr)return;const client=clientsOn()?$("sClient").value.trim():"";
   const labels=PLATFORMS[plat].f.filter(([k])=>selected.has(k)).map(([,l])=>l);const words=tr.replace(/\s+/g," ").split(" ");
-  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{pulito:tr},type:"contenuto",client,title:words.slice(0,7).join(" ")+(words.length>7?"…":""),tags:[PLATFORMS[plat].n,...labels],st:"fatto",pub:today(),plain:true};
+  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{pulito:tr},type:"contenuto",client,title:words.slice(0,7).join(" ")+(words.length>7?"…":""),tags:[PLATFORMS[plat].n,...labels],st:planDate&&planDate>today()?"idea":"fatto",pub:planDate||today(),plain:true};if(lastAudio){n.audio=lastAudio;lastAudio=null}setPlan(null);
   closeSheet();$("transcript").value="";saveNote(n);renderList();openNote(n)};
 $("contentGo").onclick=()=>{const f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}createNote("contenuto",f)};
 document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pendingType;if(!t)return;let f=TYPES[t].f;
@@ -1265,7 +1371,9 @@ async function createNote(type,formats){
   const tr=$("transcript").value.trim();const client=clientsOn()?$("sClient").value.trim():"";closeSheet();
   if(!tr)return;
   $("go").disabled=true;const jobs=[];
-  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},type,client,title:"Nuova nota",tags:[]};cur=n;$("dSeg").querySelector("button").click();
+  const n={id:"n"+Date.now(),at:Date.now(),tr,out:{},type,client,title:"Nuova nota",tags:[]};cur=n;
+  if(lastAudio){n.audio=lastAudio;lastAudio=null}
+  if(type==="contenuto"&&planDate){n.pub=planDate;n.st="lavoro";setPlan(null)}$("dSeg").querySelector("button").click();
   $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("moreFmt").hidden=true;$("dStatus").textContent="";show("detail");
   const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
   try{
@@ -1274,7 +1382,7 @@ async function createNote(type,formats){
     else for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(promptFor(k,tr,n.client),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
-    await Promise.all(jobs);saveNote(n);$("dOrg").hidden=false;if(cur===n)openNote(n);
+    await Promise.all(jobs);saveNote(n);audTrim();$("dOrg").hidden=false;if(cur===n)openNote(n);
     $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
   }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
   finally{$("go").disabled=false}
@@ -1340,7 +1448,7 @@ $("analyze").onclick=async()=>{
 /* Avvio */
 $("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
-loadMode();applyMode();show("home");if(!raw.get("uso",""))$("welcome").hidden=false;
+loadMode();applyMode();show("home");renderPend();if(!raw.get("uso",""))$("welcome").hidden=false;
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
   if(!h.rewrite)$("status").textContent="Per ora puoi registrare e trascrivere. La riscrittura con l'AI si attiva quando sul server c'è la chiave di Claude.";
