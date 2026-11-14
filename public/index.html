@@ -508,6 +508,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <div class="body">
           <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
           <label class="toggle"><input type="checkbox" id="useClients"> Usa i clienti (etichetta e filtro per cliente)</label>
+          <label class="toggle"><input type="checkbox" id="useLang"> Correggi la lingua (grammatica, ortografia, punteggiatura)</label>
           <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
 
           <div class="row tight"><label class="lbl" for="oldDays" style="flex:none">Data in rosso dopo</label><input type="number" id="oldDays" min="1" max="365" inputmode="numeric" style="width:84px;flex:none"><span>giorni</span></div>
@@ -870,7 +871,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice","lang"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
@@ -1164,7 +1165,7 @@ $("audioFile").onchange=e=>{const f=e.target.files?.[0];e.target.value="";if(f)t
 
 /* Stile e libreria stili */
 function saveStyle(){store.set("style",st);renderStyle()}
-function styleText(lv){const s=allStyles()[st.ws]||BASE_STYLES.chiaro;return `${LEVELS[lv||st.level].p} Stile: ${s.n}${s.rule?` (regola dello stile: ${s.rule})`:""}. Lunghezza: ${LENS[st.len][1]}.`}
+function styleText(lv){const s=allStyles()[st.ws]||BASE_STYLES.chiaro;return `${LEVELS[lv||st.level].p} Stile: ${s.n}${s.rule?` (regola dello stile: ${s.rule})`:""}. Lunghezza: ${LENS[st.len][1]}.${langRule()}`}
 function renderStyle(){
   if(!allStyles()[st.ws])st.ws=M().styles[0];
   $("level").innerHTML="";for(const[k,l]of Object.entries(LEVELS)){const b=document.createElement("button");b.textContent=l.n;b.setAttribute("aria-pressed",st.level===k);b.onclick=()=>{st.level=k;saveStyle()};$("level").append(b)}
@@ -1262,6 +1263,8 @@ function outCard(k,text,n){const d=document.createElement("article");d.className
 
 /* Controllo di fedeltà */
 $("useFid").onchange=e=>{store.set("fid",e.target.checked)};
+$("useLang").checked=raw.get("lang",true);$("useLang").onchange=e=>{raw.set("lang",e.target.checked)};
+const langRule=()=>raw.get("lang",true)?" Correggi la lingua: errori di grammatica, ortografia, accenti e apostrofi, concordanze, verbi, punteggiatura e maiuscole, e le parole capite male dalla trascrizione vocale (scegli la parola giusta dal contesto). Non cambiare il senso né il tono.":"";
 function fidOn(){return $("useFid").checked}
 function highlight(el,text,list){el.textContent="";const rs=[];list.forEach(x=>{const i=text.indexOf(x.testo);if(i>=0)rs.push([i,i+x.testo.length,x.motivo])});rs.sort((a,b)=>a[0]-b[0]);let p=0;
   rs.forEach(([s,e,m])=>{if(s<p)return;el.append(text.slice(p,s));const mk=document.createElement("mark");mk.textContent=text.slice(s,e);mk.title=m||"";el.append(mk);p=e});el.append(text.slice(p))}
@@ -1300,7 +1303,7 @@ function parseTasks(text){return String(text||"").split(/\n+/).map(l=>l.replace(
 function ensureTasks(n){if(!Array.isArray(n.tasks))n.tasks=parseTasks(n.out?.todo);return n.tasks}
 function syncTodo(n){n.out.todo=n.tasks.map(x=>(x.done?"☑ ":"☐ ")+x.t).join("\n")}
 async function extractTasks(src){const td=today(),wd=new Date(td+"T12:00").toLocaleDateString("it-IT",{weekday:"long"});
-  const r=await sampleFn.json(`Oggi è ${wd} ${td}. Estrai da questa nota le cose concrete da fare. Ogni attività è breve e inizia con un verbo all'infinito. Se nella nota c'è una scadenza o un giorno (es. "venerdì", "domani", "entro il 20"), calcola la data e mettila in "scad" nel formato AAAA-MM-GG; altrimenti "scad" è null. Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":[{"t":"...","scad":"AAAA-MM-GG o null"}]}.\n\nNOTA:\n${src.slice(0,20000)}`);
+  const r=await sampleFn.json(`Oggi è ${wd} ${td}. Estrai da questa nota le cose concrete da fare. Ogni attività è breve e inizia con un verbo all'infinito.${langRule()} Se nella nota c'è una scadenza o un giorno (es. "venerdì", "domani", "entro il 20"), calcola la data e mettila in "scad" nel formato AAAA-MM-GG; altrimenti "scad" è null. Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":[{"t":"...","scad":"AAAA-MM-GG o null"}]}.\n\nNOTA:\n${src.slice(0,20000)}`);
   const a=Array.isArray(r?.attivita)?r.attivita:Array.isArray(r)?r:[];return a.map(x=>typeof x==="string"?{t:x}:x).filter(x=>x&&String(x.t||"").trim()).slice(0,40).map(x=>({t:String(x.t).trim(),done:false,...(/^\d{4}-\d{2}-\d{2}$/.test(x.scad||"")?{due:x.scad}:{})}))}
 function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).length;const d=document.createElement("article");d.className="card todoCard";d.dataset.k="todo";
   d.innerHTML='<div class="head"><span class="fmt" style="color:var(--t-attivita)">Cose da fare</span><span class="todoProg"></span></div><div class="todos"></div><div class="row tight"><input type="text" placeholder="Aggiungi un\'attività…" aria-label="Nuova attività"><button class="btn sm">+</button></div>';
