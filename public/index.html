@@ -288,7 +288,7 @@ body.noClients .cliOpt{display:none!important}
 .legRow{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center}
 .legRow b{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);min-width:44px}
 .cal .dots i.s{width:10px;height:10px;border:2px solid var(--fg);background:transparent!important}
-.cal .dots i.s.late{border-color:var(--danger)}
+.cal .dots i.s.late{border-color:var(--danger);background:var(--danger)!important}
 .calLeg i.s{border:2px solid var(--fg);background:transparent!important}
 .calLeg i.sw{width:11px;height:11px;border-radius:2px}
 .calLeg i.c{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);margin-left:1px;margin-right:7px}
@@ -930,15 +930,16 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
 function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>typeOf(n)==="attivita"&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
+  const nLate=inM.filter(n=>(n.st||"idea")!=="fatto"&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
   const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="background:${c}"></i>`;
   const sw=c=>`<i class="sw" style="background:${c}"></i>`;
-  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span><span><i class="s"></i>Scadenza ${dM}</span></div><div class="legRow"><b>Stato</b><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span></div>`;
+  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span><span><i class="s"></i>Scadenza ${dM}</span></div><div class="legRow"><b>Stato</b><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span><span>${sw("var(--danger)")}Scaduto ${nLate}</span></div>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
     const b=document.createElement("button");b.innerHTML="<b></b><span class='dots'></span>";b.querySelector("b").textContent=d.getDate();if(ds.slice(0,7)!==calM)b.classList.add("out");if(ds===td)b.classList.add("today");b.setAttribute("aria-pressed",ds===calDay);
     const dueD=dues.filter(x=>x.due===ds);dueD.slice(0,2).forEach(x=>{const i=document.createElement("i");i.className="s"+(x.due<td?" late":"");b.querySelector(".dots").append(i)});
-    const items=every.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4-Math.min(2,dueD.length)).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?ST_C[n.st||"idea"]:"var(--fg)");b.querySelector(".dots").append(x)});
+    const items=every.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4-Math.min(2,dueD.length)).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?((n.st||"idea")!=="fatto"&&n.pub<td?"var(--danger)":ST_C[n.st||"idea"]):"var(--fg)");b.querySelector(".dots").append(x)});
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?every.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
