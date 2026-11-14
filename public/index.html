@@ -287,6 +287,9 @@ body.noClients .cliOpt{display:none!important}
 .calSum{flex-direction:column;gap:6px}
 .legRow{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center}
 .legRow b{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);min-width:44px}
+.cal .dots i.s{width:10px;height:10px;border:2px solid var(--fg);background:transparent!important}
+.cal .dots i.s.late{border-color:var(--danger)}
+.calLeg i.s{border:2px solid var(--fg);background:transparent!important}
 .calLeg i.sw{width:11px;height:11px;border-radius:2px}
 .calLeg i.c{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);margin-left:1px;margin-right:7px}
 .cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
@@ -926,20 +929,24 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
+  const dues=[];every.filter(n=>typeOf(n)==="attivita"&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
   const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="background:${c}"></i>`;
   const sw=c=>`<i class="sw" style="background:${c}"></i>`;
-  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span></div><div class="legRow"><b>Stato</b><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span></div>`;
+  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i style="background:var(--fg)"></i>Nota o to-do ${nN}</span><span><i class="s"></i>Scadenza ${dM}</span></div><div class="legRow"><b>Stato</b><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span></div>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
     const b=document.createElement("button");b.innerHTML="<b></b><span class='dots'></span>";b.querySelector("b").textContent=d.getDate();if(ds.slice(0,7)!==calM)b.classList.add("out");if(ds===td)b.classList.add("today");b.setAttribute("aria-pressed",ds===calDay);
-    const items=every.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?ST_C[n.st||"idea"]:"var(--fg)");b.querySelector(".dots").append(x)});
+    const dueD=dues.filter(x=>x.due===ds);dueD.slice(0,2).forEach(x=>{const i=document.createElement("i");i.className="s"+(x.due<td?" late":"");b.querySelector(".dots").append(i)});
+    const items=every.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4-Math.min(2,dueD.length)).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?ST_C[n.st||"idea"]:"var(--fg)");b.querySelector(".dots").append(x)});
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?every.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
   $("calPlan").hidden=!calDay||calDay<today();
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
-  if(!list.length)L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
+  const dl=(calDay?dues.filter(x=>x.due===calDay):dues.filter(x=>x.due.slice(0,7)===calM)).sort((a,b)=>a.due.localeCompare(b.due));
+  dl.forEach(x=>{const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent="☐ "+x.t;r.querySelector("small").textContent=shortDate(x.due)+" · "+x.n.title;const pl=r.querySelector(".pill");pl.textContent=x.due<td?"In ritardo":"Scadenza";pl.style.cssText=x.due<td?"background:var(--danger);color:#fff":"background:#fff4d6;color:#7a5600";r.onclick=()=>openNote(x.n);L.append(r)});
+  if(!list.length&&!dl.length)L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
   const nd=all.filter(n=>!n.pub&&n.st==="lavoro");$("calNoDateBox").hidden=!nd.length;$("calNoDate").innerHTML="";nd.forEach(n=>$("calNoDate").append(calRow(n)))}
 
 /* Clienti e posizionamento (sistema ManuLab) */
@@ -1060,7 +1067,7 @@ function downloadIcs(x,n){const d=x.due.replace(/-/g,""),uid=n.id+"-"+Math.abs([
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download="promemoria.ics";document.body.append(a);a.click();a.remove()}
 
 /* Oggi */
-function renderToday(){const td=today(),items=[];
+function renderToday(){$("todayBox").hidden=true;return;const td=today(),items=[];
   allNotes().filter(n=>!n.ex&&!n.arch).forEach(n=>{if(typeOf(n)==="attivita")ensureTasks(n).forEach(x=>{if(!x.done&&x.due&&x.due<=td)items.push({n,t:x.t,s:x.due<td?"In ritardo · "+shortDate(x.due):"Scade oggi",late:x.due<td,o:x.due})});
     if(typeOf(n)==="contenuto"&&n.pub&&n.pub<=td&&n.st!=="fatto")items.push({n,t:n.title,s:(n.pub<td?"Da pubblicare dal "+shortDate(n.pub):"Da pubblicare oggi")+(n.client?" · "+n.client:""),late:n.pub<td,o:n.pub})});
   items.sort((a,b)=>a.o.localeCompare(b.o));$("todayBox").hidden=!items.length||showArch;const L=$("todayList");L.innerHTML="";
@@ -1303,7 +1310,7 @@ function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).len
     const du=document.createElement("button");du.type="button";const st=dueState(x);du.className="due"+(x.due?(st&&!x.done?" "+st:""):" add");du.textContent=x.due?"📅 "+shortDate(x.due):"📅";du.setAttribute("aria-label",x.due?"Scadenza "+shortDate(x.due)+", cambia":"Aggiungi una scadenza");
     const di=document.createElement("input");di.type="date";di.value=x.due||"";di.style.cssText="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none";di.onchange=()=>{if(di.value)x.due=di.value;else delete x.due;redraw()};
     du.onclick=e=>{e.preventDefault();e.stopPropagation();try{di.showPicker()}catch{di.focus();di.click()}};
-    const ic=document.createElement("button");ic.type="button";ic.className="icsBtn";ic.textContent="🔔";ic.title="Aggiungi al calendario del telefono con promemoria";ic.setAttribute("aria-label","Promemoria nel calendario: "+x.t);ic.hidden=!x.due||x.done;ic.onclick=e=>{e.preventDefault();e.stopPropagation();downloadIcs(x,n)};const del=document.createElement("button");del.className="x";del.textContent="✕";del.setAttribute("aria-label","Elimina: "+x.t);del.onclick=e=>{e.preventDefault();tasks.splice(i,1);redraw()};r.append(c,sp,du,di,ic,del);L.append(r)});
+    const ic=document.createElement("button");ic.type="button";ic.className="icsBtn";ic.textContent="🔔";ic.title="Aggiungi al calendario del telefono con promemoria";ic.setAttribute("aria-label","Promemoria nel calendario: "+x.t);ic.hidden=!x.due||x.done;if(mode!=="creator"){du.hidden=true;ic.hidden=true}ic.onclick=e=>{e.preventDefault();e.stopPropagation();downloadIcs(x,n)};const del=document.createElement("button");del.className="x";del.textContent="✕";del.setAttribute("aria-label","Elimina: "+x.t);del.onclick=e=>{e.preventDefault();tasks.splice(i,1);redraw()};r.append(c,sp,du,di,ic,del);L.append(r)});
   if(!tasks.length)L.innerHTML='<p class="status">Nessuna attività. Aggiungine una qui sotto.</p>';
   const inp=d.querySelector("input[type=text]"),add=()=>{const t=inp.value.trim();if(!t)return;tasks.push({t,done:false});redraw().querySelector("input[type=text]").focus()};
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
