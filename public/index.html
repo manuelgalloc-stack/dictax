@@ -224,6 +224,7 @@ textarea,input[type=text],input[type=email],input[type=url],input[type=search],i
 .linkCard .url{word-break:break-all;color:var(--t-link);font-weight:600}
 .linkCard .open{background:var(--t-link);flex:1;text-align:center;text-decoration:none}
 .linkCard input{width:100%}
+.tagSugg{gap:6px}.tagSugg .chip{font-size:14px;padding:6px 12px}
 body.isLink #dSeg,body.isLink #moreFmt,body.isLink #appendBox,body.isLink #dTypeRow{display:none!important}
 .todoMake{width:100%;margin-top:12px;color:var(--t-attivita);border-color:var(--t-attivita)}
 .pill.todoPill{background:#e6eefc;color:var(--t-attivita);font-weight:700}
@@ -705,6 +706,9 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="row tight"><input type="url" id="lUrl" inputmode="url" placeholder="https://…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="lPaste" type="button">📋 Incolla</button></div>
     <label class="lbl" for="lTitle">Di cosa si tratta?</label>
     <input type="text" id="lTitle" placeholder="Es. Tutorial per i Reel" autocomplete="off">
+    <label class="lbl" for="lTags">Tag (facoltativo)</label>
+    <input type="text" id="lTags" placeholder="Es. reel, tutorial" autocomplete="off" autocapitalize="none">
+    <div class="chips tagSugg" id="lTagSugg"></div>
     <p class="status" id="lStatus" aria-live="polite"></p>
     <button class="btn big" id="lSave" style="background:var(--t-link)">Salva il link</button>
     <button class="btn ghost big" id="lCancel">Annulla</button>
@@ -1464,20 +1468,24 @@ $("contentWeek").onclick=async()=>{const tr=$("transcript").value.trim();if(!tr)
 /* Link utili */
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
+const parseTags=v=>[...new Set(String(v||"").split(/[,\s]+/).map(t=>t.replace(/^#+/,"").trim().toLowerCase()).filter(Boolean))].slice(0,12);
+const topTags=(k=8)=>{const c={};allNotes().forEach(n=>(n.tags||[]).forEach(t=>{const x=tagKey(t);if(x)c[x]=(c[x]||0)+1}));return Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,k)};
+function tagSuggest(box,inp,onAdd){box.innerHTML="";const have=parseTags(inp.value);topTags().filter(t=>!have.includes(t)).forEach(t=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent="#"+t;c.onclick=()=>{inp.value=[...parseTags(inp.value),t].join(", ");onAdd&&onAdd();tagSuggest(box,inp,onAdd)};box.append(c)})}
 function linkCard(n){const d=document.createElement("article");d.className="card linkCard";
-  d.innerHTML='<span class="fmt" style="color:var(--t-link)">Link utile</span><a class="url" target="_blank" rel="noopener"></a><div class="row tight"><a class="btn open" target="_blank" rel="noopener">🔗 Apri il link</a><button class="btn ghost sm" type="button">Copia</button></div><label class="lbl">Di cosa si tratta?</label><input type="text" class="lt"><label class="lbl">Link</label><input type="url" class="lu" inputmode="url">';
+  d.innerHTML='<span class="fmt" style="color:var(--t-link)">Link utile</span><a class="url" target="_blank" rel="noopener"></a><div class="row tight"><a class="btn open" target="_blank" rel="noopener">🔗 Apri il link</a><button class="btn ghost sm" type="button">Copia</button></div><label class="lbl">Di cosa si tratta?</label><input type="text" class="lt"><label class="lbl">Link</label><input type="url" class="lu" inputmode="url"><label class="lbl">Tag</label><input type="text" class="lg" placeholder="Es. reel, tutorial" autocapitalize="none"><div class="chips tagSugg"></div>';
   const u=n.out.link||"",a=d.querySelector("a.url"),o=d.querySelector("a.open");a.textContent=u;a.href=u;o.href=u;
   const cb=d.querySelector("button");cb.onclick=()=>copyText(n.out.link,cb,a);
   const lt=d.querySelector(".lt"),lu=d.querySelector(".lu");lt.value=n.title;lu.value=u;
   lt.onchange=()=>{const t=lt.value.trim();if(!t)return;n.title=t;saveNote(n);renderHead()};
   lu.onchange=()=>{const v=fixUrl(lu.value);if(!v)return;n.out.link=v;n.tr=v;saveNote(n);a.textContent=v;a.href=v;o.href=v};
+  const lg=d.querySelector(".lg"),sg=d.querySelector(".tagSugg");lg.value=(n.tags||[]).join(", ");const saveT=()=>{n.tags=parseTags(lg.value);saveNote(n);renderHead()};lg.onchange=saveT;tagSuggest(sg,lg,saveT);
   return d}
-function openLink(url,title){$("lUrl").value=url||"";$("lTitle").value=title||"";$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
+function openLink(url,title){$("lUrl").value=url||"";$("lTitle").value=title||"";$("lTags").value="";tagSuggest($("lTagSugg"),$("lTags"));$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
 $("lCancel").onclick=()=>{$("linkSheet").hidden=true};
 $("lPaste").onclick=async()=>{try{const t=(await navigator.clipboard.readText()).trim();if(t){$("lUrl").value=t;$("lTitle").focus()}else $("lStatus").textContent="Non c'è niente da incollare."}catch{$("lStatus").textContent="Tieni premuto nella casella e scegli Incolla."}};
 $("lSave").onclick=()=>{const url=fixUrl($("lUrl").value);if(!url){$("lStatus").textContent="Incolla prima il link.";return}
   let title=$("lTitle").value.trim();if(!title){try{title=new URL(url).hostname.replace(/^www\./,"")}catch{title=url}}
-  const n={id:"n"+Date.now(),at:Date.now(),tr:url,out:{link:url},type:"link",client:"",title,tags:[]};
+  const n={id:"n"+Date.now(),at:Date.now(),tr:url,out:{link:url},type:"link",client:"",title,tags:parseTags($("lTags").value)};
   $("linkSheet").hidden=true;$("transcript").value="";saveNote(n);renderTabs();renderList();openNote(n)};
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
