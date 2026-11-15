@@ -272,6 +272,26 @@ body.noClients .cliOpt{display:none!important}
 .accBtn.on{border-color:var(--accent);color:var(--accent-strong)}
 .accBtn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
 .stBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.resBtns,.cTools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#dRes{display:flex;flex-direction:column;gap:8px}#dRes[hidden]{display:none}
+.resBtns button,.cTools button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 6px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;color:var(--fg)}
+.resBtns button[aria-pressed=true][data-r=top]{border-color:#e0631e;background:#fff0e6;color:#9a3b06}
+.resBtns button[aria-pressed=true][data-r=meh]{border-color:var(--muted);background:var(--paper)}
+.cTools button{color:var(--t-contenuto);border-color:color-mix(in srgb,var(--t-contenuto) 45%,transparent)}
+.cTools button:disabled{opacity:.6}
+.checkCard{border:2px solid var(--t-contenuto);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.checkCard .score{display:flex;align-items:baseline;gap:10px}.checkCard .score b{font:400 44px/1 var(--display,Georgia);color:var(--t-contenuto)}
+.checkCard .row3{display:flex;gap:10px;align-items:flex-start;font-size:15px}.checkCard .row3 i{font-style:normal;flex:none;width:22px}
+.checkCard .tip{font-weight:600}
+#gobbo{position:fixed;inset:0;background:#000;color:#fff;z-index:80;display:flex;flex-direction:column}
+#gobbo[hidden]{display:none}
+.gView{flex:1;overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 80%,transparent)}
+.gTxt{padding:40vh 22px 60vh;font:600 34px/1.45 var(--body);white-space:pre-wrap;max-width:760px;margin:0 auto}
+.gTxt .cue{color:#8b8b8b;font-size:22px;font-weight:500}
+.gX{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;z-index:2;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer}
+.gBar{display:flex;justify-content:center;align-items:center;gap:26px;padding:16px 16px max(22px,env(safe-area-inset-bottom))}
+.gBar button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:50%;width:54px;height:54px;font-size:26px;cursor:pointer}
+.gBar .gPlay{width:76px;height:76px;background:#fff;color:#000;font-size:30px}
 .stBtns button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:11px 6px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:var(--fg)}
 .stBtns button[aria-pressed=true][data-s=idea]{border-color:var(--muted);background:var(--paper)}
 .stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
@@ -445,6 +465,9 @@ body:not(.solo) .soloOnly{display:none!important}
       <span class="lbl">Stato del contenuto</span>
       <div class="stBtns"><button data-s="idea">💡 Idea</button><button data-s="lavoro">✎ In creazione</button><button data-s="fatto">✓ Fatto</button></div>
       <div class="row tight"><label class="lbl" for="dPub" style="flex:none">Data di pubblicazione</label><input type="date" id="dPub" style="flex:1;min-width:0"></div>
+      <div id="dRes" hidden><span class="lbl">Com'è andato?</span><div class="resBtns"><button data-r="top">🔥 Bene</button><button data-r="meh">😐 Così così</button></div></div>
+      <div class="cTools"><button id="gobboBtn">🎬 Gobbo</button><button id="checkBtn">✅ Controlla</button></div>
+      <div id="checkBox"></div>
     </div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
@@ -653,6 +676,11 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="btn ghost big" id="delNo">Annulla</button>
   </div>
 </div>
+<div id="gobbo" hidden>
+  <button class="gX" id="gX" aria-label="Chiudi il gobbo">✕</button>
+  <div class="gView" id="gView"><div class="gTxt" id="gTxt"></div></div>
+  <div class="gBar"><button id="gSlow" aria-label="Più lento">−</button><button class="gPlay" id="gPlay" aria-label="Avvia">▶</button><button id="gFast" aria-label="Più veloce">+</button></div>
+</div>
 <div class="sheetWrap" id="linkSheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
     <h2 id="linkTitle">🔗 Link utile</h2>
@@ -683,6 +711,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <div class="slideRow" id="slideRow" hidden><span class="lbl" style="margin:0">Quante slide?</span><div class="chips" id="slideChips"></div></div>
       </div>
       <button class="btn big" id="contentGo" style="background:var(--t-contenuto);width:100%">✨ Crea contenuto</button>
+      <button class="btn ghost big" id="contentWeek" style="width:100%;margin-top:8px;color:var(--t-contenuto);border-color:var(--t-contenuto)">📅 Una settimana di contenuti</button>
       <button class="btn ghost big" id="contentPlain" style="width:100%;margin-top:8px;color:var(--t-contenuto);border-color:var(--t-contenuto)">✍️ Manuale</button>
       <p class="help" style="text-align:center;margin:4px 0 0">Manuale: salva il testo così com'è, senza AI, e lo segna come Fatto oggi.</p>
       <span class="lbl" hidden>Come la scrivo?</span>
@@ -949,7 +978,7 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
   const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
-function renderCal(){$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
+function renderCal(){document.querySelector(".weekDone")?.remove();$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
   const nLate=inM.filter(n=>(n.st||"idea")!=="fatto"&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
@@ -1303,7 +1332,7 @@ function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.className="pill";b.textContent="#"+t+" ✕";b.setAttribute("aria-label","Rimuovi tag "+t);b.onclick=()=>{cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()};P.append(b)});
   const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;if((k==="link")!==(typeOf(cur)==="link"))return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);const TC=$("dTypeChips");TC.innerHTML="";[...T.options].forEach(o=>{const b=document.createElement("button");b.type="button";b.className="chip typeChip";b.textContent=o.textContent;b.style.setProperty("--c",TYPES[o.value].color);b.setAttribute("aria-pressed",o.value===T.value);b.onclick=()=>{if(T.value===o.value)return;T.value=o.value;T.dispatchEvent(new Event("change"))};TC.append(b)});$("dTypeRow").hidden=T.options.length<2;
-  $("archBtnD").textContent=cur.arch?"↩︎ Riapri":"✓ Fatto";$("archBtnD").hidden=typeOf(cur)==="contenuto"&&!cur.arch;$("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore()}
+  $("archBtnD").textContent=cur.arch?"↩︎ Riapri":"✓ Fatto";$("archBtnD").hidden=typeOf(cur)==="contenuto"&&!cur.arch;$("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore();if(isC)renderCTools()}
 document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
@@ -1344,6 +1373,54 @@ function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();
   document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
+/* Contenuti: risultati, pagella, gobbo, settimana */
+const mainKey=n=>{const ks=orderedOut(n).filter(k=>k!=="todo");return ks.find(k=>SOCIAL.includes(baseK(k)))||ks[0]};
+const cleanPub=t=>String(t||"").split("\n").filter(l=>!/^\s*#\w/.test(l)&&!/\S+\s\|\s\S+.*\|/.test(l)).join("\n").trim();
+function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenuto"&&n.res&&(n.client||"")===(cl||""));
+  const top=same.filter(n=>n.res==="top").sort((a,b)=>(b.resAt||0)-(a.resAt||0)).slice(0,3),meh=same.filter(n=>n.res==="meh").slice(-4);let t="";
+  if(top.length)t+="\nCONTENUTI CHE HANNO FUNZIONATO BENE con questo pubblico: prendi spunto da gancio, tema, tono e struttura, senza copiarli.\n"+top.map(n=>`- ${n.title}: ${cleanPub(n.out[mainKey(n)]).slice(0,400).replace(/\n+/g," ")}`).join("\n");
+  if(meh.length)t+="\nCONTENUTI ANDATI POCO BENE (evita angoli e ganci simili): "+meh.map(n=>n.title).join("; ")+".";
+  return t}
+function renderCTools(){const n=cur,isF=(n.st||"idea")==="fatto";$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
+  $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
+document.querySelectorAll(".resBtns button").forEach(b=>b.onclick=()=>{cur.res=cur.res===b.dataset.r?undefined:b.dataset.r;if(!cur.res)delete cur.res;cur.resAt=Date.now();saveNote(cur);renderCTools();$("dStatus").textContent=cur.res?"Grazie: Dictax ne terrà conto nei prossimi contenuti"+(cur.client?" per "+cur.client:"")+".":""});
+function renderCheck(n){const B=$("checkBox");B.innerHTML="";const c=n.check;if(!c||c.k!==mainKey(n))return;
+  const d=document.createElement("div");d.className="checkCard";d.innerHTML='<div class="score"><b></b><span>su 10</span></div><div class="rows"></div><p class="tip" style="margin:0"></p><button class="btn" style="background:var(--t-contenuto)">✨ Sistemalo tu</button>';
+  d.querySelector(".score b").textContent=c.voto;const R2=d.querySelector(".rows");[["Gancio",c.gancio],["Posizionamento",c.pos],["Invito all'azione",c.cta]].forEach(([l,x])=>{const r=document.createElement("div");r.className="row3";r.innerHTML="<i></i><span><b></b> </span>";r.querySelector("i").textContent=x?.ok?"✅":"⚠️";r.querySelector("b").textContent=l+":";r.querySelector("span").append(x?.nota||"");R2.append(r)});
+  d.querySelector(".tip").textContent=c.consiglio||"";const fb=d.querySelector("button");if(c.voto>=9&&c.gancio?.ok&&c.pos?.ok&&c.cta?.ok)fb.hidden=true;fb.onclick=()=>fixContent(n,fb);B.append(d)}
+$("checkBtn").onclick=async()=>{const n=cur,k=mainKey(n),b=$("checkBtn");if(!k)return;b.disabled=true;b.textContent="Controllo…";
+  try{const r=await sampleFn.json(`Sei un revisore esperto del metodo ManuLab (Triplo Gancio). Valuta questo contenuto (${fmtName(k)}) prima della pubblicazione.\n${MANULAB_VOICE}${ctxFor(n.client)}\nControlla: 1) il gancio ferma lo scorrimento nei primi secondi o nella prima riga? 2) rispetta il posizionamento e la nicchia del cliente (se non c'è un posizionamento, valuta se è specifico per il pubblico)? 3) l'invito all'azione è chiaro e unico? Sii severo ma utile. Rispondi solo con JSON {"voto":numero da 1 a 10,"gancio":{"ok":true|false,"nota":"una frase"},"pos":{"ok":true|false,"nota":"una frase"},"cta":{"ok":true|false,"nota":"una frase"},"consiglio":"la cosa più importante da migliorare, in una frase"}.\n\nCONTENUTO:\n${n.out[k]}`);
+    n.check={...r,voto:Math.max(1,Math.min(10,Math.round(+r.voto||0))),k};saveNote(n);if(cur===n)renderCTools()}
+  catch(e){$("dStatus").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="✅ Controlla"}};
+async function fixContent(n,b){const k=n.check.k;b.disabled=true;b.textContent="Sto sistemando…";
+  try{const c=n.check,probs=[["gancio",c.gancio],["posizionamento",c.pos],["invito all'azione",c.cta]].filter(([,x])=>!x?.ok).map(([l,x])=>l+": "+(x?.nota||"")).join("; ");
+    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}\nMigliora questo contenuto seguendo la revisione. Problemi: ${probs||"nessuno grave"}. Consiglio principale: ${c.consiglio}. Mantieni le idee, non inventare fatti.${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
+    n.out[k]=text;delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto migliorato. Puoi ricontrollarlo con ✅ Controlla."}}
+  catch(e){b.disabled=false;b.textContent="✨ Sistemalo tu";$("dStatus").textContent=errMsg(e)}}
+/* Gobbo */
+let gRun=false,gSpeed=raw.get("gSpeed",45),gLast=0,gY=0;
+$("gobboBtn").onclick=()=>{const n=cur,k=n.out.reel!=null?"reel":mainKey(n);if(!k)return;const T=$("gTxt");T.innerHTML="";
+  cleanPub(n.out[k]).split(/(\[[^\]]*\])/).forEach(part=>{if(!part)return;if(/^\[.*\]$/.test(part)){const s=document.createElement("span");s.className="cue";s.textContent=part;T.append(s)}else T.append(part)});
+  gY=0;$("gView").scrollTop=0;gStop();$("gobbo").hidden=false;try{document.documentElement.requestFullscreen?.()}catch{}try{navigator.wakeLock?.request("screen").then(l=>gLock=l).catch(()=>{})}catch{}};
+let gLock=null;
+function gStop(){gRun=false;$("gPlay").textContent="▶";$("gPlay").setAttribute("aria-label","Avvia")}
+function gTick(t){if(!gRun)return;const V=$("gView");if(gLast)gY+=gSpeed*(t-gLast)/1000;gLast=t;V.scrollTop=gY;if(V.scrollTop+V.clientHeight>=V.scrollHeight-2){gStop();return}requestAnimationFrame(gTick)}
+$("gPlay").onclick=()=>{if(gRun){gStop();return}gRun=true;gLast=0;gY=$("gView").scrollTop;$("gPlay").textContent="❚❚";$("gPlay").setAttribute("aria-label","Pausa");requestAnimationFrame(gTick)};
+$("gView").onclick=()=>$("gPlay").click();
+$("gSlow").onclick=()=>{gSpeed=Math.max(15,gSpeed-10);raw.set("gSpeed",gSpeed)};$("gFast").onclick=()=>{gSpeed=Math.min(160,gSpeed+10);raw.set("gSpeed",gSpeed)};
+$("gX").onclick=()=>{gStop();$("gobbo").hidden=true;try{document.fullscreenElement&&document.exitFullscreen()}catch{}try{gLock?.release();gLock=null}catch{}};
+/* Settimana di contenuti */
+$("contentWeek").onclick=async()=>{const tr=$("transcript").value.trim();if(!tr){closeSheet();return}const client=clientsOn()?$("sClient").value.trim():"";
+  const fs=platFormats().filter(k=>selected.has(k)),allowed=fs.length?fs:platFormats(),P=PLATFORMS[plat];
+  closeSheet();$("go").disabled=true;$("status").textContent="📅 Sto preparando la tua settimana di contenuti… ci vuole circa un minuto.";
+  const start=planDate||(()=>{const d=new Date(today()+"T12:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)})(),offs=[0,1,3,4,6];
+  try{const r=await sampleFn.json(`${M().writer} Da questa nota vocale ricava un piano di 5 contenuti per ${P.n} da pubblicare in una settimana: 2 TOFU (crescita: incuriosire chi non ti conosce), 2 MOFU (fiducia: casi, obiezioni, dietro le quinte), 1 BOFU (vendita: invito chiaro all'azione). Ogni contenuto ha un angolo diverso e specifico per la nicchia. Per ogni contenuto scegli il formato tra: ${allowed.map(k=>`"${k}" (${FORMATS[k].p})`).join("; ")}. Scrivi ogni testo completo e pronto da pubblicare, con in fondo una riga di 3-5 hashtag e poi una riga di 5-8 parole chiave separate da " | ".\n${MANULAB_VOICE}${ctxFor(client)}${perfCtx(client)}\n${styleText("completa")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con JSON {"contenuti":[{"fase":"TOFU|MOFU|BOFU","formato":"una delle chiavi indicate","titolo":"titolo breve (max 7 parole)","testo":"il contenuto completo"}]}.\n\nNOTA:\n${tr}`);
+    const list=(Array.isArray(r?.contenuti)?r.contenuti:[]).filter(x=>x&&x.testo).slice(0,5);if(!list.length)throw new Error("Non sono riuscito a preparare la settimana: riprova.");
+    const base=Date.now();list.forEach((x,i)=>{const d=new Date(start+"T12:00");d.setDate(d.getDate()+offs[i]);const f=allowed.includes(x.formato)?x.formato:allowed[0];
+      const n={id:"n"+(base+i),at:base+i,tr,out:{[f]:String(x.testo)},type:"contenuto",client,title:String(x.titolo||"Contenuto "+(i+1)).slice(0,80),tags:[P.n,String(x.fase||"").toUpperCase()].filter(Boolean),st:"lavoro",pub:d.toISOString().slice(0,10)};if(i===0&&lastAudio){n.audio=lastAudio;lastAudio=null}saveNote(n)});
+    setPlan(null);$("transcript").value="";$("status").textContent="";audTrim();renderTabs();renderList();calM=start.slice(0,7);calDay="";show("cal");
+    $("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronti '+list.length+' contenuti, già nel calendario. Tocca un giorno per aprirli.</p>')}
+  catch(e){$("status").textContent=errMsg(e)}finally{$("go").disabled=false}};
 /* Link utili */
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
@@ -1398,7 +1475,7 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl):""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl):""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
   $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
