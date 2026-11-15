@@ -1399,15 +1399,14 @@ async function makeMeta(n,src){
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
 const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl):""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
-function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, scrivi qualcosa o incolla un link.";return}
-  if(isUrl(tr)){openLink(tr);return}
-  $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
+function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
+  $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
-document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="link"){const tr=$("transcript").value.trim(),m=tr.match(/(https?:\/\/|www\.)\S+/i);closeSheet();openLink(m?m[0]:"",m?tr.replace(m[0],"").replace(/\s+/g," ").trim().slice(0,120):tr.slice(0,120));return}if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="link"){const tr=$("transcript").value.trim(),m=tr.match(/(https?:\/\/|www\.)\S+/i);closeSheet();openLink(m?m[0]:"",m?tr.replace(m[0],"").replace(/\s+/g," ").trim().slice(0,120):tr.slice(0,120));return}if(!$("transcript").value.trim()){closeSheet();$("status").textContent="Prima tocca il microfono e parla, oppure scrivi qualcosa qui sopra.";$("transcript").focus();return}if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
