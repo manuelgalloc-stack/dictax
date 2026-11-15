@@ -272,6 +272,11 @@ body.noClients .cliOpt{display:none!important}
 .accBtn.on{border-color:var(--accent);color:var(--accent-strong)}
 .accBtn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
 .stBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.admBox{gap:10px;display:flex;flex-direction:column}
+.dritta{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
+.dritta.off{opacity:.55}
+.dritta .dRow{display:flex;gap:8px;align-items:center}.dritta .dRow input{flex:1;min-width:0;font-weight:700}
+.dritta .dRow button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;font:inherit;font-size:14px;cursor:pointer}
 .resBtns,.cTools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #dRes{display:flex;flex-direction:column;gap:8px}#dRes[hidden]{display:none}
 .resBtns button,.cTools button{border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 6px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;color:var(--fg)}
@@ -576,6 +581,13 @@ body:not(.solo) .soloOnly{display:none!important}
     <div id="accIn" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="card"><div class="head"><span class="fmt">Sei dentro come</span></div><b id="accMail" style="font-size:18px;overflow-wrap:anywhere"></b><p class="status" id="accSync"></p></div>
       <div class="row"><button class="btn ghost" id="accLogout">Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
+      <div class="card admBox" id="admBox" hidden>
+        <div class="head"><span class="fmt">🧭 Dritte del momento</span><span class="pill">Solo tu</span></div>
+        <p class="help" style="margin:0">Cosa funziona adesso. Dictax le usa in tutti i contenuti di tutti, scegliendo quelle giuste per il settore.</p>
+        <div id="admList"></div>
+        <button class="btn" id="admAdd">+ Nuova dritta</button>
+        <p class="status" id="admStatus" aria-live="polite"></p>
+      </div>
       <p class="help">Uscendo, le note restano su questo dispositivo. Entrando con la stessa email su un altro telefono o computer, ritrovi tutto.</p>
     </div>
     <div class="card" style="gap:10px">
@@ -945,7 +957,22 @@ async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_
   rawSet("syncT",t);rawSet("syncDone",done);
   if(changed){loadMode();applyMode();if(!$("v-conti").hidden)renderMoney()}}
 async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
-function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||""}
+function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";checkAdmin()}
+/* Dritte del momento: indicazioni di ManuLab per tutti, modificabili solo dall'amministratore */
+let dritte=raw.get("dritte",[]),isAdm=false;
+async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?select=settore,testo&attiva=eq.true&order=updated_at.desc",{headers:{apikey:SB_KEY}});if(!r.ok)return;dritte=await r.json();raw.set("dritte",dritte);raw.set("dritteAt",Date.now())}catch{}}
+if(Date.now()-raw.get("dritteAt",0)>36e5)loadDritte();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-raw.get("dritteAt",0)>36e5)loadDritte()});
+function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [${x.settore||"Tutti"}] ${x.testo}`).join("\n")}
+async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();isAdm=!!data}catch{isAdm=false}$("admBox").hidden=!isAdm;if(isAdm)renderAdm()}
+async function renderAdm(){const L=$("admList");const{data,error}=await sb.from("dritte").select("*").order("updated_at",{ascending:false});if(error){$("admStatus").textContent="Non riesco a leggere le dritte: riprova.";return}L.innerHTML="";
+  (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Settore" placeholder="Settore (es. Tutti, Ristoranti)"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><textarea rows="3" aria-label="Indicazione"></textarea>';
+    const si=d.querySelector("input"),ta=d.querySelector("textarea"),tg=d.querySelector(".tg");si.value=x.settore;ta.value=x.testo;tg.textContent=x.attiva?"✓ Attiva":"Spenta";
+    const save=async(patch)=>{const{error}=await sb.from("dritte").update({...patch,updated_at:new Date().toISOString()}).eq("id",x.id);$("admStatus").textContent=error?"Non salvata: riprova.":"Salvata ✓";if(!error){Object.assign(x,patch);loadDritte()}};
+    si.onchange=()=>save({settore:si.value.trim()||"Tutti"});ta.onchange=()=>{const t=ta.value.trim();if(t)save({testo:t})};
+    tg.onclick=async()=>{await save({attiva:!x.attiva});d.classList.toggle("off",!x.attiva);tg.textContent=x.attiva?"✓ Attiva":"Spenta"};
+    d.querySelector(".del").onclick=async()=>{if(!confirm("Eliminare questa dritta?"))return;const{error}=await sb.from("dritte").delete().eq("id",x.id);if(!error){d.remove();loadDritte();$("admStatus").textContent="Eliminata."}};L.append(d)})}
+$("admAdd").onclick=async()=>{const{error}=await sb.from("dritte").insert({settore:"Tutti",testo:"Scrivi qui la nuova indicazione…",attiva:false});if(error){$("admStatus").textContent="Non riesco ad aggiungerla: riprova.";return}await renderAdm();$("admStatus").textContent="Aggiunta (spenta): scrivi l'indicazione e tocca Spenta per attivarla.";$("admList").querySelector("textarea")?.focus()};
 $("accBtn").onclick=async()=>{show("account");renderAccount();try{await loadSb()}catch{$("accStat").textContent="Serve la connessione a internet."}};
 $("accBack").onclick=()=>show("home");$("brandHome").onclick=()=>{$("sheet").hidden=true;show("home")};
 $("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@\S+\.\S+$/.test(email)){$("accStat").textContent="Scrivi un'email valida.";$("accEmail").focus();return}
@@ -1055,7 +1082,7 @@ function renderIdeas(p){const box=$("cIdeasBox"),L=$("cIdeas");box.hidden=!p.pos
     c.querySelector("button").onclick=()=>ideaToContent(x);L.append(c)})}
 $("cIdeasGo").onclick=async()=>{const nm=$("cName").value.trim(),pos=$("cPos").value.trim();if(!nm||!pos)return;const b=$("cIdeasGo");b.disabled=true;b.textContent="Sto cercando le idee…";
   try{const old=(cliProfiles()[nm]?.ideas||[]).map(x=>x.titolo).join("; ");
-    const r=await sampleFn.json(`Dal posizionamento di questo cliente (${nm}) ricava 6 idee di contenuto social concrete e specifiche per la sua nicchia: 2 TOFU (crescita), 2 MOFU (fidelizzazione), 2 BOFU (vendita). Se il posizionamento contiene già delle idee, usale e migliorale.${old?" Non ripetere queste idee già usate: "+old+".":""} Ogni idea deve incuriosire e superare la regola north-star. Rispondi solo con JSON {"idee":[{"fase":"TOFU|MOFU|BOFU","formato":"Reel|Carosello|Post|Storia|TikTok","titolo":"...","gancio":"prima frase del contenuto","angolo":"perché funziona per questo pubblico, in una frase"}]}.\n\nPOSIZIONAMENTO:\n${pos.slice(0,6000)}`);
+    const r=await sampleFn.json(`Dal posizionamento di questo cliente (${nm}) ricava 6 idee di contenuto social concrete e specifiche per la sua nicchia: 2 TOFU (crescita), 2 MOFU (fidelizzazione), 2 BOFU (vendita). Se il posizionamento contiene già delle idee, usale e migliorale.${old?" Non ripetere queste idee già usate: "+old+".":""} Ogni idea deve incuriosire e superare la regola north-star.${dritteCtx()} Rispondi solo con JSON {"idee":[{"fase":"TOFU|MOFU|BOFU","formato":"Reel|Carosello|Post|Storia|TikTok","titolo":"...","gancio":"prima frase del contenuto","angolo":"perché funziona per questo pubblico, in una frase"}]}.\n\nPOSIZIONAMENTO:\n${pos.slice(0,6000)}`);
     const ids=(Array.isArray(r?.idee)?r.idee:[]).filter(x=>x&&x.titolo).slice(0,8);if(!ids.length)throw{code:"invalid_json"};
     if(!saveClient())return;const P=cliProfiles();P[nm].ideas=ids;store.set("clients",P);renderIdeas(P[nm]);$("cStat").textContent="Idee pronte ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false;if(b.textContent.startsWith("Sto"))b.textContent="💡 Trova le idee"}};
@@ -1389,12 +1416,12 @@ function renderCheck(n){const B=$("checkBox");B.innerHTML="";const c=n.check;if(
   d.querySelector(".score b").textContent=c.voto;const R2=d.querySelector(".rows");[["Gancio",c.gancio],["Posizionamento",c.pos],["Invito all'azione",c.cta]].forEach(([l,x])=>{const r=document.createElement("div");r.className="row3";r.innerHTML="<i></i><span><b></b> </span>";r.querySelector("i").textContent=x?.ok?"✅":"⚠️";r.querySelector("b").textContent=l+":";r.querySelector("span").append(x?.nota||"");R2.append(r)});
   d.querySelector(".tip").textContent=c.consiglio||"";const fb=d.querySelector("button");if(c.voto>=9&&c.gancio?.ok&&c.pos?.ok&&c.cta?.ok)fb.hidden=true;fb.onclick=()=>fixContent(n,fb);B.append(d)}
 $("checkBtn").onclick=async()=>{const n=cur,k=mainKey(n),b=$("checkBtn");if(!k)return;b.disabled=true;b.textContent="Controllo…";
-  try{const r=await sampleFn.json(`Sei un revisore esperto del metodo ManuLab (Triplo Gancio). Valuta questo contenuto (${fmtName(k)}) prima della pubblicazione.\n${MANULAB_VOICE}${ctxFor(n.client)}\nControlla: 1) il gancio ferma lo scorrimento nei primi secondi o nella prima riga? 2) rispetta il posizionamento e la nicchia del cliente (se non c'è un posizionamento, valuta se è specifico per il pubblico)? 3) l'invito all'azione è chiaro e unico? Sii severo ma utile. Rispondi solo con JSON {"voto":numero da 1 a 10,"gancio":{"ok":true|false,"nota":"una frase"},"pos":{"ok":true|false,"nota":"una frase"},"cta":{"ok":true|false,"nota":"una frase"},"consiglio":"la cosa più importante da migliorare, in una frase"}.\n\nCONTENUTO:\n${n.out[k]}`);
+  try{const r=await sampleFn.json(`Sei un revisore esperto del metodo ManuLab (Triplo Gancio). Valuta questo contenuto (${fmtName(k)}) prima della pubblicazione.\n${MANULAB_VOICE}${ctxFor(n.client)}${dritteCtx()}\nControlla: 1) il gancio ferma lo scorrimento nei primi secondi o nella prima riga? 2) rispetta il posizionamento e la nicchia del cliente (se non c'è un posizionamento, valuta se è specifico per il pubblico)? 3) l'invito all'azione è chiaro e unico? Sii severo ma utile. Rispondi solo con JSON {"voto":numero da 1 a 10,"gancio":{"ok":true|false,"nota":"una frase"},"pos":{"ok":true|false,"nota":"una frase"},"cta":{"ok":true|false,"nota":"una frase"},"consiglio":"la cosa più importante da migliorare, in una frase"}.\n\nCONTENUTO:\n${n.out[k]}`);
     n.check={...r,voto:Math.max(1,Math.min(10,Math.round(+r.voto||0))),k};saveNote(n);if(cur===n)renderCTools()}
   catch(e){$("dStatus").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="✅ Controlla"}};
 async function fixContent(n,b){const k=n.check.k;b.disabled=true;b.textContent="Sto sistemando…";
   try{const c=n.check,probs=[["gancio",c.gancio],["posizionamento",c.pos],["invito all'azione",c.cta]].filter(([,x])=>!x?.ok).map(([l,x])=>l+": "+(x?.nota||"")).join("; ");
-    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}\nMigliora questo contenuto seguendo la revisione. Problemi: ${probs||"nessuno grave"}. Consiglio principale: ${c.consiglio}. Mantieni le idee, non inventare fatti.${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
+    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto seguendo la revisione. Problemi: ${probs||"nessuno grave"}. Consiglio principale: ${c.consiglio}. Mantieni le idee, non inventare fatti.${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
     n.out[k]=text;delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto migliorato. Puoi ricontrollarlo con ✅ Controlla."}}
   catch(e){b.disabled=false;b.textContent="✨ Sistemalo tu";$("dStatus").textContent=errMsg(e)}}
 /* Gobbo */
@@ -1414,7 +1441,7 @@ $("contentWeek").onclick=async()=>{const tr=$("transcript").value.trim();if(!tr)
   const fs=platFormats().filter(k=>selected.has(k)),allowed=fs.length?fs:platFormats(),P=PLATFORMS[plat];
   closeSheet();$("go").disabled=true;$("status").textContent="📅 Sto preparando la tua settimana di contenuti… ci vuole circa un minuto.";
   const start=planDate||(()=>{const d=new Date(today()+"T12:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)})(),offs=[0,1,3,4,6];
-  try{const r=await sampleFn.json(`${M().writer} Da questa nota vocale ricava un piano di 5 contenuti per ${P.n} da pubblicare in una settimana: 2 TOFU (crescita: incuriosire chi non ti conosce), 2 MOFU (fiducia: casi, obiezioni, dietro le quinte), 1 BOFU (vendita: invito chiaro all'azione). Ogni contenuto ha un angolo diverso e specifico per la nicchia. Per ogni contenuto scegli il formato tra: ${allowed.map(k=>`"${k}" (${FORMATS[k].p})`).join("; ")}. Scrivi ogni testo completo e pronto da pubblicare, con in fondo una riga di 3-5 hashtag e poi una riga di 5-8 parole chiave separate da " | ".\n${MANULAB_VOICE}${ctxFor(client)}${perfCtx(client)}\n${styleText("completa")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con JSON {"contenuti":[{"fase":"TOFU|MOFU|BOFU","formato":"una delle chiavi indicate","titolo":"titolo breve (max 7 parole)","testo":"il contenuto completo"}]}.\n\nNOTA:\n${tr}`);
+  try{const r=await sampleFn.json(`${M().writer} Da questa nota vocale ricava un piano di 5 contenuti per ${P.n} da pubblicare in una settimana: 2 TOFU (crescita: incuriosire chi non ti conosce), 2 MOFU (fiducia: casi, obiezioni, dietro le quinte), 1 BOFU (vendita: invito chiaro all'azione). Ogni contenuto ha un angolo diverso e specifico per la nicchia. Per ogni contenuto scegli il formato tra: ${allowed.map(k=>`"${k}" (${FORMATS[k].p})`).join("; ")}. Scrivi ogni testo completo e pronto da pubblicare, con in fondo una riga di 3-5 hashtag e poi una riga di 5-8 parole chiave separate da " | ".\n${MANULAB_VOICE}${ctxFor(client)}${perfCtx(client)}${dritteCtx()}\n${styleText("completa")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con JSON {"contenuti":[{"fase":"TOFU|MOFU|BOFU","formato":"una delle chiavi indicate","titolo":"titolo breve (max 7 parole)","testo":"il contenuto completo"}]}.\n\nNOTA:\n${tr}`);
     const list=(Array.isArray(r?.contenuti)?r.contenuti:[]).filter(x=>x&&x.testo).slice(0,5);if(!list.length)throw new Error("Non sono riuscito a preparare la settimana: riprova.");
     const base=Date.now();list.forEach((x,i)=>{const d=new Date(start+"T12:00");d.setDate(d.getDate()+offs[i]);const f=allowed.includes(x.formato)?x.formato:allowed[0];
       const n={id:"n"+(base+i),at:base+i,tr,out:{[f]:String(x.testo)},type:"contenuto",client,title:String(x.titolo||"Contenuto "+(i+1)).slice(0,80),tags:[P.n,String(x.fase||"").toUpperCase()].filter(Boolean),st:"lavoro",pub:d.toISOString().slice(0,10)};if(i===0&&lastAudio){n.audio=lastAudio;lastAudio=null}saveNote(n)});
@@ -1475,7 +1502,7 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl):""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl)+dritteCtx():""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
   $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
@@ -1552,7 +1579,7 @@ $("qGo").onclick=async()=>{
   const qc=qClientOn()?$("qClient").value:"";const pool=qc?allNotes().filter(n=>n.client===qc):allNotes();
   const ctx=pool.map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — tipo ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
   const cre=mode==="creator",pc=qc?clientCtx(qc):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
-  const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico. Per le domande sulle note usa SOLO le note qui sotto, cita il titolo della nota da cui prendi l'informazione e, se la risposta non c'è, dillo chiaramente.${cre?` Se ti chiede di creare idee o testi di contenuto, crea contenuti specifici e incuriosenti${qc?" per "+qc:""}, seguendo il posizionamento e scrivendo con la voce ManuLab:\n${MANULAB_VOICE}`:""} Niente markdown con asterischi.${pc?"\n"+pc:""}\n\nNOTE${qc?" DEL CLIENTE "+qc:" DELL'UTENTE"}:\n${ctx||"(nessuna nota)"}`;
+  const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico. Per le domande sulle note usa SOLO le note qui sotto, cita il titolo della nota da cui prendi l'informazione e, se la risposta non c'è, dillo chiaramente.${cre?` Se ti chiede di creare idee o testi di contenuto, crea contenuti specifici e incuriosenti${qc?" per "+qc:""}, seguendo il posizionamento e scrivendo con la voce ManuLab:\n${MANULAB_VOICE}${dritteCtx()}`:""} Niente markdown con asterischi.${pc?"\n"+pc:""}\n\nNOTE${qc?" DEL CLIENTE "+qc:" DELL'UTENTE"}:\n${ctx||"(nessuna nota)"}`;
   turns.push({role:"user",content:q});
   try{const{text}=await sampleFn([{role:"user",content:rules},...turns.slice(-10)],{cache:false,onText:({text})=>{a.textContent=text}});turns.push({role:"assistant",content:text})}
   catch(e){a.textContent=e?.text||errMsg(e);turns.pop()}
