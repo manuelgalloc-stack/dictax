@@ -197,7 +197,7 @@ textarea,input[type=text],input[type=email],input[type=url],input[type=search],i
 .typeBtn svg{grid-row:1/3;width:34px;height:34px}
 .typeBtn b{font-size:21px;line-height:1.2}
 .typeBtn small{font-size:15px;opacity:.92}
-.t-nota{background:var(--t-nota)}.t-attivita{background:var(--t-attivita)}.t-contenuto{background:var(--t-contenuto)}
+.t-nota{background:var(--t-nota)}.t-attivita{background:var(--t-attivita)}.t-contenuto{background:var(--t-contenuto)}.t-link{background:var(--t-link)}
 .btn.t-contenuto{background:var(--t-contenuto)}
 #contentPick .chip[aria-pressed="true"]{background:var(--t-contenuto);border-color:var(--t-contenuto)}
 .levelBtns{display:grid;gap:10px;margin-top:8px}
@@ -219,7 +219,6 @@ textarea,input[type=text],input[type=email],input[type=url],input[type=search],i
 .note .prog.past{color:var(--muted)}.note .prog.past::before{background:var(--muted);box-shadow:none}
 .note .meta .d.old::before{content:"⚠ ";filter:none}
 .todoCard{border:2px solid var(--t-attivita)}
-#linkNew{width:100%;margin-top:8px;color:var(--t-link);border-color:var(--t-link);font-size:17px}
 .note[data-type="link"]{border-left-color:var(--t-link)}.note[data-type="link"] .meta .cat{color:var(--t-link)}
 .linkCard{border:2px solid var(--t-link);display:flex;flex-direction:column;gap:10px}
 .linkCard .url{word-break:break-all;color:var(--t-link);font-weight:600}
@@ -417,7 +416,6 @@ body:not(.solo) .soloOnly{display:none!important}
       <label class="lbl" for="transcript">Oppure scrivi o incolla</label>
       <textarea id="transcript" rows="3"></textarea>
       <button class="btn big" id="go">Crea nota</button>
-      <button class="btn ghost linkNew" id="linkNew">🔗 Salva un link utile</button>
       <div class="status" id="status" aria-live="polite"></div>
     </div>
 
@@ -676,6 +674,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="typeBtns" id="typeStep">
       <button class="typeBtn t-nota" data-t="nota"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg><b>Nota</b><small>Testo chiaro e ordinato</small></button>
       <button class="typeBtn t-contenuto" data-t="contenuto" id="tContenuto"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg><b>Contenuto</b><small>Post e testi per i social</small></button>
+      <button class="typeBtn t-link" data-t="link"><span style="grid-row:1/3;font-size:28px" aria-hidden="true">🔗</span><b>Link utile</b><small>Salva un link con un titolo</small></button>
     </div>
     <div id="levelStep" hidden>
       <div id="contentPick" hidden>
@@ -1356,14 +1355,13 @@ function linkCard(n){const d=document.createElement("article");d.className="card
   lt.onchange=()=>{const t=lt.value.trim();if(!t)return;n.title=t;saveNote(n);renderHead()};
   lu.onchange=()=>{const v=fixUrl(lu.value);if(!v)return;n.out.link=v;n.tr=v;saveNote(n);a.textContent=v;a.href=v;o.href=v};
   return d}
-function openLink(url){$("lUrl").value=url||"";$("lTitle").value="";$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
-$("linkNew").onclick=()=>openLink(isUrl($("transcript").value)?$("transcript").value.trim():"");
+function openLink(url,title){$("lUrl").value=url||"";$("lTitle").value=title||"";$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
 $("lCancel").onclick=()=>{$("linkSheet").hidden=true};
 $("lPaste").onclick=async()=>{try{const t=(await navigator.clipboard.readText()).trim();if(t){$("lUrl").value=t;$("lTitle").focus()}else $("lStatus").textContent="Non c'è niente da incollare."}catch{$("lStatus").textContent="Tieni premuto nella casella e scegli Incolla."}};
 $("lSave").onclick=()=>{const url=fixUrl($("lUrl").value);if(!url){$("lStatus").textContent="Incolla prima il link.";return}
   let title=$("lTitle").value.trim();if(!title){try{title=new URL(url).hostname.replace(/^www\./,"")}catch{title=url}}
   const n={id:"n"+Date.now(),at:Date.now(),tr:url,out:{link:url},type:"link",client:"",title,tags:[]};
-  $("linkSheet").hidden=true;if(isUrl($("transcript").value))$("transcript").value="";saveNote(n);renderTabs();renderList();openNote(n)};
+  $("linkSheet").hidden=true;$("transcript").value="";saveNote(n);renderTabs();renderList();openNote(n)};
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
   return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ntipo: ${TYPES[typeOf(n)].n}\ncliente: ${n.client||""}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
@@ -1401,16 +1399,15 @@ async function makeMeta(n,src){
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
 const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl):""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
-function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, oppure scrivi qualcosa.";return}
+function openSheet(){const tr=$("transcript").value.trim();if(!tr){$("status").textContent="Tocca il microfono e parla, scrivi qualcosa o incolla un link.";return}
   if(isUrl(tr)){openLink(tr);return}
-  if(mode!=="creator"&&(!clientsOn()||!clients().length)){$("sClient").value="";createNote("nota",TYPES.nota.f);return}
   $("sheetPreview").textContent="“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”";$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
-document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
+document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="link"){const tr=$("transcript").value.trim(),m=tr.match(/(https?:\/\/|www\.)\S+/i);closeSheet();openLink(m?m[0]:"",m?tr.replace(m[0],"").replace(/\s+/g," ").trim().slice(0,120):tr.slice(0,120));return}if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
