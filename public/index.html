@@ -239,6 +239,10 @@ body.isLink #dSeg,body.isLink #moreFmt,body.isLink #appendBox,body.isLink #dType
 .todo .x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:2px 6px}
 body.noClients .cliOpt{display:none!important}
 .mSum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.forfBox{display:flex;flex-direction:column;gap:12px}#fBody{display:flex;flex-direction:column;gap:12px}#fBody[hidden]{display:none}
+.fSave{display:grid;grid-template-columns:1fr 1fr;gap:8px}.fSave>div{background:#fff4d6;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column}.fSave small{color:#7a5600;font-size:13px}.fSave b{font-size:22px;color:#7a5600}
+.fMore summary{cursor:pointer;font-weight:600;color:var(--muted);font-size:14px}.fMore .mGrid{margin-top:10px}
+.mRow .fPart{display:block;font-size:12px;color:#7a5600;font-weight:600}
 .mSum div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 10px;min-width:0}
 .mSum small{display:block;font-size:13px;color:var(--muted);font-weight:600}
 .mSum b{display:block;font-size:18px;margin-top:2px;overflow-wrap:anywhere}
@@ -610,6 +614,18 @@ body:not(.solo) .soloOnly{display:none!important}
     <h1>Entrate e uscite</h1>
     <div class="mMonth"><button id="mPrev" aria-label="Mese precedente">‹</button><b id="mMonthLbl"></b><button id="mNext" aria-label="Mese successivo">›</button></div>
     <div class="mSum"><div><small>Entrate</small><b class="mIn" id="mTotIn"></b></div><div><small>Uscite</small><b class="mOut" id="mTotOut"></b></div><div><small>Saldo</small><b id="mTotBal"></b></div></div>
+    <div class="card forfBox">
+      <label class="toggle"><input type="checkbox" id="fOn"> Sono in regime forfettario</label>
+      <div id="fBody" hidden>
+        <div class="seg" id="fRate" style="grid-template-columns:1fr 1fr"><button data-r="5">5% (primi 5 anni)</button><button data-r="15">15%</button></div>
+        <div class="fSave"><div><small>Da mettere da parte questo mese</small><b id="fMonth"></b></div><div><small>Da inizio anno</small><b id="fYear"></b></div></div>
+        <details class="fMore"><summary>Coefficiente e contributi</summary>
+          <div class="mGrid"><div><label class="lbl" for="fCoef">Coefficiente %</label><input type="number" id="fCoef" inputmode="decimal" min="1" max="100" step="1"></div><div><label class="lbl" for="fInps">Contributi INPS %</label><input type="number" id="fInps" inputmode="decimal" min="0" max="50" step="0.01"></div></div>
+          <p class="help" style="margin:0">Il coefficiente dipende dalla tua attività (78% per molti professionisti, 67% per altre attività, 40% per il commercio). Contributi: 26,07% per la gestione separata.</p>
+        </details>
+        <p class="help" style="margin:0">Per ogni entrata Dictax calcola quanto tenere da parte per tasse e contributi. È una stima: verifica con il tuo commercialista.</p>
+      </div>
+    </div>
     <div class="composer">
       <div class="mKind"><button data-k="in" aria-pressed="false">+ Entrata</button><button data-k="out" aria-pressed="true">− Uscita</button></div>
       <div class="mGrid">
@@ -910,10 +926,20 @@ document.querySelectorAll(".mKind button").forEach(b=>b.onclick=()=>mSetKind(b.d
 $("mPrev").onclick=()=>{mMonth=shiftM(mMonth,-1);renderMoney()};$("mNext").onclick=()=>{mMonth=shiftM(mMonth,1);renderMoney()};
 $("mAdd").onclick=()=>{const v=parseFloat(String($("mAmt").value).replace(",","."));if(!(v>0)){$("mStat").textContent="Scrivi un importo.";$("mAmt").focus();return}
   const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d});saveMoney(a);
-  $("mAmt").value="";$("mDesc").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta.";mMonth=d.slice(0,7);renderMoney()};
+  $("mAmt").value="";$("mDesc").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta."+(mKind==="in"&&forf().on?" Metti da parte "+eur(forfPart(Math.round(v*100)/100))+".":"");mMonth=d.slice(0,7);renderMoney()};
+const forf=()=>({on:false,rate:5,coef:78,inps:26.07,...store.get("forf",{})});
+const forfPart=v=>{const f=forf();if(!f.on)return 0;const c=f.coef/100,i=f.inps/100,r=f.rate/100;return Math.round(v*c*(i+(1-i)*r)*100)/100};
+function setForf(p){store.set("forf",{...forf(),...p});renderMoney()}
+$("fOn").onchange=e=>setForf({on:e.target.checked});
+document.querySelectorAll("#fRate button").forEach(b=>b.onclick=()=>setForf({rate:+b.dataset.r}));
+$("fCoef").onchange=e=>{const v=+e.target.value;if(v>0&&v<=100)setForf({coef:v})};$("fInps").onchange=e=>{const v=+e.target.value;if(v>=0&&v<=50)setForf({inps:v})};
+function renderForf(all,cur){const f=forf();$("fOn").checked=f.on;$("fBody").hidden=!f.on;if(!f.on)return;
+  document.querySelectorAll("#fRate button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.r===f.rate));$("fCoef").value=f.coef;$("fInps").value=f.inps;
+  const yr=mMonth.slice(0,4),sumP=a=>a.filter(x=>x.k==="in").reduce((s,x)=>s+forfPart(x.v),0);
+  $("fMonth").textContent=eur(sumP(cur));$("fYear").textContent=eur(sumP(all.filter(x=>x.d.slice(0,4)===yr&&x.d.slice(0,7)<=mMonth)))}
 function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate").value)$("mDate").value=today();
   const all=money(),cur=all.filter(x=>x.d.slice(0,7)===mMonth),i=tot(cur,"in"),o=tot(cur,"out");
-  $("mMonthLbl").textContent=monthLbl(mMonth);$("mTotIn").textContent=eur(i);$("mTotOut").textContent=eur(o);$("mTotBal").textContent=eur(i-o);$("mTotBal").className=i-o<0?"mOut":"mIn";
+  renderForf(all,cur);$("mMonthLbl").textContent=monthLbl(mMonth);$("mTotIn").textContent=eur(i);$("mTotOut").textContent=eur(o);$("mTotBal").textContent=eur(i-o);$("mTotBal").className=i-o<0?"mOut":"mIn";
   // grafico 6 mesi
   const ms=[...Array(6)].map((_,j)=>shiftM(mMonth,j-5)),data=ms.map(m=>{const a=all.filter(x=>x.d.slice(0,7)===m);return{m,i:tot(a,"in"),o:tot(a,"out")}});
   const mx=Math.max(1,...data.flatMap(x=>[x.i,x.o])),W=360,H=170,base=H-24,gw=W/6,bw=gw*0.3;
@@ -930,7 +956,7 @@ function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate
   const L=$("mMoves");L.innerHTML="";const rows=cur.slice().sort((a,b)=>b.d.localeCompare(a.d));
   if(!rows.length)L.innerHTML='<p class="status">Nessun movimento in questo mese. Aggiungine uno qui sopra.</p>';
   rows.forEach(x=>{const r=document.createElement("div");r.className="mRow";r.innerHTML='<div><b></b><small></small></div><span></span><button class="x">✕</button>';
-    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+x.c;
+    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+x.c;if(x.k==="in"&&forf().on){const fp=document.createElement("small");fp.className="fPart";fp.textContent="Da mettere da parte: "+eur(forfPart(x.v));r.querySelector("div").append(fp)}
     const sp=r.querySelector("span");sp.textContent=(x.k==="in"?"+":"−")+eur(x.v);sp.className=x.k==="in"?"mIn":"mOut";
     const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;addDel(x.id);saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
 $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").textContent="Aggiungi prima qualche entrata o uscita.";return}
@@ -942,7 +968,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 
 /* Account e sincronizzazione (Supabase: accesso con email, dati in public.user_data) */
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice","lang"]),LISTS=["main_notes","main_money"];
+const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_forf","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice","lang"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
 raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
