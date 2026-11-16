@@ -762,7 +762,7 @@ const FORMATS={
   linkedin:{n:"Post LinkedIn",p:"post LinkedIn con gancio iniziale forte, paragrafi brevi, chiusura con domanda o call to action"},
   instagram:{n:"Caption Instagram",p:"caption Instagram breve e coinvolgente con call to action e 5 hashtag pertinenti in fondo"},
   carosello:{n:"Carosello",p:"testo per carosello Instagram di 6 slide, una riga 'Slide N: ...' per slide, titolo forte sulla prima, CTA sull'ultima"},
-  reel:{n:"Script reel",p:"script per reel di 30-45 secondi: GANCIO (primi 3 secondi), CORPO, CTA, con indicazioni visive tra parentesi quadre"},
+  reel:{n:"Script reel",p:"script per reel di 30-45 secondi, semplicissimo. Prima una sezione '3 GANCI' con 3 ganci alternativi numerati (1, 2, 3), brevissimi (massimo 10 parole ciascuno), diversi tra loro. Poi una sezione 'SCRIPT' che sviluppa il gancio migliore, indicato con '(gancio N)': GANCIO (primi 3 secondi), CORPO, CTA, frasi corte e parole di tutti i giorni, con indicazioni visive tra parentesi quadre"},
   tiktok:{n:"Caption TikTok",p:"caption TikTok brevissima e diretta, con 3-4 hashtag"},
   ganci:{n:"5 ganci",p:"5 ganci alternativi per l'inizio di un post o di un video, uno per riga, numerati"},
   newsletter:{n:"Newsletter",p:"breve sezione di newsletter con titolo, 2-3 paragrafi e CTA finale con [LINK]"},
@@ -1277,7 +1277,7 @@ const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello
 let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
 const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
 function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
-  const showSl=platFormats().includes("carosello")&&selected.has("carosello");$("slideRow").hidden=!showSl;const SC=$("slideChips");SC.innerHTML="";[5,6,7,8,10].forEach(v=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v;c.setAttribute("aria-pressed",v===carN);c.onclick=()=>{carN=v;store.set("carN",v);renderChips()};SC.append(c)});
+  const showSl=platFormats().includes("carosello")&&selected.has("carosello");$("slideRow").hidden=!showSl;const SC=$("slideChips");SC.innerHTML="";[2,3,4,5,6,7,8,9,10].forEach(v=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v;c.setAttribute("aria-pressed",v===carN);c.onclick=()=>{carN=v;store.set("carN",v);renderChips()};SC.append(c)});
   const F=$("formats");F.innerHTML="";PLATFORMS[plat].f.forEach(([k,label])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=label;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
 const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
@@ -1444,7 +1444,7 @@ async function fixContent(n,b){const k=n.check.k;b.disabled=true;b.textContent="
 /* Gobbo */
 let gRun=false,gSpeed=raw.get("gSpeed",45),gLast=0,gY=0;
 $("gobboBtn").onclick=()=>{const n=cur,k=n.out.reel!=null?"reel":mainKey(n);if(!k)return;const T=$("gTxt");T.innerHTML="";
-  cleanPub(n.out[k]).split(/(\[[^\]]*\])/).forEach(part=>{if(!part)return;if(/^\[.*\]$/.test(part)){const s=document.createElement("span");s.className="cue";s.textContent=part;T.append(s)}else T.append(part)});
+  (t=>{const i=t.search(/^\s*SCRIPT\b/im);return i>=0?t.slice(i).replace(/^\s*SCRIPT[^\n]*\n/i,""):t})(cleanPub(n.out[k])).split(/(\[[^\]]*\])/).forEach(part=>{if(!part)return;if(/^\[.*\]$/.test(part)){const s=document.createElement("span");s.className="cue";s.textContent=part;T.append(s)}else T.append(part)});
   gY=0;$("gView").scrollTop=0;gStop();$("gobbo").hidden=false;try{document.documentElement.requestFullscreen?.()}catch{}try{navigator.wakeLock?.request("screen").then(l=>gLock=l).catch(()=>{})}catch{}};
 let gLock=null;
 function gStop(){gRun=false;$("gPlay").textContent="▶";$("gPlay").setAttribute("aria-label","Avvia")}
