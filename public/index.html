@@ -132,6 +132,8 @@ h1{font:400 26px/1.2 var(--serif);margin:0;text-wrap:balance}
 .card .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .card .fmt{font-weight:700;font-size:14px;color:var(--accent-strong)}
 .card .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.card .hBtns{display:flex;gap:6px;flex-shrink:0}.edBox textarea{width:100%;min-height:160px;font:inherit;font-size:16px;line-height:1.5;padding:12px;border:2px solid var(--accent);border-radius:12px;box-sizing:border-box;resize:vertical;background:var(--bg,#fff);color:inherit}.edAct{display:flex;gap:8px;margin-top:8px}.edAct .btn{flex:1}
+.cliCard .wk{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.cliCard .wk span{font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--muted)}.cliCard .wk .ok{background:#e3f4ea;color:#1e9a55}.cliCard .wk .todo{background:#fdf0dc;color:#b06a00}.cliCard .wk .t{background:none;padding:3px 0}
 mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 .fid{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .fid:empty{display:none}
@@ -1165,10 +1167,12 @@ function packInfo(k,m){const N=(cliProfiles()[k]||{}).n|0,done=contents().filter
   let free=packSlots(k,m).filter(ds=>!taken.has(ds));const left=Math.max(0,N-done.length);const fut=free.filter(ds=>ds>=td),past=free.filter(ds=>ds<td);free=[...fut,...past].slice(0,left).filter(ds=>ds>=td).sort();
   return{N,done:done.length,left,free}}
 function packFree(m){const out=[];packKeys().forEach(k=>packInfo(k,m).free.forEach(ds=>out.push({k,ds})));return out}
+function weekRange(){const t=today(),d=new Date(t+"T12:00"),wd=(d.getDay()+6)%7,a=new Date(d-wd*864e5),b=new Date(+a+6*864e5),f=x=>x.toISOString().slice(0,10);return[f(a),f(b)]}
+function weekCount(nm){const[a,b]=weekRange();let done=0,todo=0;contents().forEach(n=>{if((n.client||"")!==nm)return;const ds=n.pub||(n.at?new Date(n.at-new Date(n.at).getTimezoneOffset()*6e4).toISOString().slice(0,10):"");if(!ds||ds<a||ds>b)return;n.st==="fatto"?done++:todo++});return{done,todo}}
 function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles(),names=clients();
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
-    c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
+    c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";{const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';wk.querySelector(".ok").textContent="✓ "+w.done+(w.done===1?" fatto":" fatti");wk.querySelector(".todo").textContent=w.todo+" da fare";c.querySelector("div").append(wk)}if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
 function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};cFmts=(p.fmts||[]).map(f=>({...f}));fmtOpen=false;renderFmts();cFix=(p.fissi||[]).map(f=>({...f}));renderFix();renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
 $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
@@ -1487,9 +1491,13 @@ function saveNote(n){n.up=Date.now();if(n.at&&n.up-n.at>60000)n.prog=n.up;
 
 /* Dettaglio */
 function outCard(k,text,n){const d=document.createElement("article");d.className="card";
-  d.innerHTML='<div class="head"><span class="fmt"></span><button class="btn ghost sm">Copia</button></div><div class="txt"></div><div class="fid"></div>';
-  d.querySelector(".fmt").textContent=n?.plain&&k==="pulito"?"Il tuo testo":fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector("button");
+  d.innerHTML='<div class="head"><span class="fmt"></span><span class="hBtns"><button class="btn ghost sm edB" hidden>✏️ Modifica</button><button class="btn ghost sm cpB">Copia</button></span></div><div class="txt"></div><div class="fid"></div>';
+  d.querySelector(".fmt").textContent=n?.plain&&k==="pulito"?"Il tuo testo":fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector(".cpB");
   b.onclick=()=>copyText(t.textContent,b,t);
+  if(n&&k!=="todo"){const e=d.querySelector(".edB");e.hidden=false;e.onclick=()=>{if(d.querySelector(".edBox"))return;const box=document.createElement("div");box.className="edBox";box.innerHTML='<textarea class="edTa"></textarea><div class="edAct"><button class="btn sm">Salva</button><button class="btn ghost sm">Annulla</button></div>';
+    const ta=box.querySelector("textarea");ta.value=n.out[k]??t.textContent;t.hidden=true;e.hidden=true;t.after(box);const fit=()=>{ta.style.height="auto";ta.style.height=Math.max(160,ta.scrollHeight+4)+"px"};ta.oninput=fit;fit();ta.focus();
+    const [sv,an]=box.querySelectorAll("button");an.onclick=()=>{box.remove();t.hidden=false;e.hidden=false};
+    sv.onclick=()=>{const v=ta.value.trim();if(!v){ta.focus();return}if(v!==(n.out[k]||"")){n.out[k]=v;if(n.fid)delete n.fid[k];delete n.check;saveNote(n)}openNote(n,true)}}}
   const c={el:d,txt:t,fid:d.querySelector(".fid")};
   if(false&&n&&mode==="creator"&&CREATOR_PRO&&SOCIAL.includes(k)){const mb=document.createElement("button");mb.className="mlBtn";
     const lbl=(k+ML in n.out)?"↻ Rifai con la voce ManuLab":"✨ Riscrivi con la voce ManuLab";mb.innerHTML='<span></span><span class="proTag">Creator Pro</span>';mb.firstChild.textContent=lbl;
