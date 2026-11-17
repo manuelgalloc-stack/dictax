@@ -337,6 +337,8 @@ body.noClients .cliOpt{display:none!important}
 .calItem:last-child{border-bottom:0}
 .calItem div{flex:1;min-width:0}.calItem b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}.calItem small{color:var(--muted);font-size:13px}
 .cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
+.calItem.doneC{opacity:.5}
+.note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
 #cDays .chip{min-width:44px;justify-content:center}
 .cliCard .pack{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted);font-weight:600}
@@ -1054,7 +1056,7 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
     const p=r.querySelector(".pill");p.textContent=TYPES[typeOf(n)].n;p.style.cssText=`background:${TYPES[typeOf(n)].color};color:#fff`;r.onclick=()=>openNote(n);return r}
   const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
-  const p=r.querySelector(".pill"),stt=n.st||"idea";p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
+  const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="fatto")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 function renderCal(){document.querySelector(".weekDone")?.remove();const free=packFree(calM);$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
@@ -1366,12 +1368,12 @@ function noteCard(n,el){
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){const L=$("list");L.innerHTML="";renderToday();renderTagFilter();
   const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
-  const nArch=base.filter(n=>n.arch).length;const ns=base.filter(n=>query?true:showArch?n.arch:!n.arch);
+  const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&n.st==="fatto";const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
   if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
   ns.forEach(n=>{const w=document.createElement("div");w.className="swipeWrap";const del=document.createElement("button");del.className="swipeDel";del.innerHTML="🗑<span>Elimina</span>";del.setAttribute("aria-label","Elimina "+n.title);
-    const b=document.createElement("button");b.className="note";noteCard(n,b);b.onclick=e=>{if(w.classList.contains("open")){e.preventDefault();closeSwipes();return}openNote(n)};
+    const b=document.createElement("button");b.className="note"+(isDone(n)?" doneC":"");noteCard(n,b);b.onclick=e=>{if(w.classList.contains("open")){e.preventDefault();closeSwipes();return}openNote(n)};
     del.onclick=()=>{deleteNote(n);renderList()};w.append(del,b);swipeable(w,b,n);L.append(w)});archBtn()}
 function askDelete(n){const W=$("delAsk");W.querySelector("b").textContent="“"+n.title+"”";W.hidden=false;$("delArch").textContent=n.arch?"↩︎ Riapri":"✓ Fatto";$("delArch").onclick=()=>{W.hidden=true;setArch(n,!n.arch)};$("delYes").onclick=()=>{W.hidden=true;deleteNote(n);renderList()};$("delNo").onclick=()=>W.hidden=true;W.onclick=e=>{if(e.target===W)W.hidden=true}}
 function setArch(n,v){n.arch=v;saveNote(n);renderTabs();renderList()}
