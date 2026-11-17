@@ -346,6 +346,8 @@ body.noClients .cliOpt{display:none!important}
 .chip.moreChip{border-style:dashed}
 .calCli{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:2px;scrollbar-width:none}.calCli::-webkit-scrollbar{display:none}.calCli .chip{flex:none}
 .note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
+.dayFmt{display:flex;flex-direction:column;gap:6px}.dfRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dfRow>span{font-size:14px;font-weight:600;min-width:78px}.dfRow .chip{font-size:13px;padding:5px 10px}
+.ideaCard{border:2px dashed var(--t-contenuto);display:flex;flex-direction:column;gap:8px}.ideaCard .btn{background:var(--t-contenuto)}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
 #cDays .chip{min-width:44px;justify-content:center}
 .cliCard .pack{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted);font-weight:600}
@@ -553,7 +555,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="chips calCli cliOpt" id="calCli" role="group" aria-label="Cliente" hidden></div>
     <div class="calSum calLeg" id="calSum"></div>
     <div class="cal" id="calGrid"></div>
-    <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><div id="calList"></div></div>
+    <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><button class="btn ghost sm" id="calMonth" hidden style="align-self:flex-start;color:var(--t-contenuto);border-color:var(--t-contenuto)"></button><div id="calList"></div></div>
     <div class="card" id="calNoDateBox"><div class="head"><span class="fmt">In creazione, senza data</span></div><div id="calNoDate"></div></div>
   </section>
 
@@ -681,6 +683,8 @@ body:not(.solo) .soloOnly{display:none!important}
           <div class="row tight"><label for="cN" style="flex:1">Contenuti al mese</label><input type="number" id="cN" min="0" max="60" inputmode="numeric" placeholder="0" style="width:90px;flex:none"></div>
           <span class="lbl" style="margin-top:4px">In quali giorni (facoltativo)</span>
           <div class="chips" id="cDays" role="group" aria-label="Giorni di pubblicazione"></div>
+          <div id="cDayFmt" class="dayFmt"></div>
+          <button class="btn ghost" id="cMonth" type="button" hidden>🗓 Prepara le idee del mese</button>
           <p class="help" style="margin:0">Nel calendario vedrai i posti liberi da riempire. Senza giorni, Dictax li distribuisce nel mese.</p>
         </div>
         <button class="btn" id="cGen">✨ Genera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
@@ -1096,7 +1100,7 @@ function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli(
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?evC.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
-  $("calPlan").hidden=!calDay||calDay<today();
+  $("calPlan").hidden=!calDay||calDay<today();{const mk=isSolo()?"__me":calCli,okM=mk&&packKeys().includes(mk)&&calM>=today().slice(0,7)&&packInfo(mk,calM).free.length;$("calMonth").hidden=!okM;if(okM){$("calMonth").textContent="🗓 Prepara le idee di "+monthLbl(calM).split(" ")[0].toLowerCase()+" ("+packInfo(mk,calM).free.length+")";$("calMonth").onclick=()=>prepMonth(mk,calM,$("calMonth"))}}
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
   const dl=(calDay?dues.filter(x=>x.due===calDay):dues.filter(x=>x.due.slice(0,7)===calM)).sort((a,b)=>a.due.localeCompare(b.due));
   dl.forEach(x=>{const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent="☐ "+x.t;r.querySelector("small").textContent=shortDate(x.due)+" · "+x.n.title;const pl=r.querySelector(".pill");pl.textContent=x.due<td?"In ritardo":"Scadenza";pl.style.cssText=x.due<td?"background:var(--danger);color:#fff":"background:#fff4d6;color:#7a5600";r.onclick=()=>openNote(x.n);L.append(r)});
@@ -1128,15 +1132,19 @@ function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
     c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);renderDays();$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
 $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
-function renderDays(){const D=$("cDays");D.innerHTML="";DAYN.forEach((t,i)=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=t;c.setAttribute("aria-pressed",cDays.has(i));c.onclick=()=>{cDays.has(i)?cDays.delete(i):cDays.add(i);renderDays()};D.append(c)})}
-const cliForm=()=>({n:Math.max(0,Math.min(60,parseInt($("cN").value)||0)),days:[...cDays].sort(),niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
+let cDayFmt={};const ROT_FMT=[["","Libero"],["reel","Reel"],["carosello","Carosello"],["instagram","Post"]];const DAYL=["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato","Domenica"];
+function renderDays(){const D=$("cDays");D.innerHTML="";DAYN.forEach((t,i)=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=t;c.setAttribute("aria-pressed",cDays.has(i));c.onclick=()=>{cDays.has(i)?cDays.delete(i):cDays.add(i);renderDays()};D.append(c)});
+  const F=$("cDayFmt");F.innerHTML="";[...cDays].sort().forEach(i=>{const r=document.createElement("div");r.className="dfRow";r.innerHTML='<span></span><div class="chips"></div>';r.firstChild.textContent=DAYL[i];ROT_FMT.forEach(([k,l])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=l;c.setAttribute("aria-pressed",(cDayFmt[i]||"")===k);c.onclick=()=>{if(k)cDayFmt[i]=k;else delete cDayFmt[i];renderDays()};r.lastChild.append(c)});F.append(r)});
+  if(cDays.size&&!F.dataset.hint){}}
+const cliForm=()=>({n:Math.max(0,Math.min(60,parseInt($("cN").value)||0)),days:[...cDays].sort(),dayFmt:Object.fromEntries(Object.entries(cDayFmt).filter(([i])=>cDays.has(+i))),niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
 function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return false}
   const P=cliProfiles();if(cliCur&&cliCur!==nm){delete P[cliCur];store.get("notes",[]).forEach(n=>{if(n.client===cliCur){n.client=nm;saveNote(n)}})}
   P[nm]={...cliForm(),ideas:(P[nm]||{}).ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
-$("cSave").onclick=()=>{if(saveClient())$("cStat").textContent="Cliente salvato ✓"};
+$("cSave").onclick=()=>{if(saveClient()){$("cStat").textContent="Cliente salvato ✓";$("cMonth").hidden=!((cliProfiles()[cliCur]?.n|0)>0)}};
+$("cMonth").onclick=()=>{if(!cliCur)return;prepMonth(cliCur,today().slice(0,7),$("cMonth"))};
 $("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
   const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";$("cPos").value="";
@@ -1207,7 +1215,7 @@ function updReset(){const r=$("reset");if(r)r.style.visibility=(recOn||$("transc
 setInterval(updReset,400);
 
 /* Registrazioni salvate sul telefono (IndexedDB) */
-let lastAudio=null,planDate=null,planCli=null;
+let lastAudio=null,planDate=null,planCli=null,planFmt=null;
 const audDB=()=>new Promise((ok,ko)=>{const r=indexedDB.open("dictax-audio",1);r.onupgradeneeded=()=>r.result.createObjectStore("a");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
 async function audSet(k,b){const d=await audDB();return new Promise((ok,ko)=>{const t=d.transaction("a","readwrite");t.objectStore("a").put(b,k);t.oncomplete=ok;t.onerror=()=>ko(t.error)})}
 async function audGet(k){try{const d=await audDB();return await new Promise(ok=>{const q=d.transaction("a").objectStore("a").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch{return null}}
@@ -1242,7 +1250,7 @@ function renderToday(){$("todayBox").hidden=true;return;const td=today(),items=[
   items.slice(0,8).forEach(it=>{const b=document.createElement("button");b.className="todayItem";b.innerHTML="<span><b></b><br><small></small></span>›";b.querySelector("b").textContent=(typeOf(it.n)==="contenuto"?"◆ ":"☐ ")+it.t;const sm=b.querySelector("small");sm.textContent=it.s;if(it.late)sm.classList.add("late");b.onclick=()=>openNote(it.n);L.append(b)})}
 
 /* Pianifica dal calendario */
-function setPlan(d,cl){planDate=d;planCli=d&&cl?cl:null;$("planBanner").hidden=!d;if(d)$("planBanner").querySelector("span").textContent="📅 Nuovo contenuto per "+new Date(d+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+(planCli?" · "+planCli:"")}
+function setPlan(d,cl){planDate=d;planCli=d&&cl?cl:null;planFmt=null;if(d&&(cl!=null)){const k=cl||(isSolo()?"__me":"");const pf=(cliProfiles()[k]||{}).dayFmt||{};planFmt=pf[(new Date(d+"T12:00").getDay()+6)%7]||null}$("planBanner").hidden=!d;if(d)$("planBanner").querySelector("span").textContent="📅 Nuovo contenuto per "+new Date(d+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+(planCli?" · "+planCli:"")}
 $("planX").onclick=()=>setPlan(null);
 $("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay,calCli||null);show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};
 
@@ -1496,7 +1504,7 @@ function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).len
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
@@ -1570,6 +1578,22 @@ $("contentWeek").onclick=async()=>{const tr=$("transcript").value.trim();if(!tr)
     setPlan(null);$("transcript").value="";$("status").textContent="";audTrim();renderTabs();renderList();calM=dates.slice().sort()[0].slice(0,7);calDay="";show("cal");
     $("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronti '+list.length+' contenuti, già nel calendario. Tocca un giorno per aprirli.</p>')}
   catch(e){$("status").textContent=errMsg(e)}finally{$("go").disabled=false}};
+/* Idee del mese: piano con rotazione dei formati, testi scritti solo quando servono */
+const slotFmt=(k,ds,i)=>{const pf=(cliProfiles()[k]||{}).dayFmt||{},f=pf[(new Date(ds+"T12:00").getDay()+6)%7];return f||["reel","carosello","instagram"][i%3]};
+async function prepMonth(k,m,btn){const info=packInfo(k,m),slots=info.free;if(!slots.length){alert("Questo mese non ci sono posti liberi da riempire.");return}
+  const cl=packCli(k),name=packName(k),fm=slots.map((ds,i)=>slotFmt(k,ds,i));
+  if(!confirm(`Preparo ${slots.length} idee per ${name} nei posti liberi di ${monthLbl(m)}? Sono solo idee (titolo e gancio): i testi li scrivi quando vuoi con "✨ Scrivilo".`))return;
+  const old=btn.textContent;btn.disabled=true;btn.textContent="Sto preparando le idee…";
+  try{const r=await sampleFn.json(`${M().writer} Prepara il piano editoriale del mese per ${name}: ${slots.length} idee di contenuto social, una per ogni uscita qui sotto e nello stesso ordine, con il formato indicato.\n${slots.map((ds,i)=>`${i+1}) ${new Date(ds+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})} — ${FORMATS[fm[i]]?.n||fm[i]}`).join("\n")}\nBilancia lo scopo nel mese: circa metà per farsi conoscere (TOFU), un terzo per creare fiducia (MOFU), il resto per vendere (BOFU), alternandoli. Ogni idea è specifica per la nicchia, diversa dalle altre e incuriosisce; adatta l'idea al formato (es. reel = cosa si vede e si dice, carosello = sequenza di slide, post = testo).${ctxFor(cl)}${perfCtx(cl)}${dritteCtx()}\nRispondi solo con JSON {"idee":[{"fase":"TOFU|MOFU|BOFU","titolo":"titolo breve (max 7 parole)","gancio":"prima frase del contenuto","angolo":"cosa raccontare, in una o due frasi"}]}.`);
+    const ideas=(Array.isArray(r?.idee)?r.idee:[]).filter(x=>x&&x.titolo).slice(0,slots.length);if(!ideas.length)throw new Error("Non sono riuscito a preparare le idee: riprova.");
+    const base=Date.now();ideas.forEach((x,i)=>{const f=fm[i];const n={id:"n"+(base+i),at:base+i,tr:`Idea di contenuto (${faseLbl(x.fase).toLowerCase()}) — ${FORMATS[f]?.n||f}: ${x.titolo}.\nGancio: ${x.gancio||""}\nCosa raccontare: ${x.angolo||""}`,out:{},type:"contenuto",client:cl,title:String(x.titolo).slice(0,80),tags:[fmtLabel(f),faseLbl(x.fase)].filter(Boolean),st:"idea",pub:slots[i],idea:{formato:f,gancio:x.gancio||"",angolo:x.angolo||"",fase:faseLbl(x.fase)}};saveNote(n)});
+    renderList();calM=m;calDay="";calCli=k==="__me"?"":k;raw.set("calCli",calCli);show("cal");$("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronte '+ideas.length+' idee nel calendario (rombi grigi). Aprine una e tocca "✨ Scrivilo" quando vuoi il testo.</p>')}
+  catch(e){alert(errMsg(e))}finally{btn.disabled=false;btn.textContent=old}}
+function ideaCard(n){const d=document.createElement("article");d.className="card ideaCard";d.innerHTML='<span class="fmt" style="color:var(--t-contenuto)"></span><b></b><p class="status" style="margin:0"></p><button class="btn big">✨ Scrivilo</button>';
+  const x=n.idea;d.querySelector(".fmt").textContent="💡 Idea · "+(FORMATS[x.formato]?.n||x.formato)+(x.fase?" · "+x.fase:"");d.querySelector("b").textContent=x.gancio?"“"+x.gancio+"”":n.title;d.querySelector("p").textContent=x.angolo||"";
+  const b=d.querySelector("button");b.onclick=async()=>{const k=FORMATS[x.formato]?x.formato:"instagram";b.disabled=true;b.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");d.after(c.el);
+    try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;n.st="lavoro";saveNote(n);if(cur===n)openNote(n,true)}
+    catch(e){c.el.remove();b.disabled=false;b.textContent="✨ Scrivilo";$("dStatus").textContent=errMsg(e)}};return d}
 /* Link utili */
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
@@ -1637,7 +1661,7 @@ $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
 function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
 document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="link"){const tr=$("transcript").value.trim(),m=tr.match(/(https?:\/\/|www\.)\S+/i);closeSheet();openLink(m?m[0]:"",m?tr.replace(m[0],"").replace(/\s+/g," ").trim().slice(0,120):tr.slice(0,120));return}if(!$("transcript").value.trim()){closeSheet();$("status").textContent="Prima tocca il microfono e parla, oppure scrivi qualcosa qui sopra.";$("transcript").focus();return}if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
-  $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
+  $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";if(pendingType==="contenuto"&&planFmt&&platFormats().includes(planFmt)){selected.clear();selected.add(planFmt)}renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
 $("levelBack").onclick=showTypeStep;
 $("contentPlain").onclick=()=>{const tr=$("transcript").value.trim();if(!tr)return;const client=clientsOn()?$("sClient").value.trim():"";
