@@ -1097,6 +1097,7 @@ let calM=today().slice(0,7),calDay="";
 $("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
 $("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
 const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
+const visNotes=()=>allNotes().filter(n=>mode==="creator"||typeOf(n)!=="contenuto"); // senza Creator i contenuti restano salvati ma non si vedono
 const ST_C={idea:"#9aa59e",lavoro:"#e0a100",fatto:"var(--accent)"};
 const isoLocal=t=>{const d=new Date(t);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const calDate=n=>typeOf(n)==="contenuto"?(n.pub||""):isoLocal(n.at);
@@ -1439,7 +1440,7 @@ function noteCard(n,el){
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){const L=$("list");L.innerHTML="";renderToday();renderTagFilter();
-  const base=allNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
+  const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&n.st==="fatto";const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
@@ -1690,7 +1691,7 @@ document.querySelectorAll(".photoBtn[data-for]").forEach(b=>b.onclick=()=>pickPh
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
 const parseTags=v=>[...new Set(String(v||"").split(/[,\s]+/).map(t=>t.replace(/^#+/,"").trim().toLowerCase()).filter(Boolean))].slice(0,12);
-const topTags=(k=8)=>{const c={};allNotes().forEach(n=>(n.tags||[]).forEach(t=>{const x=tagKey(t);if(x)c[x]=(c[x]||0)+1}));return Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,k)};
+const topTags=(k=8)=>{const c={};visNotes().forEach(n=>(n.tags||[]).forEach(t=>{const x=tagKey(t);if(x)c[x]=(c[x]||0)+1}));return Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,k)};
 function tagSuggest(box,inp,onAdd){box.innerHTML="";const have=parseTags(inp.value);topTags().filter(t=>!have.includes(t)).forEach(t=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent="#"+t;c.onclick=()=>{inp.value=[...parseTags(inp.value),t].join(", ");onAdd&&onAdd();tagSuggest(box,inp,onAdd)};box.append(c)})}
 function linkCard(n){const d=document.createElement("article");d.className="card linkCard";
   d.innerHTML='<span class="fmt" style="color:var(--t-link)">Link utile</span><a class="url" target="_blank" rel="noopener"></a><div class="row tight"><a class="btn open" target="_blank" rel="noopener">🔗 Apri il link</a><button class="btn ghost sm" type="button">Copia</button></div><label class="lbl">Di cosa si tratta?</label><input type="text" class="lt"><label class="lbl">Link</label><input type="url" class="lu" inputmode="url"><label class="lbl">Tag</label><input type="text" class="lg" placeholder="Es. reel, tutorial" autocapitalize="none"><div class="chips tagSugg"></div>';
@@ -1789,7 +1790,7 @@ async function createNote(type,formats){
 /* Super nota */
 function renderMerge(){const L=$("mList");L.innerHTML="";
   const S=$("mClient");S.innerHTML="";[["","Scegli tu"],...clients().map(c=>[c,"Tutte le note di "+c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});
-  allNotes().forEach(n=>{const l=document.createElement("label");l.className="pick";const c=document.createElement("input");c.type="checkbox";c.checked=picked.has(n.id);c.onchange=()=>{c.checked?picked.add(n.id):picked.delete(n.id)};
+  visNotes().forEach(n=>{const l=document.createElement("label");l.className="pick";const c=document.createElement("input");c.type="checkbox";c.checked=picked.has(n.id);c.onchange=()=>{c.checked?picked.add(n.id):picked.delete(n.id)};
     const d=document.createElement("div");const b=document.createElement("b");b.textContent=n.title;const s=document.createElement("small");s.textContent=fmtDate(n.at)+" · "+TYPES[typeOf(n)].n+(n.client?" · "+n.client:"")+(n.ex?" · esempio":"");d.append(b,s);l.append(c,d);L.append(l)})}
 $("mClient").onchange=e=>{const c=e.target.value;if(c){picked.clear();allNotes().filter(n=>n.client===c).forEach(n=>picked.add(n.id))}const keep=c;renderMerge();$("mClient").value=keep};
 $("mGo").onclick=async()=>{
@@ -1818,7 +1819,7 @@ $("qGo").onclick=async()=>{
   const q=$("q").value.trim();if(!q)return;
   if(!sampleFn){bubble("ai","L'AI non è disponibile in questa vista.");return}
   $("qGo").disabled=true;$("q").value="";$("sugg").innerHTML="";bubble("me",q);const a=bubble("ai","Sto cercando nelle tue note…");
-  const qc=qClientOn()?$("qClient").value:"";const pool=qc?allNotes().filter(n=>n.client===qc):allNotes();
+  const qc=qClientOn()?$("qClient").value:"";const pool=qc?visNotes().filter(n=>n.client===qc):visNotes();
   const ctx=pool.map(n=>`[${new Date(n.at).toLocaleDateString("it-IT")}] ${n.title} — tipo ${TYPES[typeOf(n)].n}${n.client?", cliente "+n.client:""}, tag ${(n.tags||[]).join(", ")}\n${Object.values(n.out).join("\n")}\nTrascrizione: ${n.tr}`).join("\n\n---\n\n").slice(0,80000);
   const cre=mode==="creator",pc=qc?clientCtx(qc):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
   const rules=`Sei l'assistente delle note di Dictax. Rispondi in italiano, in modo breve e pratico. Per le domande sulle note usa SOLO le note qui sotto, cita il titolo della nota da cui prendi l'informazione e, se la risposta non c'è, dillo chiaramente.${cre?` Se ti chiede di creare idee o testi di contenuto, crea contenuti specifici e incuriosenti${qc?" per "+qc:""}, seguendo il posizionamento e scrivendo con la voce ManuLab:\n${MANULAB_VOICE}${dritteCtx()}`:""} Niente markdown con asterischi.${pc?"\n"+pc:""}\n\nNOTE${qc?" DEL CLIENTE "+qc:" DELL'UTENTE"}:\n${ctx||"(nessuna nota)"}`;
