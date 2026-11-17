@@ -153,11 +153,12 @@ mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 .sugg{display:flex;flex-wrap:wrap;gap:7px}
 
 /* Barra in basso */
-.dock{position:fixed;left:0;right:0;bottom:0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;justify-content:center;pointer-events:none}
+.dock{z-index:40;transition:opacity .15s,transform .15s;transform:translateZ(0);position:fixed;left:0;right:0;bottom:0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;justify-content:center;pointer-events:none}
 .dock nav{pointer-events:auto;display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px;box-shadow:0 8px 24px rgba(10,40,20,.12);max-width:100%}
 .dock button{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .dock button[aria-current="true"]{background:var(--deck);color:var(--deck-fg)}
 @media (max-width:380px){.dock button{padding:9px 10px;font-size:12px}}
+body.kb .dock{opacity:0;pointer-events:none;transform:translateY(130%)}
 
 /* Versione semplificata: elementi più grandi */
 body{font-size:16px}
@@ -1670,6 +1671,10 @@ function ideaCard(n){const d=document.createElement("article");d.className="card
   const b=d.querySelector("button");b.onclick=async()=>{const k=FORMATS[x.formato]?x.formato:"instagram";b.disabled=true;b.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");d.after(c.el);
     try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;n.st="lavoro";saveNote(n);if(cur===n)openNote(n,true)}
     catch(e){c.el.remove();b.disabled=false;b.textContent="✨ Scrivilo";$("dStatus").textContent=errMsg(e)}};return d}
+/* Barra in basso: si nasconde mentre scrivi (tastiera aperta) e torna quando chiudi */
+(function(){const touch=matchMedia("(pointer:coarse)").matches,isField=el=>el&&(el.tagName==="TEXTAREA"||el.isContentEditable||(el.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|range|color|file|date)$/i.test(el.type)));
+  const upd=()=>{const vv=window.visualViewport,kbVV=vv?innerHeight-vv.height>140:false;document.body.classList.toggle("kb",touch&&(isField(document.activeElement)||kbVV))};
+  document.addEventListener("focusin",upd);document.addEventListener("focusout",()=>setTimeout(upd,60));window.visualViewport?.addEventListener("resize",upd);})();
 /* Link utili */
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
