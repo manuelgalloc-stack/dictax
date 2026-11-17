@@ -293,6 +293,7 @@ body.noClients .cliOpt{display:none!important}
 .cTools button:disabled{opacity:.6}
 .lblRow{display:flex;align-items:center;justify-content:space-between;gap:8px}.lblRow .lbl{margin:0}
 .photoBtn{border:1px solid var(--line);background:var(--surface);color:var(--accent-strong);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;flex:none}.photoBtn:disabled{opacity:.6}
+.funRow{margin:-6px 0 12px}.funChip[aria-pressed=true]{background:#fff4d6;border-color:#e0a100;color:#7a5600}
 .fixBox{display:flex;flex-direction:column;gap:8px;margin-top:10px}.fixBox textarea{min-height:0}
 .checkCard{border:2px solid var(--t-contenuto);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
 .checkCard .score{display:flex;align-items:baseline;gap:10px}.checkCard .score b{font:400 44px/1 var(--display,Georgia);color:var(--t-contenuto)}
@@ -810,6 +811,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div id="contentPick" hidden>
         <span class="lbl">Per quale piattaforma?</span><div class="chips platChips" id="platforms" style="margin-block:8px 14px"></div>
         <span class="lbl" id="channelsLbl">Cosa creo?</span><div class="chips" id="formats" style="margin-block:8px 16px"></div>
+        <div class="funRow"><button type="button" class="chip funChip" id="funChip" aria-pressed="false">😄 Fallo divertente</button></div>
         <div class="slideRow" id="slideRow" hidden><span class="lbl" style="margin:0">Quante slide?</span><div class="chips" id="slideChips"></div></div>
       </div>
       <button class="btn big" id="contentGo" style="background:var(--t-contenuto);width:100%">✨ Crea contenuto</button>
@@ -1142,7 +1144,7 @@ const isSolo=()=>mode==="creator"&&ckind==="solo";
 const clientsOn=()=>useClients&&!isSolo();
 const ctxFor=cl=>cl?clientCtx(cl):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
 function clientCtx(cl){const p=cliProfiles()[cl];let t=cl==="__me"?"\nIl contenuto è per il brand personale dell'autore (creator).":`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
-  if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;if(p.fissi?.length)t+=` Contenuti che vanno sempre bene e da fare con regolarità: ${p.fissi.map(f=>`${f.cosa} (${f.n} volte al mese)`).join("; ")}.`;
+  if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;
   if(p.pos)t+=`\nPosizionamento del cliente (sistema ManuLab): rispetta i temi, la regola north-star, il tono e le parole da usare o evitare.\n${p.pos.slice(0,5000)}`;return t}
 /* Pacchetti: contenuti promessi al mese per cliente e posti liberi nel calendario */
 const packKeys=()=>{const P=cliProfiles();return Object.keys(P).filter(k=>(P[k].n|0)>0&&(isSolo()?k==="__me":k!=="__me"&&clientsOn()))};
@@ -1580,15 +1582,18 @@ function renderCheck(n){const B=$("checkBox");B.innerHTML="";const k=mainKey(n);
   const f=document.createElement("div");f.className="fixBox";f.innerHTML='<div class="lblRow"><label class="lbl">✏️ Le tue dritte per questo contenuto (facoltative)</label><button type="button" class="photoBtn" data-ref="1">📷 Foto</button></div><textarea rows="2" placeholder="Es. accorcialo, gancio più provocatorio, togli le emoji, parla al tu…"></textarea><button class="btn" style="background:var(--t-contenuto)"></button>';
   const ta=f.querySelector("textarea"),fb=f.querySelector("button.btn");f.querySelector(".photoBtn").onclick=e=>pickPhoto(ta,e.currentTarget,"ref");fb.textContent=c?"✨ Sistemalo":"✨ Sistemalo con le mie dritte";
   fb.onclick=()=>{const t=ta.value.trim();if(!t&&!c){ta.focus();ta.placeholder="Scrivi cosa vuoi cambiare, oppure tocca prima ✅ Controlla";return}fixContent(n,fb,t)};B.append(f)}
+async function ensureQuality(n){if(!mainKey(n))return;const say=t=>{if(cur===n)$("dStatus").textContent=t};
+  try{say("Controllo la qualità…");await runCheck(n);let tries=0;while(n.check.voto<8&&tries<2){tries++;say(`Voto ${n.check.voto}: lo miglioro…`);const fake={disabled:false,textContent:""};await fixContent(n,fake,"",true)}
+    if(cur===n){renderCTools();say(`Pronto ✓ Voto ${n.check.voto} su 10.`)}}catch(e){say("")}}
 async function runCheck(n){const k=mainKey(n);const my=(n.myFix||[]).slice(-5);
   const r=await sampleFn.json(`Sei un revisore esperto del metodo ManuLab (Triplo Gancio). Valuta questo contenuto (${fmtName(k)}) prima della pubblicazione.\n${MANULAB_VOICE}${ctxFor(n.client)}${dritteCtx()}\nControlla solo 3 cose: 1) il gancio ferma lo scorrimento nei primi secondi o nella prima riga? 2) è coerente con il posizionamento e la nicchia del cliente (se non c'è un posizionamento, è specifico per il pubblico)? 3) l'invito all'azione è chiaro? Valuta in modo equo e coerente: 9-10 se i tre punti sono rispettati; 7-8 se c'è solo qualche dettaglio migliorabile; 6 o meno solo se c'è un problema vero. Non togliere punti per gusti personali o perché "si può sempre fare meglio": segna un punto come non ok solo se è davvero debole.${my.length?`\nINDICAZIONI DATE DALL'AUTORE su questo contenuto (sono scelte volute, non penalizzarle): ${my.join("; ")}.`:""}\nRispondi solo con JSON {"voto":numero da 1 a 10,"gancio":{"ok":true|false,"nota":"una frase"},"pos":{"ok":true|false,"nota":"una frase"},"cta":{"ok":true|false,"nota":"una frase"},"consiglio":"la cosa più importante da migliorare, in una frase (o 'Va bene così' se non c'è niente di importante)"}.\n\nCONTENUTO:\n${n.out[k]}`);
   n.check={...r,voto:Math.max(1,Math.min(10,Math.round(+r.voto||0))),k};saveNote(n)}
 $("checkBtn").onclick=async()=>{const n=cur,b=$("checkBtn");if(!mainKey(n))return;b.disabled=true;b.textContent="Controllo…";
   try{await runCheck(n);if(cur===n)renderCTools()}catch(e){$("dStatus").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="✅ Controlla"}};
-async function fixContent(n,b,mine){const k=mainKey(n);if(!k)return;const old=b.textContent;b.disabled=true;b.textContent="Sto sistemando…";
+async function fixContent(n,b,mine,auto){const k=mainKey(n);if(!k)return;const old=b.textContent;b.disabled=true;b.textContent="Sto sistemando…";
   try{const c=n.check&&n.check.k===k?n.check:null,probs=c?[["gancio",c.gancio],["posizionamento",c.pos],["invito all'azione",c.cta]].filter(([,x])=>!x?.ok).map(([l,x])=>l+": "+(x?.nota||"")).join("; "):"";
-    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee, non inventare fatti.${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
-    n.out[k]=text;if(mine)n.myFix=[...(n.myFix||[]),mine].slice(-5);delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto sistemato. Ricontrollo il voto…"}
+    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee e il tipo di contenuto, non inventare fatti.${n.fun?FUN_ON:FUN_OFF}${QUALITY}${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
+    const fn=n.fun;genFun=!!fn;n.out[k]=text;if(mine)n.myFix=[...(n.myFix||[]),mine].slice(-5);delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto sistemato. Ricontrollo il voto…"}
     try{await runCheck(n);if(cur===n){renderCTools();$("dStatus").textContent="Contenuto sistemato ✓ Nuovo voto: "+n.check.voto+" su 10."}}catch{if(cur===n)$("dStatus").textContent="Contenuto sistemato ✓"}}
   catch(e){b.disabled=false;b.textContent=old;$("dStatus").textContent=errMsg(e)}}
 /* Gobbo */
@@ -1672,7 +1677,7 @@ $("plGo").onclick=async()=>{if(!PL)return;if(PL.weeks.some(w=>!w.tema.trim())){$
 function ideaCard(n){const d=document.createElement("article");d.className="card ideaCard";d.innerHTML='<span class="fmt" style="color:var(--t-contenuto)"></span><b></b><p class="status" style="margin:0"></p><button class="btn big">✨ Scrivilo</button>';
   const x=n.idea;d.querySelector(".fmt").textContent="💡 Idea · "+(x.fisso?"⭐ "+x.fisso+" · ":"")+((x.tema||x.rubrica)?(x.tema||x.rubrica)+" · ":"")+(FORMATS[x.formato]?.n||x.formato)+(x.fase?" · "+x.fase:"");d.querySelector("b").textContent=x.gancio?"“"+x.gancio+"”":n.title;d.querySelector("p").textContent=x.angolo||"";
   const b=d.querySelector("button");b.onclick=async()=>{const k=FORMATS[x.formato]?x.formato:"instagram";b.disabled=true;b.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");d.after(c.el);
-    try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;n.st="lavoro";saveNote(n);if(cur===n)openNote(n,true)}
+    try{n.fun=/sketch|divert|scenett|ironi|simpatic/i.test((x.fisso||"")+" "+(x.tema||""));genFun=n.fun;const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;n.st="lavoro";saveNote(n);if(cur===n)openNote(n,true);await ensureQuality(n)}
     catch(e){c.el.remove();b.disabled=false;b.textContent="✨ Scrivilo";$("dStatus").textContent=errMsg(e)}};return d}
 /* Barra in basso: si nasconde mentre scrivi (tastiera aperta) e torna quando chiudi */
 (function(){const touch=matchMedia("(pointer:coarse)").matches,isField=el=>el&&(el.tagName==="TEXTAREA"||el.isContentEditable||(el.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|range|color|file|date)$/i.test(el.type)));
@@ -1745,14 +1750,19 @@ async function makeMeta(n,src){
   const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
   Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
-const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl)+dritteCtx():""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
+const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl)+dritteCtx()+(genFun?FUN_ON:FUN_OFF)+QUALITY:""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
   $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=planCli||cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
 let pendingType=null;
-function showTypeStep(){pendingType=null;$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
+let genFun=false;$("funChip").onclick=()=>{const b=$("funChip");b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true")};
+const funOn=()=>$("funChip").getAttribute("aria-pressed")==="true";
+const FUN_ON="\nTONO RICHIESTO DALL'AUTORE: divertente e ironico (anche in forma di sketch o scenetta, se adatto al formato).";
+const FUN_OFF="\nTono: NON trasformarlo in sketch, scenetta o battuta se l'autore non lo chiede; fai esattamente il tipo di contenuto che la nota descrive (es. presentazione di un prodotto = presentazione). Dritte e risultati passati sono indicazioni generali: non cambiano la richiesta dell'autore.";
+const QUALITY="\nPrima di rispondere verifica che il contenuto superi questa revisione: 1) il gancio ferma lo scorrimento nella prima riga o nei primi 3 secondi; 2) è coerente con il posizionamento e specifico per la nicchia; 3) l'invito all'azione è chiaro e unico. Se un punto è debole, correggilo prima di rispondere.";
+function showTypeStep(){pendingType=null;$("funChip").setAttribute("aria-pressed","false");$("typeStep").hidden=false;$("levelStep").hidden=true;$("sheetTitle").textContent="Che cos'è?"}
 document.querySelectorAll("#typeStep .typeBtn").forEach(b=>b.onclick=()=>{if(b.dataset.t==="link"){const tr=$("transcript").value.trim(),m=tr.match(/(https?:\/\/|www\.)\S+/i);closeSheet();openLink(m?m[0]:"",m?tr.replace(m[0],"").replace(/\s+/g," ").trim().slice(0,120):tr.slice(0,120));return}if(!$("transcript").value.trim()){closeSheet();$("status").textContent="Prima tocca il microfono e parla, oppure scrivi qualcosa qui sopra.";$("transcript").focus();return}if(b.dataset.t==="attivita"){createNote("attivita",["todo"]);return}if(b.dataset.t==="nota"){createNote("nota",TYPES.nota.f);return}pendingType=b.dataset.t;$("typeStep").hidden=true;$("levelStep").hidden=false;
   $("contentPick").hidden=pendingType!=="contenuto";$("channelsLbl").textContent="Cosa creo?";if(pendingType==="contenuto"&&planFmt&&platFormats().includes(planFmt)){selected.clear();selected.add(planFmt)}renderChips();$("sheetTitle").textContent=TYPES[pendingType].n;
   $("sheet").style.setProperty("--lvl",TYPES[pendingType].color);document.querySelectorAll(".levelBtn").forEach(x=>x.setAttribute("aria-current",x.dataset.l===st.level))});
@@ -1761,7 +1771,7 @@ $("contentPlain").onclick=()=>{const tr=$("transcript").value.trim();if(!tr)retu
   const labels=PLATFORMS[plat].f.filter(([k])=>selected.has(k)).map(([,l])=>l);const words=tr.replace(/\s+/g," ").split(" ");
   const n={id:"n"+Date.now(),at:Date.now(),tr,out:{pulito:tr},type:"contenuto",client,title:words.slice(0,7).join(" ")+(words.length>7?"…":""),tags:[PLATFORMS[plat].n,...labels],st:planDate&&planDate>today()?"idea":"fatto",pub:planDate||today(),plain:true};if(lastAudio){n.audio=lastAudio;lastAudio=null}setPlan(null);
   closeSheet();$("transcript").value="";saveNote(n);renderList();openNote(n)};
-$("contentGo").onclick=()=>{const f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}createNote("contenuto",f)};
+$("contentGo").onclick=()=>{genFun=funOn();const f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}createNote("contenuto",f)};
 document.querySelectorAll(".levelBtn").forEach(b=>b.onclick=()=>{const t=pendingType;if(!t)return;let f=TYPES[t].f;
   if(t==="contenuto"){f=platFormats().filter(k=>selected.has(k));if(!f.length){$("channelsLbl").textContent="Scegli almeno una cosa qui sotto";return}}
   st.level=b.dataset.l;saveStyle();createNote(t,f)});
@@ -1781,8 +1791,9 @@ async function createNote(type,formats){
     else for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(promptFor(k,tr,n.client),{onText:({text})=>{c.txt.textContent=text}});
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
-    await Promise.all(jobs);saveNote(n);audTrim();$("dOrg").hidden=false;if(cur===n)openNote(n);
+    await Promise.all(jobs);if(type==="contenuto")n.fun=genFun;saveNote(n);audTrim();$("dOrg").hidden=false;if(cur===n)openNote(n);
     $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
+    if(type==="contenuto"&&mainKey(n))await ensureQuality(n);
   }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
   finally{$("go").disabled=false}
 }
