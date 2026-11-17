@@ -681,7 +681,7 @@ body:not(.solo) .soloOnly{display:none!important}
         </div></details>
         <div class="packBox fmtBox">
           <span class="lbl">🎞 I 4 formati del cliente (facoltativo)</span>
-          <p class="help" style="margin:0">Le rubriche fisse che nascono dal posizionamento, es. "La ricetta in 30 secondi". Dictax le usa per le idee del mese.</p>
+          <p class="help" style="margin:0">Le rubriche fisse che nascono dal posizionamento, es. "La ricetta in 30 secondi". Si creano da sole quando generi il posizionamento e puoi modificarle. Dictax le usa per le idee del mese.</p>
           <div id="cFmts" class="cFmts"></div>
           <div class="row tight" style="flex-wrap:wrap"><button class="btn ghost sm" id="cFmtGen" type="button">✨ Proponili dal posizionamento</button><button class="back" id="cFmtHand" type="button">✍️ Scrivili tu</button></div>
         </div>
@@ -1144,7 +1144,7 @@ $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
 let cDayFmt={},cFmts=[];const TECH_FMT=[["reel","Reel"],["carosello","Carosello"],["instagram","Post"]];
 const rotOpts=()=>{const named=cFmts.map((f,i)=>[f&&f.nome?.trim()?"f"+i:null,f&&f.nome?.trim()]).filter(x=>x[0]);return [["","Libero"],...(named.length?named:TECH_FMT)]};
-let fmtOpen=false;function renderFmts(){const B=$("cFmts");B.innerHTML="";const has=cFmts.some(f=>f&&f.nome);$("cFmtHand").hidden=has||fmtOpen;if(!has&&!fmtOpen)return;for(let i=0;i<4;i++){const f=cFmts[i]||{nome:"",tipo:"reel",desc:""};const r=document.createElement("div");r.className="cFmt";
+let fmtOpen=false;function renderFmts(){const B=$("cFmts");B.innerHTML="";const has=cFmts.some(f=>f&&f.nome);$("cFmtGen").textContent=has?"✨ Proponili di nuovo dal posizionamento":"✨ Proponili dal posizionamento";$("cFmtHand").hidden=has||fmtOpen;if(!has&&!fmtOpen)return;for(let i=0;i<4;i++){const f=cFmts[i]||{nome:"",tipo:"reel",desc:""};const r=document.createElement("div");r.className="cFmt";
     r.innerHTML='<div class="row tight"><input type="text" class="cfn" placeholder="Formato '+(i+1)+' (es. Dietro le quinte)"><select class="cft" aria-label="Tipo"></select></div><input type="text" class="cfd" placeholder="Cosa contiene, in una riga">';
     const n=r.querySelector(".cfn"),t=r.querySelector(".cft"),d=r.querySelector(".cfd");TECH_FMT.forEach(([k,l])=>{const o=document.createElement("option");o.value=k;o.textContent=l;t.append(o)});n.value=f.nome||"";t.value=f.tipo||"reel";d.value=f.desc||"";
     const up=()=>{cFmts[i]={nome:n.value.trim(),tipo:t.value,desc:d.value.trim()};renderDays()};n.onchange=up;t.onchange=up;d.onchange=up;B.append(r)}}const DAYL=["Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato","Domenica"];
@@ -1157,12 +1157,13 @@ function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textCo
   P[nm]={...cliForm(),ideas:(P[nm]||{}).ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
 $("cSave").onclick=()=>{if(saveClient()){$("cStat").textContent="Cliente salvato ✓";$("cMonth").hidden=!((cliProfiles()[cliCur]?.n|0)>0)}};
 $("cFmtHand").onclick=()=>{fmtOpen=true;renderFmts();$("cFmts").querySelector("input")?.focus()};
-$("cFmtGen").onclick=async()=>{const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cliente",pos=$("cPos").value.trim(),f=cliForm();if(!pos&&!f.niche){$("cStat").textContent="Scrivi prima di cosa si occupa, oppure genera il posizionamento.";return}
+$("cFmtGen").onclick=()=>genFmts();
+async function genFmts(){const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cliente",pos=$("cPos").value.trim(),f=cliForm();if(!pos&&!f.niche){$("cStat").textContent="Scrivi prima di cosa si occupa, oppure genera il posizionamento.";return}
   b.disabled=true;b.textContent="Sto pensando ai formati…";
   try{const r=await sampleFn.json(`Sei un esperto di contenuti social del metodo ManuLab. Per questo cliente (${nm==="__me"?"brand personale del creator":nm}) proponi 4 formati fissi (rubriche ricorrenti) da far girare ogni settimana: concreti, riconoscibili, specifici per la nicchia e coerenti con il posizionamento. Bilanciali: almeno uno per farsi conoscere, uno per creare fiducia, uno per vendere. Per ognuno: nome breve e memorabile (max 5 parole), tipo ("reel", "carosello" o "post") e una riga su cosa contiene.${dritteCtx()}\nSettore: ${f.niche}. Pubblico: ${f.target}. Offerta: ${f.offer}. Zona: ${f.zone}.\n${pos?"POSIZIONAMENTO:\n"+pos.slice(0,5000):""}\nRispondi solo con JSON {"formati":[{"nome":"...","tipo":"reel|carosello|post","descrizione":"..."}]}.`);
     const L=(Array.isArray(r?.formati)?r.formati:[]).filter(x=>x&&x.nome).slice(0,4);if(!L.length)throw new Error("Nessun formato proposto: riprova.");
-    cFmts=L.map(x=>({nome:String(x.nome).trim(),tipo:/caros/i.test(x.tipo)?"carosello":/post|caption/i.test(x.tipo)?"instagram":"reel",desc:String(x.descrizione||"").trim()}));cDayFmt={};renderFmts();renderDays();$("cStat").textContent="Ecco i 4 formati: correggili se vuoi, poi tocca Salva cliente."}
-  catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="✨ Proponili dal posizionamento"}};
+    cFmts=L.map(x=>({nome:String(x.nome).trim(),tipo:/caros/i.test(x.tipo)?"carosello":/post|caption/i.test(x.tipo)?"instagram":"reel",desc:String(x.descrizione||"").trim()}));cDayFmt={};renderFmts();renderDays();$("cStat").textContent="Ecco i 4 formati: correggili se vuoi, poi tocca Salva cliente.";return true}
+  catch(e){$("cStat").textContent=errMsg(e);return false}finally{b.disabled=false;b.textContent="✨ Proponili di nuovo dal posizionamento"}}
 $("cMonth").onclick=()=>{if(!cliCur)return;prepMonth(cliCur,today().slice(0,7),$("cMonth"))};
 $("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
@@ -1188,7 +1189,7 @@ PAROLE DA USARE
 PAROLE DA EVITARE
 IDEE DI CONTENUTO (non usare le sigle TOFU, MOFU, BOFU: dividi le idee in 'Per farsi conoscere', 'Per creare fiducia' e 'Per vendere'. 2 idee per farsi conoscere: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee per creare fiducia: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee per vendere: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
 Non inventare numeri, recensioni, premi o risultati.`;
-  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓"}
+  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto ✓ Ora preparo i 4 formati…";if(!cFmts.some(f=>f&&f.nome)){if(await genFmts()){saveClient();$("cStat").textContent="Posizionamento e 4 formati pronti e salvati ✓ Puoi modificarli quando vuoi.";$("cFmts").scrollIntoView({behavior:"smooth",block:"center"})}}else $("cStat").textContent="Posizionamento pronto e salvato ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false}};
 
 const IDEA_FMT=f=>{f=String(f||"").toLowerCase();return f.includes("reel")||f.includes("video")?"reel":f.includes("carosel")?"carosello":f.includes("tiktok")?"tiktok":f.includes("linkedin")?"linkedin":f.includes("newsletter")||f.includes("email")?"newsletter":"instagram"};
