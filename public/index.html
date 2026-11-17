@@ -338,6 +338,11 @@ body.noClients .cliOpt{display:none!important}
 .calItem div{flex:1;min-width:0}.calItem b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}.calItem small{color:var(--muted);font-size:13px}
 .cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
 .calItem.doneC{opacity:.5}
+.cliMore summary,.voiceMore summary{cursor:pointer;font-weight:700;color:var(--muted);padding:6px 0}
+.cliMoreBody{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.voiceMore{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}.voiceMore summary{font-size:17px}
+.voiceBody{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+.chip.moreChip{border-style:dashed}
 .calCli{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:2px;scrollbar-width:none}.calCli::-webkit-scrollbar{display:none}.calCli .chip{flex:none}
 .note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -502,7 +507,6 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="share">📤 Condividi</button>
       <button class="btn ghost" id="archBtnD">✓ Fatto</button>
-      <button class="btn ghost sm" id="mdSave">Scarica file .md</button>
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
     <div class="composer" id="appendBox">
@@ -510,7 +514,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
       <div class="row"><span class="status" id="aStatus" aria-live="polite"></span><button class="btn" id="appendGo">Aggiungi e riscrivi</button></div>
     </div>
-    <button class="btn danger sm" id="del" style="align-self:center;margin-top:10px">Elimina nota</button>
+    <div class="row" style="justify-content:center;gap:10px;margin-top:10px"><button class="btn ghost sm" id="mdSave">Scarica file</button><button class="btn danger sm" id="del">Elimina nota</button></div>
   </section>
 
   <!-- UNISCI -->
@@ -664,11 +668,13 @@ body:not(.solo) .soloOnly{display:none!important}
       <button class="btn ghost agencyOnly" id="cliNew">+ Nuovo cliente</button>
       <div class="composer" id="cliEdit" hidden>
         <label class="lbl agencyOnly" for="cName">Nome del cliente</label><input type="text" class="agencyOnly" id="cName" placeholder="Es. Ristorante sul Lago">
-        <label class="lbl" for="cNiche">Settore e nicchia</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione">
+        <label class="lbl" for="cNiche">Di cosa si occupa</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione">
+        <details class="cliMore" id="cliMore"><summary>Altri dettagli (facoltativi)</summary><div class="cliMoreBody">
         <label class="lbl" for="cTarget">A chi si rivolge</label><input type="text" id="cTarget" placeholder="Es. coppie 30-55 della zona, turisti nel weekend">
         <label class="lbl" for="cOffer">Cosa vende o offre</label><input type="text" id="cOffer" placeholder="Es. cene, pranzi della domenica, eventi privati">
         <label class="lbl" for="cZone">Zona (facoltativa)</label><input type="text" id="cZone" placeholder="Es. Agrigento">
         <label class="lbl" for="cAvoid">Da evitare (facoltativo)</label><input type="text" id="cAvoid" placeholder="Parole, temi o toni da non usare">
+        </div></details>
         <div class="packBox">
           <span class="lbl">📦 Pacchetto (facoltativo)</span>
           <div class="row tight"><label for="cN" style="flex:1">Contenuti al mese</label><input type="number" id="cN" min="0" max="60" inputmode="numeric" placeholder="0" style="width:90px;flex:none"></div>
@@ -687,7 +693,7 @@ body:not(.solo) .soloOnly{display:none!important}
         </div>
       </div>
     </div>
-    <h1 style="margin-top:10px">Voce di brand <span class="pro planBadge"></span></h1>
+    <details class="voiceMore"><summary>🎙 Voce di brand (facoltativa) <span class="pro planBadge"></span></summary><div class="voiceBody">
     <p class="lead">Incolla 2 o 3 testi scritti da te o dal tuo cliente. Dictax ricava lo stile e lo usa ogni volta che trasformi una nota.</p>
     <div class="composer">
       <label class="lbl" for="brandName">Nome del profilo</label>
@@ -698,6 +704,7 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <div class="row"><span class="lbl">Profilo attivo</span><span class="pill" id="vTag">Esempio</span></div>
     <div class="voice-grid" id="voiceSum"></div>
+    </div></details>
   </section>
 </div>
 
@@ -1119,7 +1126,7 @@ function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
     c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";cDays=new Set(p.days||[]);renderDays();$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);renderDays();$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
 $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
 function renderDays(){const D=$("cDays");D.innerHTML="";DAYN.forEach((t,i)=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=t;c.setAttribute("aria-pressed",cDays.has(i));c.onclick=()=>{cDays.has(i)?cDays.delete(i):cDays.add(i);renderDays()};D.append(c)})}
@@ -1453,7 +1460,9 @@ $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
 $("dClient").onchange=e=>{cur.client=e.target.value.trim();e.target.dataset.new="";saveNote(cur);renderHead()};
 function renderMore(){$("moreLbl").textContent=typeOf(cur)==="contenuto"?"Da questo contenuto crea anche":"Crea anche da questa nota";const M2=$("moreChips");M2.innerHTML="";const list0=fmts().filter(k=>!(k in cur.out)&&k!=="todo"),list=typeOf(cur)==="contenuto"?[...list0.filter(k=>SOCIAL.includes(k)),...list0.filter(k=>!SOCIAL.includes(k))]:list0;$("moreFmt").hidden=!list.length;
-  list.forEach(k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);M2.append(b)})}
+  const PRIO=typeOf(cur)==="contenuto"?["ganci","reel","carosello","newsletter"]:["email","riassunto","verbale","todo"],sorted=[...PRIO.filter(k=>list.includes(k)),...list.filter(k=>!PRIO.includes(k))];
+  const mk=k=>{const b=document.createElement("button");b.className="chip";b.textContent="+ "+FORMATS[k].n;b.onclick=()=>addFormat(k,b);return b};
+  sorted.slice(0,4).forEach(k=>M2.append(mk(k)));if(sorted.length>4){const more=document.createElement("button");more.className="chip moreChip";more.textContent="Altro…";more.onclick=()=>{more.remove();sorted.slice(4).forEach(k=>M2.append(mk(k)))};M2.append(more)}}
 async function addFormat(k,btn){const n=cur;btn.disabled=true;btn.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
   try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;if(fidOn())await runFid(n,k,c);saveNote(n);if(cur===n)renderMore()}
   catch(e){c.txt.textContent=errMsg(e);btn.disabled=false;btn.textContent="+ "+FORMATS[k].n}}
