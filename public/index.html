@@ -281,6 +281,7 @@ body.noClients .cliOpt{display:none!important}
 .dritta{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
 .dritta.off{opacity:.55}
 .dritta .dRow{display:flex;gap:8px;align-items:center}.dritta .dRow input{flex:1;min-width:0;font-weight:700}
+.dritta .dLbl{font-size:14px;font-weight:600;color:var(--muted);flex:none}.dritta .dRow select{flex:1;min-width:0;padding:8px 10px}
 .dritta .dRow button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 10px;font:inherit;font-size:14px;cursor:pointer}
 .resBtns,.cTools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #dRes{display:flex;flex-direction:column;gap:8px}#dRes[hidden]{display:none}
@@ -568,7 +569,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <details class="style" id="styleBox" open>
         <summary>⚙️ Impostazioni <span id="styleSum"></span></summary>
         <div class="body">
-          <label class="toggle" id="voiceToggle"><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
+          <label class="toggle" id="voiceToggle" hidden><input type="checkbox" id="useVoice" checked> Scrivi con la mia voce di brand</label>
           <label class="toggle"><input type="checkbox" id="useClients"> Usa i clienti (etichetta e filtro per cliente)</label>
           <label class="toggle"><input type="checkbox" id="useLang"> Correggi la lingua (grammatica, ortografia, punteggiatura)</label>
           <label class="toggle"><input type="checkbox" id="useFid"> Segnalami le frasi aggiunte dall'AI</label>
@@ -609,7 +610,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="row"><button class="btn ghost" id="accLogout">Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
       <div class="card admBox" id="admBox" hidden>
         <div class="head"><span class="fmt">🧭 Dritte del momento</span><span class="pill">Solo tu</span></div>
-        <p class="help" style="margin:0">Cosa funziona adesso. Dictax le usa in tutti i contenuti di tutti, scegliendo quelle giuste per il settore.</p>
+        <p class="help" style="margin:0">Cosa funziona adesso e come scrivere. Dictax le usa in tutti i contenuti di tutti, scegliendo quelle giuste per il settore e per il formato (es. solo nelle caption).</p>
         <div id="admList"></div>
         <button class="btn" id="admAdd">+ Nuova dritta</button>
         <p class="status" id="admStatus" aria-live="polite"></p>
@@ -693,7 +694,7 @@ body:not(.solo) .soloOnly{display:none!important}
         </div>
       </div>
     </div>
-    <details class="voiceMore"><summary>🎙 Voce di brand (facoltativa) <span class="pro planBadge"></span></summary><div class="voiceBody">
+    <details class="voiceMore" hidden><summary>🎙 Voce di brand (facoltativa) <span class="pro planBadge"></span></summary><div class="voiceBody">
     <p class="lead">Incolla 2 o 3 testi scritti da te o dal tuo cliente. Dictax ricava lo stile e lo usa ogni volta che trasformi una nota.</p>
     <div class="composer">
       <label class="lbl" for="brandName">Nome del profilo</label>
@@ -939,7 +940,7 @@ function applyMode(){
   $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=mode!=="creator";
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
-  $("voiceToggle").hidden=mode!=="creator";$("useVoice").checked=mode==="creator"&&st.ws==="mio";
+  $("voiceToggle").hidden=true;$("useVoice").checked=mode==="creator"&&st.ws==="mio";
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=v==="voice"&&isSolo()?"Brand":n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
@@ -1029,13 +1030,14 @@ async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();a
 function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";setTimeout(checkAdmin,0)}
 /* Dritte del momento: indicazioni di ManuLab per tutti, modificabili solo dall'amministratore */
 let dritte=raw.get("dritte",[]),isAdm=false;
-async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?select=settore,testo&attiva=eq.true&order=updated_at.desc",{headers:{apikey:SB_KEY}});if(!r.ok)return;dritte=await r.json();raw.set("dritte",dritte);raw.set("dritteAt",Date.now())}catch{}}
+async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?select=settore,testo,formato&attiva=eq.true&order=updated_at.desc",{headers:{apikey:SB_KEY}});if(!r.ok)return;dritte=await r.json();raw.set("dritte",dritte);raw.set("dritteAt",Date.now())}catch{}}
 if(Date.now()-raw.get("dritteAt",0)>36e5)loadDritte();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-raw.get("dritteAt",0)>36e5)loadDritte()});
-function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [${x.settore||"Tutti"}] ${x.testo}`).join("\n")}
+function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [settore: ${x.settore||"Tutti"} · formato: ${x.formato||"Tutti"}] ${x.testo}`).join("\n")+"\nLe indicazioni con un formato (es. Caption, Reel, Carosello) valgono solo quando scrivi quel formato."}
 async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm;if(isAdm)renderAdm()}
 async function renderAdm(){const L=$("admList");const{data,error}=await sb.from("dritte").select("*").order("updated_at",{ascending:false});if(error){$("admStatus").textContent="Non riesco a leggere le dritte: riprova.";return}L.innerHTML="";
-  (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Settore" placeholder="Settore (es. Tutti, Ristoranti)"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><textarea rows="3" aria-label="Indicazione"></textarea>';
+  (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Settore" placeholder="Settore (es. Tutti, Ristoranti)"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><div class="dRow"><span class="dLbl">Formato</span><select class="fm" aria-label="Formato"></select></div><textarea rows="3" aria-label="Indicazione"></textarea>';
+    const fm=d.querySelector(".fm");["Tutti","Caption","Reel","Carosello","Post","Storie","TikTok","Ganci","Newsletter"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v==="Tutti"?"Tutti i formati":v;fm.append(o)});fm.value=x.formato||"Tutti";fm.onchange=()=>save({formato:fm.value});
     const si=d.querySelector("input"),ta=d.querySelector("textarea"),tg=d.querySelector(".tg");si.value=x.settore;ta.value=x.testo;tg.textContent=x.attiva?"✓ Attiva":"Spenta";
     const save=async(patch)=>{const{error}=await sb.from("dritte").update({...patch,updated_at:new Date().toISOString()}).eq("id",x.id);$("admStatus").textContent=error?"Non salvata: riprova.":"Salvata ✓";if(!error){Object.assign(x,patch);loadDritte()}};
     si.onchange=()=>save({settore:si.value.trim()||"Tutti"});ta.onchange=()=>{const t=ta.value.trim();if(t)save({testo:t})};
@@ -1605,7 +1607,7 @@ $("del").onclick=()=>{if($("del").textContent==="Elimina"){$("del").textContent=
   deleteNote(cur);renderList();show("home")};
 
 /* Prompt comuni */
-const voiceText=()=>{if(mode!=="creator"||!$("useVoice").checked)return"";const v=voice||EX_VOICE;return `\nScrivi con questa voce di brand — Tono: ${v.tono}. Lessico: ${v.lessico}. Struttura: ${v.struttura}. Da evitare: ${v.evitare}. In sintesi: ${v.sintesi}\n`};
+const voiceText=()=>{return"";const v=voice||EX_VOICE;return `\nScrivi con questa voce di brand — Tono: ${v.tono}. Lessico: ${v.lessico}. Struttura: ${v.struttura}. Da evitare: ${v.evitare}. In sintesi: ${v.sintesi}\n`};
 
 /* Aggiungi alla nota */
 $("appendGo").onclick=async()=>{
