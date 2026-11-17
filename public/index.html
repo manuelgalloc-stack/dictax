@@ -347,6 +347,7 @@ body.noClients .cliOpt{display:none!important}
 .calCli{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:2px;scrollbar-width:none}.calCli::-webkit-scrollbar{display:none}.calCli .chip{flex:none}
 .note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
 .cFmts{display:flex;flex-direction:column;gap:10px}.cFmt{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}.cFmt .row{gap:6px}.cFmt .cfn{font-weight:700}.cFmt .cfd{font-size:14px}
+.plWeeks{display:flex;flex-direction:column;gap:10px}.plWeek{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--paper)}.plWeek small{color:var(--muted);font-weight:600}.plWeek .row{gap:6px}.plWeek input{flex:1;min-width:0;font-weight:700}.plWeek .why{font-size:13px;color:var(--muted);margin:0}.plWeek button{flex:none}
 .dayFmt{display:flex;flex-direction:column;gap:6px}.dfRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dfRow>span{font-size:14px;font-weight:600;min-width:78px}.dfRow .chip{font-size:13px;padding:5px 10px}
 .ideaCard{border:2px dashed var(--t-contenuto);display:flex;flex-direction:column;gap:8px}.ideaCard .btn{background:var(--t-contenuto)}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -679,7 +680,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <label class="lbl" for="cZone">Zona (facoltativa)</label><input type="text" id="cZone" placeholder="Es. Agrigento">
         <label class="lbl" for="cAvoid">Da evitare (facoltativo)</label><input type="text" id="cAvoid" placeholder="Parole, temi o toni da non usare">
         </div></details>
-        <div class="packBox fmtBox">
+        <div class="packBox fmtBox" hidden>
           <span class="lbl">🎞 I 4 formati del cliente (facoltativo)</span>
           <p class="help" style="margin:0">Le rubriche fisse che nascono dal posizionamento, es. "La ricetta in 30 secondi". Si creano da sole quando generi il posizionamento. Per cambiarle tocca il testo e scrivi: si salvano da sole.</p>
           <div id="cFmts" class="cFmts"></div>
@@ -690,8 +691,8 @@ body:not(.solo) .soloOnly{display:none!important}
           <div class="row tight"><label for="cN" style="flex:1">Contenuti al mese</label><input type="number" id="cN" min="0" max="60" inputmode="numeric" placeholder="0" style="width:90px;flex:none"></div>
           <span class="lbl" style="margin-top:4px">In quali giorni (facoltativo)</span>
           <div class="chips" id="cDays" role="group" aria-label="Giorni di pubblicazione"></div>
-          <div id="cDayFmt" class="dayFmt"></div>
-          <button class="btn ghost" id="cMonth" type="button" hidden>🗓 Prepara le idee del mese</button>
+          <div id="cDayFmt" class="dayFmt" hidden></div>
+          <button class="btn ghost" id="cMonth" type="button" hidden>🎯 Pianifica il mese</button>
           <p class="help" style="margin:0">Nel calendario vedrai i posti liberi da riempire. Senza giorni, Dictax li distribuisce nel mese.</p>
         </div>
         <button class="btn" id="cGen">✨ Genera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
@@ -752,6 +753,16 @@ body:not(.solo) .soloOnly{display:none!important}
   <button class="gX" id="gX" aria-label="Chiudi il gobbo">✕</button>
   <div class="gView" id="gView"><div class="gTxt" id="gTxt"></div></div>
   <div class="gBar"><button id="gSlow" aria-label="Più lento">−</button><button class="gPlay" id="gPlay" aria-label="Avvia">▶</button><button id="gFast" aria-label="Più veloce">+</button></div>
+</div>
+<div class="sheetWrap" id="planSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="plTitle">
+    <h2 id="plTitle"></h2>
+    <p class="lead" id="plSub" style="margin:0"></p>
+    <div id="plWeeks" class="plWeeks"></div>
+    <p class="status" id="plStat" aria-live="polite"></p>
+    <button class="btn big" id="plGo" style="background:var(--t-contenuto)">✨ Crea le idee</button>
+    <button class="btn ghost big" id="plNo">Annulla</button>
+  </div>
 </div>
 <div class="sheetWrap" id="choiceAsk" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="chTitle">
@@ -1107,7 +1118,7 @@ function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli(
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?evC.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
-  $("calPlan").hidden=!calDay||calDay<today();{const mk=isSolo()?"__me":calCli,okM=mk&&packKeys().includes(mk)&&calM>=today().slice(0,7)&&packInfo(mk,calM).free.length;$("calMonth").hidden=!okM;if(okM){$("calMonth").textContent="🗓 Prepara le idee di "+monthLbl(calM).split(" ")[0].toLowerCase()+" ("+packInfo(mk,calM).free.length+")";$("calMonth").onclick=()=>prepMonth(mk,calM,$("calMonth"))}}
+  $("calPlan").hidden=!calDay||calDay<today();{const mk=isSolo()?"__me":calCli,okM=mk&&packKeys().includes(mk)&&calM>=today().slice(0,7)&&packInfo(mk,calM).free.length;$("calMonth").hidden=!okM;if(okM){$("calMonth").textContent="🎯 Pianifica "+monthLbl(calM).split(" ")[0].toLowerCase()+" ("+packInfo(mk,calM).free.length+")";$("calMonth").onclick=()=>openPlanner(mk,calM)}}
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
   const dl=(calDay?dues.filter(x=>x.due===calDay):dues.filter(x=>x.due.slice(0,7)===calM)).sort((a,b)=>a.due.localeCompare(b.due));
   dl.forEach(x=>{const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent="☐ "+x.t;r.querySelector("small").textContent=shortDate(x.due)+" · "+x.n.title;const pl=r.querySelector(".pill");pl.textContent=x.due<td?"In ritardo":"Scadenza";pl.style.cssText=x.due<td?"background:var(--danger);color:#fff":"background:#fff4d6;color:#7a5600";r.onclick=()=>openNote(x.n);L.append(r)});
@@ -1164,7 +1175,7 @@ async function genFmts(){const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cl
     const L=(Array.isArray(r?.formati)?r.formati:[]).filter(x=>x&&x.nome).slice(0,4);if(!L.length)throw new Error("Nessun formato proposto: riprova.");
     cFmts=L.map(x=>({nome:String(x.nome).trim(),desc:String(x.descrizione||"").trim()}));cDayFmt={};renderFmts();renderDays();$("cStat").textContent="Ecco i 4 formati: correggili se vuoi, poi tocca Salva cliente.";return true}
   catch(e){$("cStat").textContent=errMsg(e);return false}finally{b.disabled=false;b.textContent="✨ Proponili di nuovo dal posizionamento"}}
-$("cMonth").onclick=()=>{if(!cliCur)return;prepMonth(cliCur,today().slice(0,7),$("cMonth"))};
+$("cMonth").onclick=()=>{if(!cliCur)return;openPlanner(cliCur,today().slice(0,7))};
 $("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
   const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";$("cPos").value="";
@@ -1533,10 +1544,19 @@ const FMT_SHORT={reel:"Reel",carosello:"Carosello",instagram:"Caption",facebook:
 const fmtLabel=k=>(PLATFORMS[plat]?.f.find(x=>x[0]===k)||[])[1]||FMT_SHORT[k]||FORMATS[k]?.n||k;
 const mainKey=n=>{const ks=orderedOut(n).filter(k=>k!=="todo");return ks.find(k=>SOCIAL.includes(baseK(k)))||ks[0]};
 const cleanPub=t=>String(t||"").split("\n").filter(l=>!/^\s*#\w/.test(l)&&!/\S+\s\|\s\S+.*\|/.test(l)).join("\n").trim();
+const kindOf=n=>{const k=n.idea?.formato||Object.keys(n.out||{}).find(k=>FMT_SHORT[k])||"";return FMT_SHORT[k]||""};
+const purposeOf=n=>(n.tags||[]).map(t=>faseLbl(t)).find(t=>Object.values(FASE).includes(t))||"";
+function perfStats(same){const agg=f=>{const m={};same.forEach(n=>{const k=f(n);if(!k)return;m[k]=m[k]||{b:0,c:0};n.res==="top"?m[k].b++:m[k].c++});return Object.entries(m).sort((a,b)=>(b[1].b-b[1].c)-(a[1].b-a[1].c))};
+  const T=agg(kindOf),S=agg(purposeOf),Z=agg(n=>n.tema||"");if(!T.length&&!S.length&&!Z.length)return"";const fmt=L=>L.map(([k,v])=>`${k} (${v.b} bene, ${v.c} così così)`).join("; ");let t="\nRISULTATI SEGNALATI DALL'AUTORE (molto importante):";
+  if(T.length){t+="\n- Per tipo: "+fmt(T)+".";const best=T.find(([,v])=>v.b>v.c);if(best)t+=` Spingi di più su ${best[0]}: circa la metà dei contenuti di questo tipo, meno di quelli che vanno peggio.`}
+  if(S.length){t+="\n- Per scopo: "+fmt(S)+".";const best=S.find(([,v])=>v.b>v.c);if(best)t+=` Dai più spazio a "${best[0]}".`}
+  if(Z.length){const good=Z.filter(([,v])=>v.b>v.c).map(([k])=>k),bad=Z.filter(([,v])=>v.c>v.b).map(([k])=>k);if(good.length)t+="\n- Temi andati bene (riprendi lo spirito, senza ripeterli uguali): "+good.join("; ")+".";if(bad.length)t+="\n- Temi andati male (evita): "+bad.join("; ")+"."}
+  return t}
 function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenuto"&&n.res&&(n.client||"")===(cl||""));
   const top=same.filter(n=>n.res==="top").sort((a,b)=>(b.resAt||0)-(a.resAt||0)).slice(0,3),meh=same.filter(n=>n.res==="meh").slice(-4);let t="";
   if(top.length)t+="\nCONTENUTI CHE HANNO FUNZIONATO BENE con questo pubblico: prendi spunto da gancio, tema, tono e struttura, senza copiarli.\n"+top.map(n=>`- ${n.title}: ${cleanPub(n.out[mainKey(n)]).slice(0,400).replace(/\n+/g," ")}`).join("\n");
   if(meh.length)t+="\nCONTENUTI ANDATI POCO BENE (evita angoli e ganci simili): "+meh.map(n=>n.title).join("; ")+".";
+  const ps=perfStats(same);if(ps)t+=ps;
   return t}
 function renderCTools(){const n=cur,isF=(n.st||"idea")==="fatto";$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
   $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
@@ -1603,17 +1623,36 @@ const slotSpec=(k,ds,i)=>{const p=cliProfiles()[k]||{},F=(p.fmts||[]).filter(f=>
   if(F.length){const m=/^f(\d)$/.exec(v||"");const f=m&&F[+m[1]]?F[+m[1]]:F[i%F.length];return{tipo:null,nome:f.nome,desc:f.desc||""}}
   return{tipo:v&&FORMATS[v]?v:["reel","carosello","instagram"][i%3],nome:"",desc:""}};
 const slotFmt=(k,ds,i)=>slotSpec(k,ds,i).tipo||"reel";const tipoKey=t=>/caros/i.test(t||"")?"carosello":/post|caption/i.test(t||"")?"instagram":/reel|video/i.test(t||"")?"reel":null;
-async function prepMonth(k,m,btn){const info=packInfo(k,m),slots=info.free;if(!slots.length){alert("Questo mese non ci sono posti liberi da riempire.");return}
-  const cl=packCli(k),name=packName(k),sp=slots.map((ds,i)=>slotSpec(k,ds,i)),fm=sp.map(x=>x.tipo);
-  if(!confirm(`Preparo ${slots.length} idee per ${name} nei posti liberi di ${monthLbl(m)}? Sono solo idee (titolo e gancio): i testi li scrivi quando vuoi con "✨ Scrivilo".`))return;
-  const old=btn.textContent;btn.disabled=true;btn.textContent="Sto preparando le idee…";
-  try{const r=await sampleFn.json(`${M().writer} Prepara il piano editoriale del mese per ${name}: ${slots.length} idee di contenuto social, una per ogni uscita qui sotto e nello stesso ordine, con il formato indicato.\n${slots.map((ds,i)=>`${i+1}) ${new Date(ds+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})} — ${sp[i].nome?`formato fisso "${sp[i].nome}"${sp[i].desc?" ("+sp[i].desc+")":""}`:(FORMATS[fm[i]]?.n||fm[i])}`).join("\n")}\nSe un'uscita ha un formato fisso, l'idea deve essere una nuova puntata di quel formato, fedele alla sua descrizione.\nBilancia lo scopo nel mese: circa metà per farsi conoscere (TOFU), un terzo per creare fiducia (MOFU), il resto per vendere (BOFU), alternandoli. Ogni idea è specifica per la nicchia, diversa dalle altre e incuriosisce; adatta l'idea al formato (es. reel = cosa si vede e si dice, carosello = sequenza di slide, post = testo).${ctxFor(cl)}${perfCtx(cl)}${dritteCtx()}\nPer le uscite con un formato fisso scegli tu il tipo di post più adatto a quella puntata (reel, carosello o post) e scrivilo in "tipo"; per le altre usa il tipo indicato. Rispondi solo con JSON {"idee":[{"fase":"TOFU|MOFU|BOFU","tipo":"reel|carosello|post","titolo":"titolo breve (max 7 parole)","gancio":"prima frase del contenuto","angolo":"cosa raccontare, in una o due frasi"}]}.`);
+const monWeek=ds=>{const d=new Date(ds+"T12:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
+let PL=null;
+function prepMonth(k,m){openPlanner(k,m)}
+async function openPlanner(k,m){const slots=packInfo(k,m).free;if(!slots.length){alert("Questo mese non ci sono posti liberi da riempire.");return}
+  const wk={};slots.forEach(ds=>{const w=monWeek(ds);(wk[w]=wk[w]||[]).push(ds)});
+  PL={k,m,cl:packCli(k),name:packName(k),weeks:Object.keys(wk).sort().map(w=>({start:w,slots:wk[w],tema:"",perche:""}))};
+  $("plTitle").textContent="🎯 Pianifica "+monthLbl(m).split(" ")[0].toLowerCase();$("plSub").textContent=`${PL.name} · ${slots.length} contenut${slots.length===1?"o":"i"} da preparare. Ogni settimana ha un tema: tienilo, chiedine un altro o scrivi il tuo.`;
+  $("plStat").textContent="Sto pensando ai temi…";$("plGo").disabled=true;renderPlan();$("planSheet").hidden=false;
+  try{const r=await proposeThemes(PL.weeks.length,[]);PL.weeks.forEach((w,i)=>{w.tema=r[i]?.tema||"";w.perche=r[i]?.perche||""});$("plStat").textContent=""}catch(e){$("plStat").textContent=errMsg(e)}
+  $("plGo").disabled=false;renderPlan()}
+const wkLbl=w=>{const a=new Date(w.start+"T12:00"),b=new Date(a);b.setDate(b.getDate()+6);return "Settimana "+(a.getMonth()===b.getMonth()?a.getDate():a.toLocaleDateString("it-IT",{day:"numeric",month:"short"}))+" – "+b.toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+w.slots.length+" contenut"+(w.slots.length===1?"o":"i")};
+function renderPlan(){const B=$("plWeeks");B.innerHTML="";PL.weeks.forEach((w,i)=>{const d=document.createElement("div");d.className="plWeek";d.innerHTML='<small></small><div class="row tight"><input type="text" placeholder="Tema della settimana"><button class="btn ghost sm" type="button">↻ Un altro</button></div><p class="why"></p>';
+  d.querySelector("small").textContent=wkLbl(w);const inp=d.querySelector("input");inp.value=w.tema;inp.oninput=()=>{w.tema=inp.value;w.perche="";d.querySelector(".why").textContent=""};d.querySelector(".why").textContent=w.perche||"";
+  const b=d.querySelector("button");b.onclick=async()=>{b.disabled=true;b.textContent="…";try{const r=await proposeThemes(1,PL.weeks.map(x=>x.tema).filter(Boolean),w.start);if(r[0]){w.tema=r[0].tema;w.perche=r[0].perche||""}}catch(e){$("plStat").textContent=errMsg(e)}renderPlan()};B.append(d)})}
+async function proposeThemes(nW,avoid,onlyStart){const p=cliProfiles()[PL.k]||{},past=(p.temi||[]).map(x=>x.tema).slice(-30),ws=onlyStart?[PL.weeks.find(w=>w.start===onlyStart)]:PL.weeks;
+  const r=await sampleFn.json(`Sei lo stratega di contenuti di ManuLab. Proponi ${nW===1?"un tema":nW+" temi"} per ${PL.name}, uno per ogni settimana qui sotto: il tema è il filo conduttore dei contenuti di quella settimana. Ogni tema è concreto, specifico per la nicchia, coerente con il posizionamento, adatto al periodo (stagione, ricorrenze e festività italiane di quei giorni) e diverso dagli altri. Massimo 6 parole per tema, più una riga sul perché funziona.\n${ws.map((w,i)=>`${i+1}) settimana dal ${w.start} (${w.slots.length} contenuti)`).join("\n")}\n${past.length||avoid.length?"Non ripetere né somigliare a questi temi già usati: "+[...past,...avoid].join("; ")+".":""}${ctxFor(PL.cl)}${perfCtx(PL.cl)}${dritteCtx()}\nRispondi solo con JSON {"temi":[{"tema":"...","perche":"..."}]}.`);
+  return (Array.isArray(r?.temi)?r.temi:[]).filter(x=>x&&x.tema).map(x=>({tema:String(x.tema).trim(),perche:String(x.perche||"").trim()}))}
+$("plNo").onclick=()=>{$("planSheet").hidden=true;PL=null};
+$("plGo").onclick=async()=>{if(!PL)return;if(PL.weeks.some(w=>!w.tema.trim())){$("plStat").textContent="Scrivi un tema per ogni settimana.";return}
+  const b=$("plGo");b.disabled=true;b.textContent="Sto preparando le idee…";$("plStat").textContent="";
+  const slots=PL.weeks.flatMap(w=>w.slots.map(ds=>({ds,tema:w.tema.trim()})));
+  try{const r=await sampleFn.json(`${M().writer} Prepara il piano editoriale per ${PL.name}: ${slots.length} idee di contenuto social, una per ogni uscita qui sotto e nello stesso ordine. Ogni idea sviluppa il tema della sua settimana.\n${slots.map((x,i)=>`${i+1}) ${new Date(x.ds+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})} — tema della settimana: "${x.tema}"`).join("\n")}\nPer ogni idea scegli il tipo più adatto (reel, carosello o post), alternandoli, e lo scopo, bilanciando nel mese: circa metà per farsi conoscere (TOFU), un terzo per creare fiducia (MOFU), il resto per vendere (BOFU). Se sotto ci sono risultati segnalati dall'autore, seguili: spingi sui tipi, sugli scopi e sui temi che funzionano meglio. Ogni idea è specifica per la nicchia, diversa dalle altre e incuriosisce; adattala al tipo (reel = cosa si vede e si dice, carosello = sequenza di slide, post = testo).${ctxFor(PL.cl)}${perfCtx(PL.cl)}${dritteCtx()}\nRispondi solo con JSON {"idee":[{"tipo":"reel|carosello|post","fase":"TOFU|MOFU|BOFU","titolo":"titolo breve (max 7 parole)","gancio":"prima frase del contenuto","angolo":"cosa raccontare, in una o due frasi"}]}.`);
     const ideas=(Array.isArray(r?.idee)?r.idee:[]).filter(x=>x&&x.titolo).slice(0,slots.length);if(!ideas.length)throw new Error("Non sono riuscito a preparare le idee: riprova.");
-    const base=Date.now();ideas.forEach((x,i)=>{const f=fm[i]||tipoKey(x.tipo)||"reel";const rb=sp[i].nome;const n={id:"n"+(base+i),at:base+i,tr:`Idea di contenuto (${faseLbl(x.fase).toLowerCase()}) — ${rb?`puntata del formato fisso "${rb}"${sp[i].desc?" ("+sp[i].desc+")":""}, `:""}${FORMATS[f]?.n||f}: ${x.titolo}.\nGancio: ${x.gancio||""}\nCosa raccontare: ${x.angolo||""}`,out:{},type:"contenuto",client:cl,title:String(x.titolo).slice(0,80),tags:[rb||fmtLabel(f),...(rb?[fmtLabel(f)]:[]),faseLbl(x.fase)].filter(Boolean),st:"idea",pub:slots[i],idea:{formato:f,rubrica:rb,gancio:x.gancio||"",angolo:x.angolo||"",fase:faseLbl(x.fase)}};saveNote(n)});
-    renderList();calM=m;calDay="";calCli=k==="__me"?"":k;raw.set("calCli",calCli);show("cal");$("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronte '+ideas.length+' idee nel calendario (rombi grigi). Aprine una e tocca "✨ Scrivilo" quando vuoi il testo.</p>')}
-  catch(e){alert(errMsg(e))}finally{btn.disabled=false;btn.textContent=old}}
+    const base=Date.now();ideas.forEach((x,i)=>{const f=tipoKey(x.tipo)||["reel","carosello","instagram"][i%3],tm=slots[i].tema;
+      saveNote({id:"n"+(base+i),at:base+i,tr:`Idea di contenuto (${faseLbl(x.fase).toLowerCase()}) — tema della settimana "${tm}", ${FORMATS[f]?.n||f}: ${x.titolo}.\nGancio: ${x.gancio||""}\nCosa raccontare: ${x.angolo||""}`,out:{},type:"contenuto",client:PL.cl,title:String(x.titolo).slice(0,80),tags:[tm,fmtLabel(f),faseLbl(x.fase)].filter(Boolean),st:"idea",pub:slots[i].ds,tema:tm,idea:{formato:f,tema:tm,gancio:x.gancio||"",angolo:x.angolo||"",fase:faseLbl(x.fase)}})});
+    const P=cliProfiles();if(P[PL.k]){P[PL.k].temi=[...(P[PL.k].temi||[]),...PL.weeks.map(w=>({da:w.start,tema:w.tema.trim()}))].slice(-40);store.set("clients",P)}
+    const k=PL.k,m=PL.m;$("planSheet").hidden=true;PL=null;renderList();calM=m;calDay="";calCli=k==="__me"?"":k;raw.set("calCli",calCli);show("cal");$("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronte '+ideas.length+' idee nel calendario (rombi grigi). Aprine una e tocca "✨ Scrivilo" quando vuoi il testo.</p>')}
+  catch(e){$("plStat").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="✨ Crea le idee"}};
 function ideaCard(n){const d=document.createElement("article");d.className="card ideaCard";d.innerHTML='<span class="fmt" style="color:var(--t-contenuto)"></span><b></b><p class="status" style="margin:0"></p><button class="btn big">✨ Scrivilo</button>';
-  const x=n.idea;d.querySelector(".fmt").textContent="💡 Idea · "+(x.rubrica?x.rubrica+" · ":"")+(FORMATS[x.formato]?.n||x.formato)+(x.fase?" · "+x.fase:"");d.querySelector("b").textContent=x.gancio?"“"+x.gancio+"”":n.title;d.querySelector("p").textContent=x.angolo||"";
+  const x=n.idea;d.querySelector(".fmt").textContent="💡 Idea · "+((x.tema||x.rubrica)?(x.tema||x.rubrica)+" · ":"")+(FORMATS[x.formato]?.n||x.formato)+(x.fase?" · "+x.fase:"");d.querySelector("b").textContent=x.gancio?"“"+x.gancio+"”":n.title;d.querySelector("p").textContent=x.angolo||"";
   const b=d.querySelector("button");b.onclick=async()=>{const k=FORMATS[x.formato]?x.formato:"instagram";b.disabled=true;b.textContent="Sto scrivendo…";const c=outCard(k,"Sto pensando…");d.after(c.el);
     try{const{text}=await sampleFn(promptFor(k,n.tr,n.client),{onText:({text})=>{c.txt.textContent=text}});n.out[k]=text;n.st="lavoro";saveNote(n);if(cur===n)openNote(n,true)}
     catch(e){c.el.remove();b.disabled=false;b.textContent="✨ Scrivilo";$("dStatus").textContent=errMsg(e)}};return d}
