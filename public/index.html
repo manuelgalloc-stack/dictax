@@ -1042,7 +1042,7 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
 const SB_URL="https://kzrxedaahwgltzrbuctl.supabase.co",SB_KEY="sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1",SB_LIB="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
 const SYNC=new Set(["main_cplat","uso","ckind","main_clients","main_notes","main_money","main_forf","main_dels","main_style","main_cformats","main_cstyles","main_exedits","main_fid","main_folders","voice","lang"]),LISTS=["main_notes","main_money"];
 const rawSet=raw.set;let sb=null,user=null,pushT=null,lastPull=0;
-raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(syncPush,1500)}}};
+raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Date.now();rawSet("syncT",t);if(user){clearTimeout(pushT);pushT=setTimeout(()=>{(k==="main_clients"?syncAll():syncPush()).catch?.(()=>{})},1500)}}};
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
 function syncMsg(m){const e=$("accSync");if(e)e.textContent=m}
 function loadSb(){if(sb)return Promise.resolve(sb);return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=SB_LIB;sc.onload=()=>{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
@@ -1060,7 +1060,10 @@ async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_
     let arr=[...m.values()].filter(x=>!dels.has(x.id));if(k==="main_notes")arr.sort((a,b)=>(b.at||0)-(a.at||0));
     if(JSON.stringify(arr)!==JSON.stringify(loc)){raw.set(k,arr);changed=true;t[k]=raw.get("syncT",{})[k]}else if(JSON.stringify(arr)!==JSON.stringify(rem)||!remote[k]&&arr.length){t[k]=Date.now()}}
   for(const k of SYNC){if(LISTS.includes(k))continue;if(k==="main_dels"){t[k]=raw.get("syncT",{})[k]||t[k];if(!remote[k]&&dl.length)t[k]=t[k]||Date.now();continue}
-    if(!remote[k]){if(raw.get(k,undefined)!==undefined&&!t[k])t[k]=Date.now();continue}const rt=Date.parse(remote[k].updated_at);if(rt>(t[k]||0)){rawSet(k,remote[k].value);t[k]=rt;done[k]=rt;changed=true}}
+    if(!remote[k]){if(raw.get(k,undefined)!==undefined&&!t[k])t[k]=Date.now();continue}
+    if(k==="main_clients"){const loc=raw.get(k,{})||{},rem=remote[k].value||{},out={...rem};for(const[n,v]of Object.entries(loc)){const r=rem[n];if(!r){out[n]=v;continue}const newer=(v.up||0)>=(r.up||0)?v:r,other=newer===v?r:v;out[n]={...other,...newer,pos:newer.pos||other.pos||"",ideas:newer.ideas||other.ideas,dritte:newer.dritte||other.dritte||""}}
+      const so=JSON.stringify(out);if(so!==JSON.stringify(loc)){rawSet(k,out);changed=true}if(so!==JSON.stringify(rem))t[k]=Date.now();else t[k]=Date.parse(remote[k].updated_at);continue}
+    const rt=Date.parse(remote[k].updated_at);if(rt>(t[k]||0)){rawSet(k,remote[k].value);t[k]=rt;done[k]=rt;changed=true}}
   rawSet("syncT",t);rawSet("syncDone",done);
   if(changed){loadMode();applyMode();if(!$("v-conti").hidden)renderMoney()}}
 async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
@@ -1183,7 +1186,7 @@ function renderDays(){const D=$("cDays");D.innerHTML="";DAYN.forEach((t,i)=>{con
 const cliForm=()=>({dritte:$("cDr").value.trim(),n:Math.max(0,Math.min(60,parseInt($("cN").value)||0)),days:[...cDays].sort(),dayFmt:Object.fromEntries(Object.entries(cDayFmt).filter(([i])=>cDays.has(+i))),fmts:[...Array(4)].map((_,i)=>cFmts[i]).filter(f=>f&&f.nome),fissi:cFix.filter(f=>f.cosa&&f.cosa.trim()).map(f=>({cosa:f.cosa.trim(),n:f.n||1})),niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
 function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return false}
   const P=cliProfiles();if(cliCur&&cliCur!==nm){delete P[cliCur];store.get("notes",[]).forEach(n=>{if(n.client===cliCur){n.client=nm;saveNote(n)}})}
-  P[nm]={...cliForm(),ideas:(P[nm]||{}).ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
+  const old=P[nm]||(cliCur&&P[cliCur])||{},f=cliForm();if(!f.pos&&old.pos)f.pos=old.pos;P[nm]={...old,...f,ideas:old.ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
 $("cSave").onclick=()=>{if(saveClient()){$("cStat").textContent="Cliente salvato ✓";$("cMonth").hidden=!((cliProfiles()[cliCur]?.n|0)>0)}};
 $("cFixAdd").onclick=()=>{cFix.push({cosa:"",n:2});renderFix();$("cFix").querySelector(".fixRow:last-child .fx")?.focus()};
 $("cFmtHand").onclick=()=>{fmtOpen=true;renderFmts();$("cFmts").querySelector("input")?.focus()};
@@ -1197,7 +1200,7 @@ async function genFmts(){const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cl
 $("cMonth").onclick=()=>{if(!cliCur)return;openPlanner(cliCur,today().slice(0,7))};
 $("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
-  const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";$("cPos").value="";
+  const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";const oldPos=$("cPos").value;$("cPos").value="";
   const prompt=`Sei lo stratega di ManuLab, agenzia di contenuti social. Costruisci il posizionamento di questo cliente con il sistema ManuLab.
 Principio guida: chi è specifico batte sempre chi è generico. Regola north-star: se un concorrente dello stesso settore potrebbe dire la stessa cosa cambiando solo il nome, non va bene.
 
@@ -1219,8 +1222,8 @@ PAROLE DA USARE
 PAROLE DA EVITARE
 IDEE DI CONTENUTO (non usare le sigle TOFU, MOFU, BOFU: dividi le idee in 'Per farsi conoscere', 'Per creare fiducia' e 'Per vendere'. 2 idee per farsi conoscere: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee per creare fiducia: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee per vendere: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
 Non inventare numeri, recensioni, premi o risultati.`;
-  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto ✓ Ora preparo i 4 formati…";if(!cFmts.some(f=>f&&f.nome)){if(await genFmts()){saveClient();$("cStat").textContent="Posizionamento e 4 formati pronti e salvati ✓ Puoi modificarli quando vuoi.";$("cFmts").scrollIntoView({behavior:"smooth",block:"center"})}}else $("cStat").textContent="Posizionamento pronto e salvato ✓"}
-  catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false}};
+  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});if(!text.trim())throw new Error("Il posizionamento è arrivato vuoto: riprova.");$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓";if(!document.body.classList.contains("simple")&&!cFmts.some(f=>f&&f.nome)){$("cStat").textContent="Posizionamento pronto ✓ Ora preparo i 4 formati…";if(await genFmts()){saveClient();$("cStat").textContent="Posizionamento e 4 formati pronti e salvati ✓ Puoi modificarli quando vuoi.";$("cFmts").scrollIntoView({behavior:"smooth",block:"center"})}}else $("cStat").textContent="Posizionamento pronto e salvato ✓"}
+  catch(e){if(!$("cPos").value.trim()||$("cPos").value.length<oldPos.length/3)$("cPos").value=oldPos;$("cStat").textContent=errMsg(e)+(oldPos?" Il posizionamento precedente è rimasto.":"")}finally{b.disabled=false}};
 
 const IDEA_FMT=f=>{f=String(f||"").toLowerCase();return f.includes("reel")||f.includes("video")?"reel":f.includes("carosel")?"carosello":f.includes("tiktok")?"tiktok":f.includes("linkedin")?"linkedin":f.includes("newsletter")||f.includes("email")?"newsletter":"instagram"};
 const TEMA_C=["#2f6fdb","#e0631e","#8a4fd8","#1e9a55"];
