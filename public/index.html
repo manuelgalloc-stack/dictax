@@ -133,7 +133,7 @@ h1{font:400 26px/1.2 var(--serif);margin:0;text-wrap:balance}
 .card .fmt{font-weight:700;font-size:14px;color:var(--accent-strong)}
 .card .txt{white-space:pre-wrap;overflow-wrap:anywhere}
 .card .hBtns{display:flex;gap:6px;flex-shrink:0}.edBox textarea{width:100%;min-height:160px;font:inherit;font-size:16px;line-height:1.5;padding:12px;border:2px solid var(--accent);border-radius:12px;box-sizing:border-box;resize:vertical;background:var(--bg,#fff);color:inherit}.edAct{display:flex;gap:8px;margin-top:8px}.edAct .btn{flex:1}
-.cliCard .wk{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.cliCard .wk span{font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--muted)}.cliCard .wk .ok{background:#e3f4ea;color:#1e9a55}.cliCard .wk .todo{background:#fdf0dc;color:#b06a00}.cliCard .wk .t{background:none;padding:3px 0}
+.cliCard .wk{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}.cliCard .wk span{font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--muted)}.cliCard .wk .ok{background:#e3f4ea;color:#1e9a55}.cliCard .wk .todo{background:#fdf0dc;color:#b06a00}.cliCard .wk .t{background:none;padding:3px 0}
 mark{background:var(--warn-bg);color:inherit;border-radius:3px;padding:0 2px}
 .fid{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .fid:empty{display:none}
@@ -347,7 +347,8 @@ body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMo
 .calItem{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer}
 .calItem:last-child{border-bottom:0}
 .calItem div{flex:1;min-width:0}.calItem b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}.calItem small{color:var(--muted);font-size:13px}
-.cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
+.cliCard{display:block!important;position:relative;cursor:pointer;text-align:left}
+.cliCard>div{display:block}.cliCard>div>b{padding-right:118px}.cliCard>.pill{position:absolute;top:14px;right:14px;margin:0!important}
 .calItem.doneC{opacity:.5}
 .cliMore summary,.voiceMore summary{cursor:pointer;font-weight:700;color:var(--muted);padding:6px 0}
 .cliMoreBody{display:flex;flex-direction:column;gap:8px;margin-top:6px}
@@ -369,7 +370,7 @@ body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMo
 .cal .dots i.c.free{background:transparent!important;border:1.5px dashed var(--fg)}
 .calItem.freeRow{cursor:default;color:var(--muted)}.calItem.freeRow b{color:var(--fg);font-weight:600}
 .calLeg i.c.free{background:transparent!important;border:1.5px dashed var(--fg)}
-.cliCard div{flex:1;min-width:0}.cliCard b{display:block;font-size:17px}.cliCard small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.cliCard>div{min-width:0}.cliCard b{display:block;font-size:17px}.cliCard small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
 .posOut{white-space:pre-wrap;line-height:1.5;font-size:15px;min-height:180px}
 .ideaCard{display:flex;flex-direction:column;gap:6px}
 .ideaCard .ph{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t-contenuto)}
