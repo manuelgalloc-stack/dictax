@@ -1137,7 +1137,7 @@ PRESA DI POSIZIONE (un'opinione netta e riconoscibile del brand, mai un attacco 
 TONO DI VOCE (3 aggettivi e come parla al suo pubblico)
 PAROLE DA USARE
 PAROLE DA EVITARE
-IDEE PER IL FUNNEL (2 idee TOFU di crescita: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee MOFU di fidelizzazione: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee BOFU di vendita: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
+IDEE DI CONTENUTO (non usare le sigle TOFU, MOFU, BOFU: dividi le idee in 'Per farsi conoscere', 'Per creare fiducia' e 'Per vendere'. 2 idee per farsi conoscere: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee per creare fiducia: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee per vendere: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
 Non inventare numeri, recensioni, premi o risultati.`;
   try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false}};
@@ -1145,7 +1145,7 @@ Non inventare numeri, recensioni, premi o risultati.`;
 const IDEA_FMT=f=>{f=String(f||"").toLowerCase();return f.includes("reel")||f.includes("video")?"reel":f.includes("carosel")?"carosello":f.includes("tiktok")?"tiktok":f.includes("linkedin")?"linkedin":f.includes("newsletter")||f.includes("email")?"newsletter":"instagram"};
 function renderIdeas(p){const box=$("cIdeasBox"),L=$("cIdeas");box.hidden=!p.pos;L.innerHTML="";const ids=p.ideas||[];$("cIdeasGo").textContent=ids.length?"↻ Trova altre idee":"💡 Trova le idee";
   ids.forEach(x=>{const c=document.createElement("article");c.className="card ideaCard";c.innerHTML='<span class="ph"></span><b></b><small></small><button class="btn sm" style="align-self:flex-start">Crea il contenuto</button>';
-    c.querySelector(".ph").textContent=[x.fase,FORMATS[IDEA_FMT(x.formato)].n].filter(Boolean).join(" · ");c.querySelector("b").textContent=x.titolo;c.querySelector("small").textContent=x.gancio?"Gancio: "+x.gancio:"";
+    c.querySelector(".ph").textContent=[faseLbl(x.fase),FORMATS[IDEA_FMT(x.formato)].n].filter(Boolean).join(" · ");c.querySelector("b").textContent=x.titolo;c.querySelector("small").textContent=x.gancio?"Gancio: "+x.gancio:"";
     c.querySelector("button").onclick=()=>ideaToContent(x);L.append(c)})}
 $("cIdeasGo").onclick=async()=>{const nm=$("cName").value.trim(),pos=$("cPos").value.trim();if(!nm||!pos)return;const b=$("cIdeasGo");b.disabled=true;b.textContent="Sto cercando le idee…";
   try{const old=(cliProfiles()[nm]?.ideas||[]).map(x=>x.titolo).join("; ");
@@ -1154,7 +1154,7 @@ $("cIdeasGo").onclick=async()=>{const nm=$("cName").value.trim(),pos=$("cPos").v
     if(!saveClient())return;const P=cliProfiles();P[nm].ideas=ids;store.set("clients",P);renderIdeas(P[nm]);$("cStat").textContent="Idee pronte ✓"}
   catch(e){$("cStat").textContent=errMsg(e)}finally{b.disabled=false;if(b.textContent.startsWith("Sto"))b.textContent="💡 Trova le idee"}};
 async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me"?"":nm0;
-  $("transcript").value=`Idea di contenuto ${x.fase||""}${nm?" per "+nm:""}: ${x.titolo}.\nGancio da cui partire: ${x.gancio||""}\nAngolo: ${x.angolo||""}`;$("sClient").value=nm;
+  $("transcript").value=`Idea di contenuto ${x.fase?"("+faseLbl(x.fase).toLowerCase()+")":""}${nm?" per "+nm:""}: ${x.titolo}.\nGancio da cui partire: ${x.gancio||""}\nAngolo: ${x.angolo||""}`;$("sClient").value=nm;
   await createNote("contenuto",[IDEA_FMT(x.formato)]);if(cur){cur.st="lavoro";saveNote(cur);renderHead()}}
 
 /* Creator: singolo o gestione clienti */
@@ -1476,6 +1476,9 @@ function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
+const FASE={TOFU:"Farsi conoscere",MOFU:"Creare fiducia",BOFU:"Vendere"},faseLbl=f=>FASE[String(f||"").toUpperCase().trim()]||String(f||"");
+const FMT_SHORT={reel:"Reel",carosello:"Carosello",instagram:"Caption",facebook:"Post",linkedin:"Post",tiktok:"TikTok"};
+const fmtLabel=k=>(PLATFORMS[plat]?.f.find(x=>x[0]===k)||[])[1]||FMT_SHORT[k]||FORMATS[k]?.n||k;
 const mainKey=n=>{const ks=orderedOut(n).filter(k=>k!=="todo");return ks.find(k=>SOCIAL.includes(baseK(k)))||ks[0]};
 const cleanPub=t=>String(t||"").split("\n").filter(l=>!/^\s*#\w/.test(l)&&!/\S+\s\|\s\S+.*\|/.test(l)).join("\n").trim();
 function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenuto"&&n.res&&(n.client||"")===(cl||""));
@@ -1520,7 +1523,7 @@ $("contentWeek").onclick=async()=>{const tr=$("transcript").value.trim();if(!tr)
     const list=(Array.isArray(r?.contenuti)?r.contenuti:[]).filter(x=>x&&x.testo).slice(0,5);if(!list.length)throw new Error("Non sono riuscito a preparare la settimana: riprova.");
     const pk=isSolo()&&!client?"__me":client,slotD=packKeys().includes(pk)?[...packInfo(pk,start.slice(0,7)).free,...packInfo(pk,shiftM(start.slice(0,7),1)).free].filter(ds=>ds>=start).slice(0,list.length):[];
     const base=Date.now();list.forEach((x,i)=>{const d=new Date((slotD[i]||start)+"T12:00");if(!slotD[i])d.setDate(d.getDate()+offs[i]);const f=allowed.includes(x.formato)?x.formato:allowed[0];
-      const n={id:"n"+(base+i),at:base+i,tr,out:{[f]:String(x.testo)},type:"contenuto",client,title:String(x.titolo||"Contenuto "+(i+1)).slice(0,80),tags:[P.n,String(x.fase||"").toUpperCase()].filter(Boolean),st:"lavoro",pub:d.toISOString().slice(0,10)};if(i===0&&lastAudio){n.audio=lastAudio;lastAudio=null}saveNote(n)});
+      const n={id:"n"+(base+i),at:base+i,tr,out:{[f]:String(x.testo)},type:"contenuto",client,title:String(x.titolo||"Contenuto "+(i+1)).slice(0,80),tags:[P.n,fmtLabel(f),faseLbl(x.fase)].filter(Boolean),st:"lavoro",pub:d.toISOString().slice(0,10)};if(i===0&&lastAudio){n.audio=lastAudio;lastAudio=null}saveNote(n)});
     setPlan(null);$("transcript").value="";$("status").textContent="";audTrim();renderTabs();renderList();calM=start.slice(0,7);calDay="";show("cal");
     $("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Pronti '+list.length+' contenuti, già nel calendario. Tocca un giorno per aprirli.</p>')}
   catch(e){$("status").textContent=errMsg(e)}finally{$("go").disabled=false}};
@@ -1613,7 +1616,7 @@ async function createNote(type,formats){
   $("dHead").innerHTML="";$("dOut").innerHTML="";$("dOrig").textContent=tr;$("dOrg").hidden=true;$("moreFmt").hidden=true;$("dStatus").textContent="";show("detail");
   const h=document.createElement("h1");h.textContent="Sto scrivendo…";$("dHead").append(h);
   try{
-    await makeMeta(n,tr);renderHead();$("moreFmt").hidden=true;
+    await makeMeta(n,tr);if(type==="contenuto"){n.tags=[...new Set([...formats.map(fmtLabel),...(n.tags||[])])]}renderHead();$("moreFmt").hidden=true;
     if(type==="attivita"){const w=document.createElement("p");w.className="status";w.textContent="Sto preparando la lista delle cose da fare…";$("dOut").append(w);n.tasks=await extractTasks(tr);syncTodo(n);w.remove()}
     else for(const k of formats){const c=outCard(k,"Sto pensando…");$("dOut").append(c.el);
       const{text}=await sampleFn(promptFor(k,tr,n.client),{onText:({text})=>{c.txt.textContent=text}});
