@@ -338,6 +338,7 @@ body.noClients .cliOpt{display:none!important}
 .calItem div{flex:1;min-width:0}.calItem b{display:block;font-size:16px;font-weight:600;overflow-wrap:anywhere}.calItem small{color:var(--muted);font-size:13px}
 .cliCard{display:flex;align-items:center;gap:10px;cursor:pointer}
 .calItem.doneC{opacity:.5}
+.calCli{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:2px;scrollbar-width:none}.calCli::-webkit-scrollbar{display:none}.calCli .chip{flex:none}
 .note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
 #cDays .chip{min-width:44px;justify-content:center}
@@ -544,6 +545,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="calBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Calendario contenuti</h1>
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
+    <div class="chips calCli cliOpt" id="calCli" role="group" aria-label="Cliente" hidden></div>
     <div class="calSum calLeg" id="calSum"></div>
     <div class="cal" id="calGrid"></div>
     <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><div id="calList"></div></div>
@@ -1065,7 +1067,10 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
   const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="fatto")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
-function renderCal(){document.querySelector(".weekDone")?.remove();const free=packFree(calM);$("calLbl").textContent=monthLbl(calM);const all=contents(),every=allNotes().filter(n=>!n.ex),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
+let calCli=raw.get("calCli","");
+function renderCalCli(){const C=$("calCli"),cl=clientsOn()?clients():[];if(calCli&&!cl.includes(calCli))calCli="";C.hidden=!cl.length;C.innerHTML="";if(!cl.length)return;
+  [["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=t;b.setAttribute("aria-pressed",v===calCli);b.onclick=()=>{calCli=v;raw.set("calCli",v);calDay="";renderCal()};C.append(b)})}
+function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli();const byC=n=>!calCli||(n.client||"")===calCli;const free=packFree(calM).filter(x=>!calCli||packCli(x.k)===calCli);$("calLbl").textContent=monthLbl(calM);const all=contents().filter(byC),every=allNotes().filter(n=>!n.ex&&byC(n)),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evM=every.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
   const nLate=inM.filter(n=>(n.st||"idea")!=="fatto"&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
@@ -1230,7 +1235,7 @@ function renderToday(){$("todayBox").hidden=true;return;const td=today(),items=[
 /* Pianifica dal calendario */
 function setPlan(d,cl){planDate=d;planCli=d&&cl?cl:null;$("planBanner").hidden=!d;if(d)$("planBanner").querySelector("span").textContent="📅 Nuovo contenuto per "+new Date(d+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+(planCli?" · "+planCli:"")}
 $("planX").onclick=()=>setPlan(null);
-$("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay);show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};
+$("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay,calCli||null);show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};
 
 /* Guida al primo uso */
 const GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["☑️","Nota e lista","Dictax scrive la nota pulita. Dentro la nota puoi creare la lista delle cose da fare, da spuntare."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
