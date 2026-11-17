@@ -76,6 +76,21 @@ export async function onRequestPost({ request, env }) {
 
   const quick = body?.tier === "quick";
 
+  // Optional photo (document, screenshot, flyer…) sent as a data URL: Claude reads it.
+  let image = null;
+  if (body?.image) {
+    const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(String(body.image));
+    if (!m || m[2].length > 7_000_000) {
+      return json({ code: "invalid_image", error: "Foto non valida o troppo grande." }, 400);
+    }
+    if (!claudeKey(env)) {
+      return json({ code: "not_configured", error: "Per leggere le foto serve la chiave di Claude sul server." }, 503);
+    }
+    image = { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } };
+    const last = messages[messages.length - 1];
+    last.content = [image, { type: "text", text: last.content }];
+  }
+
   // Without a Claude key, use an open model on Cloudflare Workers AI (no extra key needed).
   if (!claudeKey(env)) {
     return runWorkersAI(env, messages, quick);
@@ -127,7 +142,7 @@ export async function onRequestPost({ request, env }) {
     }
     console.error("claude failed", reason, err?.message);
     // Keep the app working: write the note with Cloudflare's model and say why.
-    if (env.AI) return runWorkersAI(env, messages, quick, reason);
+    if (env.AI && !image) return runWorkersAI(env, messages, quick, reason);
     return json({ code: "upstream_error", error: reason }, 502);
   }
 }

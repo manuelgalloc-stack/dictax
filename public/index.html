@@ -291,6 +291,8 @@ body.noClients .cliOpt{display:none!important}
 .resBtns button[aria-pressed=true][data-r=meh]{border-color:var(--muted);background:var(--paper)}
 .cTools button{color:var(--t-contenuto);border-color:color-mix(in srgb,var(--t-contenuto) 45%,transparent)}
 .cTools button:disabled{opacity:.6}
+.lblRow{display:flex;align-items:center;justify-content:space-between;gap:8px}.lblRow .lbl{margin:0}
+.photoBtn{border:1px solid var(--line);background:var(--surface);color:var(--accent-strong);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;flex:none}.photoBtn:disabled{opacity:.6}
 .fixBox{display:flex;flex-direction:column;gap:8px;margin-top:10px}.fixBox textarea{min-height:0}
 .checkCard{border:2px solid var(--t-contenuto);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
 .checkCard .score{display:flex;align-items:baseline;gap:10px}.checkCard .score b{font:400 44px/1 var(--display,Georgia);color:var(--t-contenuto)}
@@ -471,7 +473,7 @@ body:not(.solo) .soloOnly{display:none!important}
 
     <div class="composer" id="composer">
       <div class="planBanner" id="planBanner" hidden><span></span><button id="planX" aria-label="Annulla la data">✕</button></div>
-      <label class="lbl" for="transcript">Oppure scrivi o incolla</label>
+      <div class="lblRow"><label class="lbl" for="transcript">Oppure scrivi o incolla</label><button type="button" class="photoBtn" data-for="transcript">📷 Da una foto</button></div>
       <textarea id="transcript" rows="3"></textarea>
       <button class="btn big" id="go">Crea nota</button>
       <div class="status" id="status" aria-live="polite"></div>
@@ -518,7 +520,7 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
     <div class="composer" id="appendBox">
-      <label class="lbl" for="addText">Aggiungi alla nota</label>
+      <div class="lblRow"><label class="lbl" for="addText">Aggiungi alla nota</label><button type="button" class="photoBtn" data-for="addText">📷 Da una foto</button></div>
       <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
       <div class="row"><span class="status" id="aStatus" aria-live="polite"></span><button class="btn" id="appendGo">Aggiungi e riscrivi</button></div>
     </div>
@@ -1574,8 +1576,8 @@ function renderCheck(n){const B=$("checkBox");B.innerHTML="";const k=mainKey(n);
   if(c){const d=document.createElement("div");d.className="checkCard";d.innerHTML='<div class="score"><b></b><span>su 10</span></div><div class="rows"></div><p class="tip" style="margin:0"></p>';
     d.querySelector(".score b").textContent=c.voto;const R2=d.querySelector(".rows");[["Gancio",c.gancio],["Posizionamento",c.pos],["Invito all'azione",c.cta]].forEach(([l,x])=>{const r=document.createElement("div");r.className="row3";r.innerHTML="<i></i><span><b></b> </span>";r.querySelector("i").textContent=x?.ok?"✅":"⚠️";r.querySelector("b").textContent=l+":";r.querySelector("span").append(x?.nota||"");R2.append(r)});
     d.querySelector(".tip").textContent=c.consiglio||"";B.append(d)}
-  const f=document.createElement("div");f.className="fixBox";f.innerHTML='<label class="lbl">✏️ Le tue dritte per questo contenuto (facoltative)</label><textarea rows="2" placeholder="Es. accorcialo, gancio più provocatorio, togli le emoji, parla al tu…"></textarea><button class="btn" style="background:var(--t-contenuto)"></button>';
-  const ta=f.querySelector("textarea"),fb=f.querySelector("button");fb.textContent=c?"✨ Sistemalo":"✨ Sistemalo con le mie dritte";
+  const f=document.createElement("div");f.className="fixBox";f.innerHTML='<div class="lblRow"><label class="lbl">✏️ Le tue dritte per questo contenuto (facoltative)</label><button type="button" class="photoBtn" data-ref="1">📷 Foto</button></div><textarea rows="2" placeholder="Es. accorcialo, gancio più provocatorio, togli le emoji, parla al tu…"></textarea><button class="btn" style="background:var(--t-contenuto)"></button>';
+  const ta=f.querySelector("textarea"),fb=f.querySelector("button.btn");f.querySelector(".photoBtn").onclick=e=>pickPhoto(ta,e.currentTarget,"ref");fb.textContent=c?"✨ Sistemalo":"✨ Sistemalo con le mie dritte";
   fb.onclick=()=>{const t=ta.value.trim();if(!t&&!c){ta.focus();ta.placeholder="Scrivi cosa vuoi cambiare, oppure tocca prima ✅ Controlla";return}fixContent(n,fb,t)};B.append(f)}
 async function runCheck(n){const k=mainKey(n);const my=(n.myFix||[]).slice(-5);
   const r=await sampleFn.json(`Sei un revisore esperto del metodo ManuLab (Triplo Gancio). Valuta questo contenuto (${fmtName(k)}) prima della pubblicazione.\n${MANULAB_VOICE}${ctxFor(n.client)}${dritteCtx()}\nControlla solo 3 cose: 1) il gancio ferma lo scorrimento nei primi secondi o nella prima riga? 2) è coerente con il posizionamento e la nicchia del cliente (se non c'è un posizionamento, è specifico per il pubblico)? 3) l'invito all'azione è chiaro? Valuta in modo equo e coerente: 9-10 se i tre punti sono rispettati; 7-8 se c'è solo qualche dettaglio migliorabile; 6 o meno solo se c'è un problema vero. Non togliere punti per gusti personali o perché "si può sempre fare meglio": segna un punto come non ok solo se è davvero debole.${my.length?`\nINDICAZIONI DATE DALL'AUTORE su questo contenuto (sono scelte volute, non penalizzarle): ${my.join("; ")}.`:""}\nRispondi solo con JSON {"voto":numero da 1 a 10,"gancio":{"ok":true|false,"nota":"una frase"},"pos":{"ok":true|false,"nota":"una frase"},"cta":{"ok":true|false,"nota":"una frase"},"consiglio":"la cosa più importante da migliorare, in una frase (o 'Va bene così' se non c'è niente di importante)"}.\n\nCONTENUTO:\n${n.out[k]}`);
@@ -1675,6 +1677,15 @@ function ideaCard(n){const d=document.createElement("article");d.className="card
 (function(){const touch=matchMedia("(pointer:coarse)").matches,isField=el=>el&&(el.tagName==="TEXTAREA"||el.isContentEditable||(el.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|range|color|file|date)$/i.test(el.type)));
   const upd=()=>{const vv=window.visualViewport,kbVV=vv?innerHeight-vv.height>140:false;document.body.classList.toggle("kb",touch&&(isField(document.activeElement)||kbVV))};
   document.addEventListener("focusin",upd);document.addEventListener("focusout",()=>setTimeout(upd,60));window.visualViewport?.addEventListener("resize",upd);})();
+/* Foto: Dictax legge una foto (documento, screenshot, volantino, post) e ne mette il testo nella casella */
+const photoIn=document.createElement("input");photoIn.type="file";photoIn.accept="image/*";photoIn.hidden=true;document.body.append(photoIn);
+function shrinkPhoto(file){return new Promise((ok,ko)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const M=1600,k=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",.82))};img.onerror=()=>{URL.revokeObjectURL(u);ko(new Error("Non riesco ad aprire questa foto: prova con un'altra."))};img.src=u})}
+function pickPhoto(ta,btn,mode){photoIn.value="";photoIn.onchange=async()=>{const f=photoIn.files[0];if(!f)return;const old=btn.textContent;btn.disabled=true;btn.textContent="📷 Leggo la foto…";
+  try{const data=await shrinkPhoto(f);const d=await api("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({input:`Guarda questa foto (può essere un documento, uno screenshot, un volantino, un post social, una lavagna o un oggetto). Se contiene del testo, trascrivilo fedelmente e in ordine. Se non c'è testo o è poco, descrivi in poche righe cosa si vede di utile per scrivere una nota o un contenuto social. Rispondi solo con il testo, in italiano, senza preamboli.`,image:data,tier:"default"})});
+    const t=String(d.text||"").trim();if(!t)throw new Error("Non ho trovato niente da leggere in questa foto.");
+    const head=mode==="ref"?"Prendi spunto da questa foto:\n":"📷 Dalla foto:\n";ta.value=(ta.value.trim()?ta.value.trim()+"\n\n":"")+head+t;ta.dispatchEvent(new Event("input"));ta.focus();ta.scrollIntoView({block:"center",behavior:"smooth"})}
+  catch(e){alert(errMsg(e))}finally{btn.disabled=false;btn.textContent=old}};photoIn.click()}
+document.querySelectorAll(".photoBtn[data-for]").forEach(b=>b.onclick=()=>pickPhoto($(b.dataset.for),b,"add"));
 /* Link utili */
 const fixUrl=u=>{u=(u||"").trim();if(u&&!/^[a-z]+:\/\//i.test(u))u="https://"+u;return u};
 const isUrl=t=>/^(https?:\/\/|www\.)\S+$/i.test((t||"").trim());
