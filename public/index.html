@@ -1371,7 +1371,7 @@ function noteCard(n,el){
   if(typeOf(n)==="contenuto"&&(n.st||n.pub)){const c=document.createElement("span");const stt=n.st||"idea";c.className="pill st-"+stt;c.textContent=ST[stt]+(n.pub?" · "+fmtDate(n.pub+"T12:00"):"");el.querySelector(".pills").append(c)}
   if(n.client){const c=document.createElement("span");c.className="pill client cliOpt";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;const txt=Object.entries(n.out).find(([k])=>k!=="todo")?.[1];if(hasTodo(n)){const ts=ensureTasks(n),dn=ts.filter(x=>x.done).length,next=ts.find(x=>!x.done);const sum=ts.length?(dn===ts.length?`✓ Tutte fatte (${ts.length})`:`☐ ${dn} su ${ts.length} fatte · prossima: ${next.t}`):"☐ Lista vuota";if(txt){el.querySelector("p").textContent=txt;const c=document.createElement("span");c.className="pill todoPill";c.textContent=ts.length?(dn===ts.length?"✓ Lista fatta":`☐ ${dn}/${ts.length}`):"☐ Lista";el.querySelector(".pills").prepend(c)}else el.querySelector("p").textContent=sum}else if(typeOf(n)==="link")el.querySelector("p").textContent="🔗 "+(n.out.link||"");else el.querySelector("p").textContent=txt||n.tr;
-  (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill tagLink";s.textContent="#"+t;s.title="Mostra le note con #"+t;s.onclick=e=>{if(el.id==="dHead")return;e.stopPropagation();e.preventDefault();setTag(t);$("tagChip").scrollIntoView({block:"center",behavior:"smooth"})};el.querySelector(".pills").append(s)});
+  (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill tagLink";s.textContent="#"+faseLbl(t);s.title="Mostra le note con #"+t;s.onclick=e=>{if(el.id==="dHead")return;e.stopPropagation();e.preventDefault();setTag(t);$("tagChip").scrollIntoView({block:"center",behavior:"smooth"})};el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){const L=$("list");L.innerHTML="";renderToday();renderTagFilter();
@@ -1436,7 +1436,7 @@ async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textCo
   catch(e){c.fid.textContent=e?.code==="not_granted"?"Controllo non disponibile: non hai consentito l'uso di Claude.":"Controllo non riuscito."}}
 function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
 function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
-  const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="pill tagBtn";b.textContent="#"+t;b.title="Tocca: mostra le note con #"+t+". Tieni premuto: togli il tag";b.setAttribute("aria-label","Mostra le note con #"+t+"; tieni premuto per togliere il tag");
+  const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="pill tagBtn";b.textContent="#"+faseLbl(t);b.title="Tocca: mostra le note con #"+t+". Tieni premuto: togli il tag";b.setAttribute("aria-label","Mostra le note con #"+t+"; tieni premuto per togliere il tag");
     let tm=null,t2=null,held=false;const stop=()=>{clearTimeout(tm);clearTimeout(t2);tm=null;b.classList.remove("hold")};
     b.onpointerdown=()=>{held=false;t2=setTimeout(()=>b.classList.add("hold"),250);tm=setTimeout(()=>{held=true;b.classList.remove("hold");if(confirm("Togliere il tag #"+t+" da questa nota?")){cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()}},700)};
     b.onpointerup=b.onpointerleave=b.onpointercancel=stop;b.oncontextmenu=e=>e.preventDefault();
@@ -1714,6 +1714,12 @@ $("analyze").onclick=async()=>{
 /* Avvio */
 $("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
+(function fixFasi(){const re=/^(tofu|mofu|bofu)$/i;let ch=false;const ns=store.get("notes",[]);
+  ns.forEach(n=>{if(typeOf(n)!=="contenuto")return;let t=(n.tags||[]).map(x=>re.test(String(x).trim())?faseLbl(x):x);
+    const fl=Object.keys(n.out||{}).filter(k=>!k.endsWith(ML)&&FMT_SHORT[k]).map(k=>FMT_SHORT[k]);fl.forEach(f=>{if(!t.some(x=>String(x).toLowerCase()===f.toLowerCase()))t.unshift(f)});
+    t=[...new Set(t)];if(JSON.stringify(t)!==JSON.stringify(n.tags||[])){n.tags=t;n.up=Date.now();ch=true}});
+  if(ch)store.set("notes",ns);
+  const P=store.get("clients",{});let pc=false;Object.values(P).forEach(p=>{if(p.pos&&/\b(TOFU|MOFU|BOFU)\b/.test(p.pos)){p.pos=p.pos.replace(/\bTOFU\b/g,"Farsi conoscere").replace(/\bMOFU\b/g,"Creare fiducia").replace(/\bBOFU\b/g,"Vendere");pc=true}(p.ideas||[]).forEach(x=>{if(x&&re.test(String(x.fase||"").trim())){x.fase=faseLbl(x.fase);pc=true}})});if(pc)store.set("clients",P)})();
 loadMode();applyMode();show("home");renderPend();if(!raw.get("uso",""))$("welcome").hidden=false;
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
