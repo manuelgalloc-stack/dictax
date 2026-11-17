@@ -1009,14 +1009,14 @@ async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_
   rawSet("syncT",t);rawSet("syncDone",done);
   if(changed){loadMode();applyMode();if(!$("v-conti").hidden)renderMoney()}}
 async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
-function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";checkAdmin()}
+function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";setTimeout(checkAdmin,0)}
 /* Dritte del momento: indicazioni di ManuLab per tutti, modificabili solo dall'amministratore */
 let dritte=raw.get("dritte",[]),isAdm=false;
 async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?select=settore,testo&attiva=eq.true&order=updated_at.desc",{headers:{apikey:SB_KEY}});if(!r.ok)return;dritte=await r.json();raw.set("dritte",dritte);raw.set("dritteAt",Date.now())}catch{}}
 if(Date.now()-raw.get("dritteAt",0)>36e5)loadDritte();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-raw.get("dritteAt",0)>36e5)loadDritte()});
 function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [${x.settore||"Tutti"}] ${x.testo}`).join("\n")}
-async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();isAdm=!!data}catch{isAdm=false}$("admBox").hidden=!isAdm;if(isAdm)renderAdm()}
+async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm;if(isAdm)renderAdm()}
 async function renderAdm(){const L=$("admList");const{data,error}=await sb.from("dritte").select("*").order("updated_at",{ascending:false});if(error){$("admStatus").textContent="Non riesco a leggere le dritte: riprova.";return}L.innerHTML="";
   (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Settore" placeholder="Settore (es. Tutti, Ristoranti)"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><textarea rows="3" aria-label="Indicazione"></textarea>';
     const si=d.querySelector("input"),ta=d.querySelector("textarea"),tg=d.querySelector(".tg");si.value=x.settore;ta.value=x.testo;tg.textContent=x.attiva?"✓ Attiva":"Spenta";
@@ -1242,7 +1242,7 @@ $("dataDel").onclick=async()=>{if(!confirm("Eliminare TUTTE le tue note, conti e
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
-  if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice"){renderClients();if(isSolo())editClient("__me")}if(v==="ask")renderQClient();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+  if(v==="account"&&user)checkAdmin();if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice"){renderClients();if(isSolo())editClient("__me")}if(v==="ask")renderQClient();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
@@ -1571,7 +1571,7 @@ $("appendGo").onclick=async()=>{
   try{if(hasTodo(cur)&&Object.keys(cur.out).every(k=>k==="todo")){const nt=await extractTasks(add);ensureTasks(cur).push(...nt);syncTodo(cur);saveNote(cur);openNote(cur,true);$("addText").value="";$("aStatus").textContent=nt.length?`Aggiunte ${nt.length} attività.`:"Nessuna nuova attività trovata.";return}
     if(hasTodo(cur)){const nt=await extractTasks(add);ensureTasks(cur).push(...nt);syncTodo(cur)}
     for(const k of Object.keys(cur.out)){if(k==="todo")continue;const c=outCard(k,"Sto riscrivendo…");$("dOut").append(c.el);
-      const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[baseK(k)]?.p||k}.${useML(k)?"\n"+MANULAB_VOICE:""}\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
+      const{text}=await sampleFn(`${M().writer} Riscrivi questo testo integrando l'aggiunta dell'autore. Formato: ${FORMATS[baseK(k)]?.p||k}.${useML(k)?"\n"+MANULAB_VOICE+ctxFor(cur.client)+dritteCtx():""}\n${styleText()}${voiceText()}\nNon inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nTESTO ATTUALE:\n${cur.out[k]}\n\nAGGIUNTA:\n${add}`,{onText:({text})=>{c.txt.textContent=text}});cur.out[k]=text;if(fidOn())jobs.push(runFid(cur,k,c))}
     await Promise.all(jobs);saveNote(cur);$("addText").value="";if(hasTodo(cur))openNote(cur,true);$("aStatus").textContent="Nota aggiornata.";
   }catch(e){$("aStatus").textContent=errMsg(e)}
   finally{$("appendGo").disabled=false}
