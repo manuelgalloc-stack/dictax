@@ -360,6 +360,12 @@ body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMo
 .cFmts{display:flex;flex-direction:column;gap:10px}.cFmt{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}.cFmt .row{gap:6px}.cFmt .cfn{font-weight:700}.cFmt .cfd{font-size:14px}
 .plWeeks{display:flex;flex-direction:column;gap:10px}.plWeek{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--paper)}.plWeek small{color:var(--muted);font-weight:600}.plWeek .row{gap:6px}.plWeek input{flex:1;min-width:0;font-weight:700}.plWeek .why{font-size:13px;color:var(--muted);margin:0}.plWeek button{flex:none}
 .cFix{display:flex;flex-direction:column;gap:8px}.fixRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.cliPage{display:flex;flex-direction:column;gap:14px}.cliPage #cliBack{align-self:flex-start}.cliHead h1{margin:0;overflow-wrap:anywhere}.cliHead .wk{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}.cliHead .wk span{font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--muted)}.cliHead .wk .ok{background:#e3f4ea;color:#1e9a55}.cliHead .wk .todo{background:#fdf0dc;color:#b06a00}.cliHead .wk .t{background:none!important;padding:3px 0!important}.cliHead .wk.late .todo{background:#fde3e3;color:var(--danger,#d33)}.cliHead .wk.full .ok{background:#1e9a55;color:#fff}
+.cTabs{grid-template-columns:1fr 1fr}.cTabs button{font-size:15px;padding:10px 4px}.cPane{display:flex;flex-direction:column;gap:12px}.cPane[hidden]{display:none}
+.cTiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cTile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 6px;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff);cursor:pointer;font:inherit;color:inherit;text-align:center}.cTile span{font-size:28px}.cTile b{font-size:15px}.cTile small{font-size:12px;color:var(--muted);line-height:1.25}.cTile.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}.cTile:disabled{opacity:.45;cursor:default}
+.cNoPos{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:#fff7e6;border:1px solid #f0d9a8}
+.cRecent{display:flex;flex-direction:column;gap:8px;margin-top:4px}.cRecent:empty{display:none}.cRow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);font:inherit;color:inherit;cursor:pointer}.cRow b{font-size:15px}.cRow small{color:var(--muted);font-size:13px}.cRow.done{opacity:.55}
+#cliEdit.isNew .notNew,#cliEdit:not(.isNew) .newOnly{display:none!important}.back.danger{color:var(--danger,#d33)}
 .cComp{display:flex;flex-direction:column;gap:8px}.compRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}.compRow .cu{grid-column:1/2}.compRow .cn{grid-column:1/4}.compRow a,.compRow button{font-size:14px;font-weight:700;color:var(--accent);background:none;border:0;padding:6px;text-decoration:none;cursor:pointer}.compRow button{color:var(--muted)}
 .stBox{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#faf7ff}.stThumbs,.nThumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.stThumbs:empty{display:none}.stThumbs figure,.nThumbs figure{margin:0;flex:none;position:relative;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}.stThumbs img,.nThumbs img{width:64px;height:96px;object-fit:cover;border-radius:10px;display:block;margin-bottom:3px}.stThumbs button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#222;color:#fff;font-size:13px;cursor:pointer}.stGo .btn{flex:1}.nThumbs{margin:0 0 10px}.fixRow .fx{flex:1 1 100%;min-width:0}.fixRow .fn{width:58px;flex:none;text-align:center;padding:8px 4px}.fixRow span{font-size:13px;color:var(--muted);flex:none}.fixRow button{flex:none;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px}
 .dayFmt{display:flex;flex-direction:column;gap:6px}.dfRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dfRow>span{font-size:14px;font-weight:600;min-width:78px}.dfRow .chip{font-size:13px;padding:5px 10px}
@@ -680,29 +686,61 @@ body:not(.solo) .soloOnly{display:none!important}
   <!-- VOCE (solo Creator) -->
   <section id="v-voice" class="app" style="gap:14px" hidden>
     <div id="cliSec" style="display:flex;flex-direction:column;gap:14px">
-      <h1 class="agencyOnly">Clienti</h1><h1 class="soloOnly">Il mio posizionamento</h1>
-      <p class="lead agencyOnly">Per ogni cliente crea il posizionamento con il sistema ManuLab: Dictax lo usa per scrivere contenuti su misura per la sua nicchia.</p>
-      <p class="lead soloOnly">Descrivi di cosa parli e a chi: Dictax crea il tuo posizionamento con il sistema ManuLab e lo usa in tutti i tuoi contenuti.</p>
+      <div id="cliHome" style="display:flex;flex-direction:column;gap:14px">
+      <h1 class="agencyOnly">Clienti</h1>
+      <p class="lead agencyOnly">Tocca un cliente per creare idee, storie e contenuti su misura per lui.</p>
       <div class="list agencyOnly" id="cliList"></div>
       <button class="btn ghost agencyOnly" id="cliNew">+ Nuovo cliente</button>
-      <div class="composer" id="cliEdit" hidden>
-        <label class="lbl agencyOnly" for="cName">Nome del cliente</label><input type="text" class="agencyOnly" id="cName" placeholder="Es. Ristorante sul Lago">
-        <label class="lbl" for="cNiche">Di cosa si occupa</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione"><label class="lbl" for="cWk">Contenuti a settimana</label><input type="number" id="cWk" min="0" max="30" inputmode="numeric" placeholder="Es. 3 (lascia vuoto se non c'è un numero fisso)">
-        <details class="cliMore" id="cliMore"><summary>Altri dettagli (facoltativi)</summary><div class="cliMoreBody">
+      </div>
+      <div id="cliEdit" class="cliPage" hidden>
+        <button class="back agencyOnly" id="cliBack" type="button">← Tutti i clienti</button>
+        <div class="cliHead"><h1 id="cTitle">Nuovo cliente</h1><div id="cWkLine" class="cliCard" style="all:unset"></div></div>
+        <div class="seg cTabs" id="cTabs" role="tablist"><button type="button" data-p="crea" aria-pressed="true">✨ Crea</button><button type="button" data-p="scheda" aria-pressed="false">📋 Scheda</button></div>
+        <div id="cPaneCrea" class="cPane">
+          <div id="cNoPos" class="cNoPos" hidden><p class="lead" style="margin:0">Per iniziare serve il posizionamento: Dictax lo crea da solo partendo da cosa fa il cliente.</p><button class="btn big" id="cGoPos" type="button">✨ Crea il posizionamento</button></div>
+          <div class="cTiles" id="cTiles">
+            <button type="button" class="cTile" data-t="idee"><span>💡</span><b>Idee</b><small>4 temi, 8 idee</small></button>
+            <button type="button" class="cTile" data-t="storie"><span>📱</span><b>Storie</b><small>dalle foto del cliente</small></button>
+            <button type="button" class="cTile" data-t="nuovo"><span>🎙</span><b>Nuovo contenuto</b><small>parla o scrivi</small></button>
+          </div>
+          <div id="cIdeasBox" class="cPanel" hidden style="display:flex;flex-direction:column;gap:10px">
+          <span class="lbl">💡 Idee dal posizionamento</span>
+          <div id="cIdeas" class="list" style="gap:10px"></div>
+          <button class="btn ghost" id="cIdeasGo">💡 Trova le idee</button>
+        </div>
+          <div id="stBox" class="stBox cPanel" hidden>
+          <span class="lbl">📱 Storie dal cliente</span>
+          <p class="help" style="margin:0">Carica le foto che ti ha mandato il cliente (fino a 8). Per i video, fai uno screenshot o descrivili qui sotto.</p>
+          <div id="stThumbs" class="stThumbs"></div>
+          <button class="btn ghost" id="stPick" type="button">📷 Scegli le foto</button>
+          <textarea id="stNote" rows="2" placeholder="Facoltativo: cosa c'è nelle foto o cosa vuole il cliente (es. nuovo piatto del giorno, evento di sabato)"></textarea>
+          <div class="row tight stGo"><button class="btn" id="stStory" type="button">📖 Racconto</button><button class="btn" id="stSingle" type="button">🔹 Storie singole</button></div>
+          <span class="status" id="stStat" aria-live="polite"></span>
+        </div>
+          <div id="cRecent" class="cRecent"></div>
+        </div>
+        <div id="cPaneScheda" class="cPane composer" hidden>
+          <label class="lbl agencyOnly" for="cName">Nome del cliente</label><input type="text" class="agencyOnly" id="cName" placeholder="Es. Ristorante sul Lago">
+          <label class="lbl" for="cNiche">Di cosa si occupa</label><input type="text" id="cNiche" placeholder="Es. ristorante di pesce sul lago, cucina di stagione">
+          <button class="btn big newOnly" id="cCreate" type="button">✨ Crea il cliente</button>
+          <p class="help newOnly" style="margin:0">Dictax crea subito il posizionamento. Tutto il resto lo aggiungi dopo, quando vuoi.</p>
+          <div class="notNew" style="display:contents">
+          <label class="lbl" for="cWk">Contenuti a settimana</label><input type="number" id="cWk" min="0" max="30" inputmode="numeric" placeholder="Es. 3 (lascia vuoto se non c'è un numero fisso)">
+          <label class="lbl" for="cReq">📝 Richieste del cliente</label>
+          <textarea id="cReq" rows="3" placeholder="Es. vuole più video dello chef, non mostrare i prezzi, a dicembre spingere i pranzi di Natale"></textarea>
+          <label class="lbl" for="cDr">✍️ Le tue dritte per questo cliente</label>
+          <textarea id="cDr" rows="3" placeholder="Es. parla al tu, niente prezzi nei post, ogni tanto qualcosa di divertente con lo staff"></textarea>
+          <span class="lbl">🔗 Competitor da cui prendere spunto</span>
+          <div id="cComp" class="cComp"></div>
+          <button class="back" id="cCompAdd" type="button" style="align-self:flex-start">+ Aggiungi un competitor</button>
+          <p class="help" style="margin:0">Scrivi cosa ti piace di ognuno: Dictax ne prende lo spirito, senza copiare. I link di Instagram e TikTok Dictax non riesce ad aprirli: per fargli vedere un post, fai uno screenshot e usa "📷 Foto di un esempio".</p>
+          <details class="cliMore" id="cliMore"><summary>Altri dettagli (facoltativi)</summary><div class="cliMoreBody">
         <label class="lbl" for="cTarget">A chi si rivolge</label><input type="text" id="cTarget" placeholder="Es. coppie 30-55 della zona, turisti nel weekend">
         <label class="lbl" for="cOffer">Cosa vende o offre</label><input type="text" id="cOffer" placeholder="Es. cene, pranzi della domenica, eventi privati">
         <label class="lbl" for="cZone">Zona (facoltativa)</label><input type="text" id="cZone" placeholder="Es. Agrigento">
         <label class="lbl" for="cAvoid">Da evitare (facoltativo)</label><input type="text" id="cAvoid" placeholder="Parole, temi o toni da non usare">
         </div></details>
-        <label class="lbl" for="cDr">✍️ Le tue dritte per questo cliente</label>
-        <textarea id="cDr" rows="3" placeholder="Es. parla al tu, niente prezzi nei post, ogni tanto qualcosa di divertente con lo staff"></textarea>
-        <label class="lbl" for="cReq">📝 Richieste del cliente</label>
-        <textarea id="cReq" rows="3" placeholder="Es. vuole più video dello chef, non mostrare i prezzi, a dicembre spingere i pranzi di Natale"></textarea>
-        <span class="lbl">🔗 Competitor da cui prendere spunto</span>
-        <div id="cComp" class="cComp"></div>
-        <button class="back" id="cCompAdd" type="button" style="align-self:flex-start">+ Aggiungi un competitor</button>
-        <p class="help" style="margin:0">Scrivi cosa ti piace di ognuno: Dictax ne prende lo spirito, senza copiare. I link di Instagram e TikTok Dictax non riesce ad aprirli: per fargli vedere un post, fai uno screenshot e usa "📷 Foto di un esempio".</p>
-        <div class="packBox fmtBox" hidden>
+          <div class="packBox fmtBox" hidden>
           <span class="lbl">🎞 I 4 formati del cliente (facoltativo)</span>
           <p class="help" style="margin:0">Le rubriche fisse che nascono dal posizionamento, es. "La ricetta in 30 secondi". Si creano da sole quando generi il posizionamento. Per cambiarle tocca il testo e scrivi: si salvano da sole.</p>
           <div id="cFmts" class="cFmts"></div>
@@ -720,24 +758,15 @@ body:not(.solo) .soloOnly{display:none!important}
           <button class="btn ghost" id="cMonth" type="button" hidden>🎯 Pianifica il mese</button>
           <p class="help" style="margin:0">Nel calendario vedrai i posti liberi da riempire. Senza giorni, Dictax li distribuisce nel mese.</p>
         </div>
-        <button class="btn" id="cGen">✨ Genera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
-        <label class="lbl" for="cPos">Posizionamento (puoi modificarlo)</label>
-        <textarea id="cPos" class="posOut" rows="12" placeholder="Premi il pulsante qui sopra: il posizionamento comparirà qui."></textarea>
-        <div class="row"><button class="btn danger sm agencyOnly" id="cDel">Elimina</button><span class="status" id="cStat" aria-live="polite"></span><button class="btn" id="cSave">Salva cliente</button></div>
-        <div id="cIdeasBox" hidden style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
-          <span class="lbl">💡 Idee dal posizionamento</span>
-          <div id="cIdeas" class="list" style="gap:10px"></div>
-          <button class="btn ghost" id="cIdeasGo">💡 Trova le idee</button>
+          <details class="cliMore posMore" id="posMore"><summary>📄 Posizionamento</summary><div class="cliMoreBody">
+          <textarea id="cPos" class="posOut" rows="12" placeholder="Tocca il pulsante qui sotto: il posizionamento comparirà qui."></textarea>
+          <button class="btn ghost" id="cGen">↻ Rigenera il posizionamento <span class="proTag" style="margin-left:6px">Creator Pro</span></button>
+          </div></details>
+          <button class="back danger agencyOnly" id="cDel" type="button" style="align-self:center;margin-top:10px">Elimina questo cliente</button>
+          </div>
+          <button class="btn" id="cSave" hidden>Salva</button>
         </div>
-        <div id="stBox" class="stBox" hidden>
-          <span class="lbl">📱 Storie dal cliente</span>
-          <p class="help" style="margin:0">Carica le foto che ti ha mandato il cliente (fino a 8). Per i video, fai uno screenshot o descrivili qui sotto.</p>
-          <div id="stThumbs" class="stThumbs"></div>
-          <button class="btn ghost" id="stPick" type="button">📷 Scegli le foto</button>
-          <textarea id="stNote" rows="2" placeholder="Facoltativo: cosa c'è nelle foto o cosa vuole il cliente (es. nuovo piatto del giorno, evento di sabato)"></textarea>
-          <div class="row tight stGo"><button class="btn" id="stStory" type="button">📖 Racconto</button><button class="btn" id="stSingle" type="button">🔹 Storie singole</button></div>
-          <span class="status" id="stStat" aria-live="polite"></span>
-        </div>
+        <span class="status" id="cStat" aria-live="polite"></span>
       </div>
     </div>
     <details class="voiceMore" hidden><summary>🎙 Voce di brand (facoltativa) <span class="pro planBadge"></span></summary><div class="voiceBody">
@@ -1188,13 +1217,34 @@ function packInfo(k,m){const N=(cliProfiles()[k]||{}).n|0,done=contents().filter
 function packFree(m){const out=[];packKeys().forEach(k=>packInfo(k,m).free.forEach(ds=>out.push({k,ds})));return out}
 function weekRange(){const t=today(),d=new Date(t+"T12:00"),wd=(d.getDay()+6)%7,a=new Date(d-wd*864e5),b=new Date(+a+6*864e5),f=x=>x.toISOString().slice(0,10);return[f(a),f(b)]}
 function weekCount(nm){const[a,b]=weekRange();let done=0,todo=0;contents().forEach(n=>{if((n.client||"")!==nm)return;const ds=n.pub||(n.at?new Date(n.at-new Date(n.at).getTimezoneOffset()*6e4).toISOString().slice(0,10):"");if(!ds||ds<a||ds>b)return;n.st==="fatto"?done++:todo++});return{done,todo}}
+function wkEl(nm,p){const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';const W=p.wk|0,ok=wk.querySelector(".ok"),td=wk.querySelector(".todo");
+  if(W){ok.textContent="✓ "+w.done+" di "+W+" fatti";const miss=W-w.done;if(miss<=0){td.remove();wk.classList.add("full");ok.textContent="✓ Fatti tutti ("+w.done+" di "+W+")"}else{td.textContent=miss===1?"ne manca 1":"ne mancano "+miss;const wd=(new Date(today()+"T12:00").getDay()+6)%7;if(w.done<W*(wd+1)/7-.5)wk.classList.add("late")}}
+  else{ok.textContent="✓ "+w.done+(w.done===1?" fatto":" fatti");td.textContent=w.todo+" da fare"}return wk}
 function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles(),names=clients();
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
-    c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";{const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';const W=p.wk|0,ok=wk.querySelector(".ok"),td=wk.querySelector(".todo");
-      if(W){ok.textContent="✓ "+w.done+" di "+W+" fatti";const miss=W-w.done;if(miss<=0){td.remove();wk.classList.add("full");ok.textContent="✓ Fatti tutti ("+w.done+" di "+W+")"}else{td.textContent=miss===1?"ne manca 1":"ne mancano "+miss;const wd=(new Date(today()+"T12:00").getDay()+6)%7;if(w.done<W*(wd+1)/7-.5)wk.classList.add("late")}}
-      else{ok.textContent="✓ "+w.done+(w.done===1?" fatto":" fatti");td.textContent=w.todo+" da fare"}c.querySelector("div").append(wk)}if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cReq").value=p.req||"";cComp=(p.comp||[]).map(c=>({...c}));renderComp();stImgs=[];renderSt();$("stStat").textContent="";$("stBox").hidden=!nm;$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};cFmts=(p.fmts||[]).map(f=>({...f}));fmtOpen=false;renderFmts();cFix=(p.fissi||[]).map(f=>({...f}));renderFix();renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+    c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";c.querySelector("div").append(wkEl(nm,p));if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
+function editClient(nm,pane){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;$("cliHome").hidden=true;$("cliEdit").classList.toggle("isNew",!nm);renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cReq").value=p.req||"";cComp=(p.comp||[]).map(c=>({...c}));renderComp();stImgs=[];renderSt();$("stStat").textContent="";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};cFmts=(p.fmts||[]).map(f=>({...f}));fmtOpen=false;renderFmts();cFix=(p.fissi||[]).map(f=>({...f}));renderFix();renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("posMore").open=false;setCPane(nm?(pane||"crea"):"scheda");refreshCrea();scrollTo(0,0);if(!nm)$("cName").focus()}
+function setCPane(k){$("cTabs").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p===k));$("cPaneCrea").hidden=k!=="crea";$("cPaneScheda").hidden=k!=="scheda";$("cTabs").hidden=!cliCur}
+$("cTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.p==="crea")refreshCrea();setCPane(b.dataset.p)});
+function refreshCrea(){const nm=cliCur,p=(nm&&cliProfiles()[nm])||{};$("cTitle").textContent=nm==="__me"?"Il mio brand":nm||"Nuovo cliente";
+  const L=$("cWkLine");L.innerHTML="";if(nm)L.append(wkEl(nm==="__me"?"":nm,p));
+  $("cNoPos").hidden=!!p.pos||!nm;{const me=nm==="__me";$("cNoPos").querySelector("p").textContent="Per iniziare serve il posizionamento: Dictax lo crea da solo partendo da "+(me?"cosa fai tu.":"cosa fa il cliente.");$("cTiles").querySelector("[data-t=storie] small").textContent=me?"dalle tue foto":"dalle foto del cliente"}$("cTiles").querySelector('[data-t=idee]').disabled=!p.pos;
+  const R=$("cRecent");R.innerHTML="";if(!nm)return;const cl=nm==="__me"?"":nm;const list=contents().filter(n=>(n.client||"")===cl).sort((a,b)=>(b.up||b.at)-(a.up||a.at)).slice(0,5);
+  if(!list.length)return;const h=document.createElement("span");h.className="lbl";h.textContent="Ultimi contenuti";R.append(h);
+  list.forEach(n=>{const r=document.createElement("button");r.type="button";r.className="cRow"+(n.st==="fatto"?" done":"");const st={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto"}[n.st]||"";r.innerHTML='<b></b><small></small>';r.querySelector("b").textContent=n.title||"Contenuto";r.querySelector("small").textContent=[kindOf(n),st].filter(Boolean).join(" · ");r.onclick=()=>openNote(n);R.append(r)})}
+function cPanel(t){const I=$("cIdeasBox"),S=$("stBox");const showI=t==="idee"&&I.hidden,showS=t==="storie"&&S.hidden;I.hidden=!showI;S.hidden=!showS;
+  $("cTiles").querySelectorAll(".cTile").forEach(b=>b.classList.toggle("on",(b.dataset.t==="idee"&&showI)||(b.dataset.t==="storie"&&showS)));(showI?I:showS?S:null)?.scrollIntoView({behavior:"smooth",block:"start"})}
+let preCli=null;
+$("cTiles").querySelectorAll(".cTile").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==="nuovo"){preCli=cliCur==="__me"?"":cliCur;show("home");$("status").textContent=preCli?"Registra o scrivi: il contenuto sarà per "+preCli+".":"Registra o scrivi il tuo contenuto.";scrollTo(0,0);return}cPanel(t)});
+$("cliBack").onclick=()=>{cliCur=null;$("cliEdit").hidden=true;$("cliHome").hidden=false;$("cIdeasBox").hidden=true;$("stBox").hidden=true;renderClients();scrollTo(0,0)};
+$("cGoPos").onclick=()=>{setCPane("scheda");$("posMore").open=true;$("cGen").click()};
+$("cCreate").onclick=()=>{const nm=$("cName").value.trim(),ni=$("cNiche").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return}if(!ni){$("cStat").textContent="Scrivi di cosa si occupa.";$("cNiche").focus();return}
+  if(cliProfiles()[nm]){$("cStat").textContent="Hai già un cliente con questo nome.";return}if(!saveClient())return;editClient(nm,"crea");$("cGen").click()};
+let cSaveT=null;const autoSave=()=>{if(!cliCur)return;clearTimeout(cSaveT);cSaveT=setTimeout(()=>{if(saveClient()){$("cStat").textContent="Salvato ✓";refreshCrea()}},700)};
+$("cPaneScheda").addEventListener("input",e=>{if(e.target.id!=="cName")autoSave()});
+$("cPaneScheda").addEventListener("click",e=>{if(e.target.closest("#cComp button,#cDays,#cFix button,#cDayFmt"))autoSave()});
+$("cName").addEventListener("change",()=>{if(!cliCur||cliCur==="__me")return;const nm=$("cName").value.trim();if(!nm){$("cName").value=cliCur;return}if(nm!==cliCur&&cliProfiles()[nm]){$("cStat").textContent="Hai già un cliente con questo nome.";$("cName").value=cliCur;return}if(saveClient()){$("cStat").textContent="Salvato ✓";refreshCrea()}});
 $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
 let cDayFmt={},cFmts=[],cFix=[];
@@ -1260,7 +1310,7 @@ async function genFmts(){const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cl
     cFmts=L.map(x=>({nome:String(x.nome).trim(),desc:String(x.descrizione||"").trim()}));cDayFmt={};renderFmts();renderDays();$("cStat").textContent="Ecco i 4 formati: correggili se vuoi, poi tocca Salva cliente.";return true}
   catch(e){$("cStat").textContent=errMsg(e);return false}finally{b.disabled=false;b.textContent="✨ Proponili di nuovo dal posizionamento"}}
 $("cMonth").onclick=()=>{if(!cliCur)return;openPlanner(cliCur,today().slice(0,7))};
-$("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;renderClients()};
+$("cDel").onclick=()=>{if(!cliCur||!confirm("Eliminare il profilo di "+cliCur+"? Le note restano."))return;const P=cliProfiles();delete P[cliCur];store.set("clients",P);cliCur=null;$("cliEdit").hidden=true;$("cliHome").hidden=false;renderClients()};
 $("cGen").onclick=async()=>{const nm=$("cName").value.trim(),f=cliForm();if(!nm||!f.niche){$("cStat").textContent="Scrivi almeno il nome e il settore/nicchia.";return}
   const b=$("cGen");b.disabled=true;$("cStat").textContent="Sto costruendo il posizionamento…";const oldPos=$("cPos").value;$("cPos").value="";
   const prompt=`Sei lo stratega di ManuLab, agenzia di contenuti social. Costruisci il posizionamento di questo cliente con il sistema ManuLab.
@@ -1284,12 +1334,12 @@ PAROLE DA USARE
 PAROLE DA EVITARE
 IDEE DI CONTENUTO (non usare le sigle TOFU, MOFU, BOFU: dividi le idee in 'Per farsi conoscere', 'Per creare fiducia' e 'Per vendere'. 2 idee per farsi conoscere: errore comune, storytelling, tutorial, dietro le quinte o presa di posizione; 2 idee per creare fiducia: domande frequenti e obiezioni, confronti, casi concreti, rubriche; 2 idee per vendere: invito all'azione legato alla zona, testimonianza, obiezione su prezzo o tempo, garanzia. Per ogni idea: formato, titolo e prima frase-gancio)
 Non inventare numeri, recensioni, premi o risultati.`;
-  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});if(!text.trim())throw new Error("Il posizionamento è arrivato vuoto: riprova.");$("cPos").value=text.trim();saveClient();$("cStat").textContent="Posizionamento pronto e salvato ✓";if(!document.body.classList.contains("simple")&&!cFmts.some(f=>f&&f.nome)){$("cStat").textContent="Posizionamento pronto ✓ Ora preparo i 4 formati…";if(await genFmts()){saveClient();$("cStat").textContent="Posizionamento e 4 formati pronti e salvati ✓ Puoi modificarli quando vuoi.";$("cFmts").scrollIntoView({behavior:"smooth",block:"center"})}}else $("cStat").textContent="Posizionamento pronto e salvato ✓"}
+  try{const{text}=await sampleFn(prompt,{onText:({text})=>{$("cPos").value=text}});if(!text.trim())throw new Error("Il posizionamento è arrivato vuoto: riprova.");$("cPos").value=text.trim();saveClient();refreshCrea();$("cStat").textContent="Posizionamento pronto e salvato ✓";if(!document.body.classList.contains("simple")&&!cFmts.some(f=>f&&f.nome)){$("cStat").textContent="Posizionamento pronto ✓ Ora preparo i 4 formati…";if(await genFmts()){saveClient();$("cStat").textContent="Posizionamento e 4 formati pronti e salvati ✓ Puoi modificarli quando vuoi.";$("cFmts").scrollIntoView({behavior:"smooth",block:"center"})}}else $("cStat").textContent="Posizionamento pronto e salvato ✓"}
   catch(e){if(!$("cPos").value.trim()||$("cPos").value.length<oldPos.length/3)$("cPos").value=oldPos;$("cStat").textContent=errMsg(e)+(oldPos?" Il posizionamento precedente è rimasto.":"")}finally{b.disabled=false}};
 
 const IDEA_FMT=f=>{f=String(f||"").toLowerCase();return f.includes("reel")||f.includes("video")?"reel":f.includes("carosel")?"carosello":f.includes("tiktok")?"tiktok":f.includes("linkedin")?"linkedin":f.includes("newsletter")||f.includes("email")?"newsletter":"instagram"};
 const TEMA_C=["#2f6fdb","#e0631e","#8a4fd8","#1e9a55"];
-function renderIdeas(p){const box=$("cIdeasBox"),L=$("cIdeas");box.hidden=!p.pos;L.innerHTML="";const ids=p.ideas||[];$("cIdeasGo").textContent=ids.length?"↻ Genera altre idee":"💡 Genera le idee";
+function renderIdeas(p){const box=$("cIdeasBox"),L=$("cIdeas");L.innerHTML="";const ids=p.ideas||[];$("cIdeasGo").textContent=ids.length?"↻ Genera altre idee":"💡 Genera le idee";
   const temi=[...new Set([...(p.temiIdee||[]),...ids.map(x=>x.tema).filter(Boolean)])].slice(0,4),col=t=>TEMA_C[Math.max(0,temi.indexOf(t))%4];
   if(temi.length){const lg=document.createElement("div");lg.className="themeLeg";temi.forEach(t=>{const sp=document.createElement("span");sp.innerHTML="<i></i>";sp.querySelector("i").style.background=col(t);sp.append(t);lg.append(sp)});L.append(lg)}
   ids.forEach(x=>{const c=document.createElement("article");c.className="card ideaCard tIdea"+(x.fatta?" done":"");c.style.setProperty("--tc",x.tema?col(x.tema):"var(--t-contenuto)");c.innerHTML='<span class="ph"></span><b></b><small></small><div class="row tight"><button type="button" class="chip skChip">😄 Sketch</button><button class="btn sm" style="margin-left:auto">✨ Scrivila</button></div>';
@@ -1393,7 +1443,7 @@ $("dataDel").onclick=async()=>{if(!confirm("Eliminare TUTTE le tue note, conti e
 /* Viste */
 function show(v){["home","detail","merge","ask","voice","conti","account","cal"].forEach(x=>$("v-"+x).hidden=x!==v);
   document.querySelectorAll("#dockNav button").forEach(b=>b.setAttribute("aria-current",b.dataset.view===(v==="detail"?"home":v)));
-  if(v==="account"&&user)checkAdmin();if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice"){renderClients();if(isSolo())editClient("__me")}if(v==="ask")renderQClient();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
+  if(v==="account"&&user)checkAdmin();if(v==="conti")renderMoney();if(v==="cal")renderCal();if(v==="voice"){renderClients();if(isSolo())editClient("__me");else if(cliCur&&!$("cliEdit").hidden)refreshCrea()}if(v==="ask")renderQClient();if(v==="merge")renderMerge();if(v==="ask")renderSugg();scrollTo(0,0)}
 $("back").onclick=()=>show("home");
 
 /* Onda e timer */
@@ -1832,7 +1882,7 @@ async function makeMeta(n,src){
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
 const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl)+dritteCtx()+(genFun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF)+QUALITY:""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
-  $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=planCli||cfilter||"";$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
+  $("sheetPreview").textContent=tr?"“"+(tr.length>160?tr.slice(0,160)+"…":tr)+"”":"";$("sheetPreview").hidden=!tr;$("tContenuto").hidden=mode!=="creator";showTypeStep();$("sClient").value=planCli||preCli||cfilter||"";preCli=null;$("sClient").dataset.new="";cliChips($("sClient"),()=>{});renderChips();$("sheet").hidden=false}
 function closeSheet(){$("sheet").hidden=true}
 $("sheetCancel").onclick=closeSheet;
 $("sheet").onclick=e=>{if(e.target===$("sheet"))closeSheet()};
