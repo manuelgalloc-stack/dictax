@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1e9a55">
-<meta name="description" content="Dictax trasforma la tua voce in testi pronti: note, email, verbali e contenuti social.">
+<meta name="description" content="Dictax è il quaderno vocale per partite IVA e creator: parli, e ti ritrovi note pulite, cose da fare, verbali, conti e contenuti social.">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -579,7 +579,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <h1>Il tuo profilo</h1>
     <div style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Come usi Dictax?</span>
-      <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Uso personale</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
+      <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Per il mio lavoro</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
       <p class="help" id="kindHelp"></p>
     </div>
       <details class="style" id="styleBox" open>
@@ -751,7 +751,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <h2 id="wTitle">Benvenuto in Dictax</h2>
     <p class="lead" style="margin:0">Come userai Dictax? Potrai cambiarlo quando vuoi dal profilo, in alto a destra.</p>
     <div class="typeBtns">
-      <button class="typeBtn t-nota" data-u="personale"><span style="grid-row:1/3;font-size:30px">📝</span><b>Uso personale</b><small>Note, liste di cose da fare e conti</small></button>
+      <button class="typeBtn t-nota" data-u="personale"><span style="grid-row:1/3;font-size:30px">📝</span><b>Per il mio lavoro</b><small>Partita IVA: note vocali, cose da fare, verbali e quanto mettere da parte per le tasse</small></button>
       <button class="typeBtn t-contenuto" data-u="solo"><span style="grid-row:1/3;font-size:30px">👤</span><b>Creator singolo</b><small>Creo contenuti social per me</small></button>
       <button class="typeBtn t-attivita" data-u="agency"><span style="grid-row:1/3;font-size:30px">👥</span><b>Creator con clienti</b><small>Creo contenuti per i miei clienti</small></button>
     </div>
@@ -887,9 +887,9 @@ const EXAMPLES={
     {id:"exn1",ex:true,type:"attivita",client:"",at:Date.now()-864e5,cat:"Lavoro",title:"Cose da chiedere al commercialista",tags:["tasse","scadenze"],
      tr:"allora devo ricordarmi di chiedere al commercialista ehm la scadenza dell'IVA trimestrale, se posso scaricare il computer nuovo che ho preso a settembre, e poi devo mandargli le fatture di ottobre entro venerdì, sennò slitta tutto.",
      out:{todo:"• Chiedere la scadenza dell'IVA trimestrale\n• Chiedere se il computer acquistato a settembre è deducibile\n• Inviare le fatture di ottobre entro venerdì"}},
-    {id:"exn2",ex:true,type:"nota",client:"",at:Date.now()-4*864e5,cat:"Diario",title:"Una mattina senza telefono",tags:["abitudini"],
-     tr:"oggi ho provato a non guardare il telefono per la prima ora, all'inizio strano, poi mi sono accorto che avevo la testa più libera e ho scritto la scaletta del progetto in mezz'ora.",
-     out:{pulito:"Oggi ho provato a non guardare il telefono per la prima ora della giornata. All'inizio è stato strano, poi mi sono accorto di avere la testa più libera. In mezz'ora ho scritto tutta la scaletta del progetto."}}
+    {id:"exn2",ex:true,type:"nota",client:"",at:Date.now()-4*864e5,cat:"Lavoro",title:"Chiamata con il signor Bianchi: preventivo bagno",tags:["clienti","preventivi"],
+     tr:"allora ho appena sentito il signor Bianchi, vuole rifare il bagno, ehm, piastrelle grandi grigie, doccia al posto della vasca, budget sui sette otto mila euro, vuole iniziare a febbraio, devo mandargli il preventivo entro lunedì e chiedere al fornitore i tempi per le piastrelle.",
+     out:{pulito:"Ho sentito il signor Bianchi: vuole rifare il bagno.\n\n• Piastrelle grandi, grigie\n• Doccia al posto della vasca\n• Budget: 7.000–8.000 €\n• Inizio lavori: febbraio\n\nDa fare: mandargli il preventivo entro lunedì e chiedere al fornitore i tempi di consegna delle piastrelle."}}
   ],
   creator:[
     {id:"exc1",ex:true,type:"contenuto",client:"",at:Date.now()-864e5,cat:"Contenuti",title:"Due minuti in macchina valgono una settimana di post",tags:["social","produttività"],
@@ -1320,8 +1320,9 @@ $("planX").onclick=()=>setPlan(null);
 $("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay,calCli||null);show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};
 
 /* Guida al primo uso */
-const GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["☑️","Nota e lista","Dictax scrive la nota pulita. Dentro la nota puoi creare la lista delle cose da fare, da spuntare."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
-let gi=0;function guideShow(i){gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?"Inizia":"Avanti";$("guide").hidden=false}
+const GUIDE_P=[["🎙","Parla, anche in macchina","Dopo una chiamata o un sopralluogo, tocca il microfono verde e racconta. Dictax scrive la nota pulita e corretta."],["☑️","Cose da fare e scadenze","Dentro la nota tocca \"Crea la lista delle cose da fare\": Dictax trova i compiti e le date (\"entro venerdì\")."],["📤","Pronto da mandare","Dalla stessa nota crei l'email, il verbale o il riassunto da mandare al cliente, con un tocco."],["💶","Conti e tasse","In Conti segni entrate e spese. Se sei in forfettario, Dictax ti dice quanto mettere da parte per tasse e contributi a ogni fattura."]];
+let GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["☑️","Nota e lista","Dictax scrive la nota pulita. Dentro la nota puoi creare la lista delle cose da fare, da spuntare."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
+let gi=0;const GUIDE_C=GUIDE;function guideShow(i){if(i===0)GUIDE=raw.get("uso","")==="personale"?GUIDE_P:GUIDE_C;gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?"Inizia":"Avanti";$("guide").hidden=false}
 const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true)};
 $("guideNext").onclick=()=>gi<GUIDE.length-1?guideShow(gi+1):guideEnd();$("guideSkip").onclick=guideEnd;
 $("guideAgain").onclick=()=>{show("home");guideShow(0)};
