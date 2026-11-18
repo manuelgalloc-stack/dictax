@@ -76,20 +76,28 @@ export async function onRequestPost({ request, env }) {
 
   const quick = body?.tier === "quick";
 
-  // Optional photo (document, screenshot, flyer…) sent as a data URL: Claude reads it.
-  let image = null;
-  if (body?.image) {
-    const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(String(body.image));
-    if (!m || m[2].length > 7_000_000) {
-      return json({ code: "invalid_image", error: "Foto non valida o troppo grande." }, 400);
+  // Optional photos (document, screenshot, flyer, client photos for stories…) sent as data URLs: Claude reads them.
+  const rawImgs = Array.isArray(body?.images) ? body.images : body?.image ? [body.image] : [];
+  if (rawImgs.length) {
+    if (rawImgs.length > 8) return json({ code: "too_many_images", error: "Al massimo 8 foto alla volta." }, 400);
+    const blocks = [];
+    let total = 0;
+    for (const raw of rawImgs) {
+      const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(String(raw));
+      if (!m || m[2].length > 7_000_000) {
+        return json({ code: "invalid_image", error: "Foto non valida o troppo grande." }, 400);
+      }
+      total += m[2].length;
+      blocks.push({ type: "image", source: { type: "base64", media_type: m[1], data: m[2] } });
     }
+    if (total > 24_000_000) return json({ code: "too_large", error: "Foto troppo grandi tutte insieme: mandane meno." }, 413);
     if (!claudeKey(env)) {
       return json({ code: "not_configured", error: "Per leggere le foto serve la chiave di Claude sul server." }, 503);
     }
-    image = { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } };
     const last = messages[messages.length - 1];
-    last.content = [image, { type: "text", text: last.content }];
+    last.content = [...blocks, { type: "text", text: last.content }];
   }
+  const image = rawImgs.length > 0;
 
   // Without a Claude key, use an open model on Cloudflare Workers AI (no extra key needed).
   if (!claudeKey(env)) {

@@ -359,7 +359,9 @@ body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMo
 .note.doneC{opacity:.5;filter:saturate(.4)}@media(hover:hover){.note.doneC:hover{opacity:.85}}.note.doneC:focus-visible{opacity:.85}
 .cFmts{display:flex;flex-direction:column;gap:10px}.cFmt{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}.cFmt .row{gap:6px}.cFmt .cfn{font-weight:700}.cFmt .cfd{font-size:14px}
 .plWeeks{display:flex;flex-direction:column;gap:10px}.plWeek{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--paper)}.plWeek small{color:var(--muted);font-weight:600}.plWeek .row{gap:6px}.plWeek input{flex:1;min-width:0;font-weight:700}.plWeek .why{font-size:13px;color:var(--muted);margin:0}.plWeek button{flex:none}
-.cFix{display:flex;flex-direction:column;gap:8px}.fixRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}.fixRow .fx{flex:1 1 100%;min-width:0}.fixRow .fn{width:58px;flex:none;text-align:center;padding:8px 4px}.fixRow span{font-size:13px;color:var(--muted);flex:none}.fixRow button{flex:none;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px}
+.cFix{display:flex;flex-direction:column;gap:8px}.fixRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.cComp{display:flex;flex-direction:column;gap:8px}.compRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}.compRow .cu{grid-column:1/2}.compRow .cn{grid-column:1/4}.compRow a,.compRow button{font-size:14px;font-weight:700;color:var(--accent);background:none;border:0;padding:6px;text-decoration:none;cursor:pointer}.compRow button{color:var(--muted)}
+.stBox{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#faf7ff}.stThumbs,.nThumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.stThumbs:empty{display:none}.stThumbs figure,.nThumbs figure{margin:0;flex:none;position:relative;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}.stThumbs img,.nThumbs img{width:64px;height:96px;object-fit:cover;border-radius:10px;display:block;margin-bottom:3px}.stThumbs button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#222;color:#fff;font-size:13px;cursor:pointer}.stGo .btn{flex:1}.nThumbs{margin:0 0 10px}.fixRow .fx{flex:1 1 100%;min-width:0}.fixRow .fn{width:58px;flex:none;text-align:center;padding:8px 4px}.fixRow span{font-size:13px;color:var(--muted);flex:none}.fixRow button{flex:none;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px}
 .dayFmt{display:flex;flex-direction:column;gap:6px}.dfRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dfRow>span{font-size:14px;font-weight:600;min-width:78px}.dfRow .chip{font-size:13px;padding:5px 10px}
 .ideaCard{border:2px dashed var(--t-contenuto);display:flex;flex-direction:column;gap:8px}.ideaCard .btn{background:var(--t-contenuto)}
 .packBox{border:1px dashed var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -694,6 +696,12 @@ body:not(.solo) .soloOnly{display:none!important}
         </div></details>
         <label class="lbl" for="cDr">✍️ Le tue dritte per questo cliente</label>
         <textarea id="cDr" rows="3" placeholder="Es. parla al tu, niente prezzi nei post, ogni tanto qualcosa di divertente con lo staff"></textarea>
+        <label class="lbl" for="cReq">📝 Richieste del cliente</label>
+        <textarea id="cReq" rows="3" placeholder="Es. vuole più video dello chef, non mostrare i prezzi, a dicembre spingere i pranzi di Natale"></textarea>
+        <span class="lbl">🔗 Competitor da cui prendere spunto</span>
+        <div id="cComp" class="cComp"></div>
+        <button class="back" id="cCompAdd" type="button" style="align-self:flex-start">+ Aggiungi un competitor</button>
+        <p class="help" style="margin:0">Scrivi cosa ti piace di ognuno: Dictax ne prende lo spirito, senza copiare. I link di Instagram e TikTok Dictax non riesce ad aprirli: per fargli vedere un post, fai uno screenshot e usa "📷 Foto di un esempio".</p>
         <div class="packBox fmtBox" hidden>
           <span class="lbl">🎞 I 4 formati del cliente (facoltativo)</span>
           <p class="help" style="margin:0">Le rubriche fisse che nascono dal posizionamento, es. "La ricetta in 30 secondi". Si creano da sole quando generi il posizionamento. Per cambiarle tocca il testo e scrivi: si salvano da sole.</p>
@@ -720,6 +728,15 @@ body:not(.solo) .soloOnly{display:none!important}
           <span class="lbl">💡 Idee dal posizionamento</span>
           <div id="cIdeas" class="list" style="gap:10px"></div>
           <button class="btn ghost" id="cIdeasGo">💡 Trova le idee</button>
+        </div>
+        <div id="stBox" class="stBox" hidden>
+          <span class="lbl">📱 Storie dal cliente</span>
+          <p class="help" style="margin:0">Carica le foto che ti ha mandato il cliente (fino a 8). Per i video, fai uno screenshot o descrivili qui sotto.</p>
+          <div id="stThumbs" class="stThumbs"></div>
+          <button class="btn ghost" id="stPick" type="button">📷 Scegli le foto</button>
+          <textarea id="stNote" rows="2" placeholder="Facoltativo: cosa c'è nelle foto o cosa vuole il cliente (es. nuovo piatto del giorno, evento di sabato)"></textarea>
+          <div class="row tight stGo"><button class="btn" id="stStory" type="button">📖 Racconto</button><button class="btn" id="stSingle" type="button">🔹 Storie singole</button></div>
+          <span class="status" id="stStat" aria-live="polite"></span>
         </div>
       </div>
     </div>
@@ -855,6 +872,7 @@ const FORMATS={
   carosello:{n:"Carosello",p:"testo per carosello Instagram di 6 slide, una riga 'Slide N: ...' per slide, titolo forte sulla prima, CTA sull'ultima"},
   reel:{n:"Script reel",p:"script per reel di 30-45 secondi, semplicissimo. Prima una sezione '3 GANCI' con 3 ganci alternativi numerati (1, 2, 3), brevissimi (massimo 10 parole ciascuno), diversi tra loro. Poi una sezione 'SCRIPT' che sviluppa il gancio migliore, indicato con '(gancio N)': GANCIO (primi 3 secondi), CORPO, CTA, frasi corte e parole di tutti i giorni, con indicazioni visive tra parentesi quadre"},
   tiktok:{n:"Caption TikTok",p:"caption TikTok brevissima e diretta, con 3-4 hashtag"},
+  storie:{n:"Storie Instagram",p:"sequenza di 4-6 storie Instagram: per ogni storia 'STORIA N', 'Testo sopra' (massimo 12 parole), 'Sticker' (sondaggio, domanda, quiz o link, solo se serve) e 'Cosa mostrare'; l'ultima con un invito all'azione"},
   ganci:{n:"5 ganci",p:"5 ganci alternativi per l'inizio di un post o di un video, uno per riga, numerati"},
   newsletter:{n:"Newsletter",p:"breve sezione di newsletter con titolo, 2-3 paragrafi e CTA finale con [LINK]"},
   idee:{n:"Idee di contenuto",p:"5 idee di contenuti derivate da questa nota, ognuna con formato consigliato e titolo"},
@@ -874,7 +892,7 @@ const MODES={
     tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Unisci in un riassunto le note di questa settimana","Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
-  creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","facebook","instagram","carosello","reel","tiktok","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
+  creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","facebook","instagram","carosello","reel","tiktok","storie","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
     tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"],["voice","Clienti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
@@ -1155,7 +1173,7 @@ const isSolo=()=>mode==="creator"&&ckind==="solo";
 const clientsOn=()=>useClients&&!isSolo();
 const ctxFor=cl=>cl?clientCtx(cl):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
 function clientCtx(cl){const p=cliProfiles()[cl];let t=cl==="__me"?"\nIl contenuto è per il brand personale dell'autore (creator).":`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
-  if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;if(p.dritte)t+=`\nINDICAZIONI DELL'AUTORE PER QUESTO CLIENTE (rispettale sempre): ${p.dritte}`;
+  if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;if(p.dritte)t+=`\nINDICAZIONI DELL'AUTORE PER QUESTO CLIENTE (rispettale sempre): ${p.dritte}`;if(p.req)t+=`\nRICHIESTE DEL CLIENTE (rispettale sempre): ${p.req}`;{const cp=(p.comp||[]).filter(c=>c.nota||c.url);if(cp.length)t+=`\nCOMPETITOR DA CUI PRENDERE SPUNTO (prendi lo spirito di ciò che piace all'autore, non copiare frasi né idee precise):\n${cp.map(c=>"- "+[c.nota,c.url].filter(Boolean).join(" — ")).join("\n")}`}
   if(p.pos)t+=`\nPosizionamento del cliente (sistema ManuLab): rispetta i temi, la regola north-star, il tono e le parole da usare o evitare.\n${p.pos.slice(0,5000)}`;return t}
 /* Pacchetti: contenuti promessi al mese per cliente e posti liberi nel calendario */
 const packKeys=()=>{const P=cliProfiles();return Object.keys(P).filter(k=>(P[k].n|0)>0&&(isSolo()?k==="__me":k!=="__me"&&clientsOn()))};
@@ -1176,7 +1194,7 @@ function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles
     c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";{const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';const W=p.wk|0,ok=wk.querySelector(".ok"),td=wk.querySelector(".todo");
       if(W){ok.textContent="✓ "+w.done+" di "+W+" fatti";const miss=W-w.done;if(miss<=0){td.remove();wk.classList.add("full");ok.textContent="✓ Fatti tutti ("+w.done+" di "+W+")"}else{td.textContent=miss===1?"ne manca 1":"ne mancano "+miss;const wd=(new Date(today()+"T12:00").getDay()+6)%7;if(w.done<W*(wd+1)/7-.5)wk.classList.add("late")}}
       else{ok.textContent="✓ "+w.done+(w.done===1?" fatto":" fatti");td.textContent=w.todo+" da fare"}c.querySelector("div").append(wk)}if((p.n|0)>0&&clientsOn()){const m=today().slice(0,7),pi=packInfo(nm,m),dim=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),exp=pi.N*(+today().slice(8,10))/dim;const pk=document.createElement("span");pk.className="pack"+(pi.done<exp-1.5&&pi.done<pi.N?" behind":"");pk.innerHTML='<span class="bar"><i></i></span><span></span>';pk.querySelector("i").style.width=Math.min(100,pi.done/pi.N*100)+"%";pk.lastChild.textContent=pi.done+" di "+pi.N+" questo mese";c.querySelector("div").append(pk)}const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};cFmts=(p.fmts||[]).map(f=>({...f}));fmtOpen=false;renderFmts();cFix=(p.fissi||[]).map(f=>({...f}));renderFix();renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
+function editClient(nm){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cReq").value=p.req||"";cComp=(p.comp||[]).map(c=>({...c}));renderComp();stImgs=[];renderSt();$("stStat").textContent="";$("stBox").hidden=!nm;$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cN").value=p.n||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=!!(p.target||p.offer||p.zone||p.avoid);cDays=new Set(p.days||[]);cDayFmt={...(p.dayFmt||{})};cFmts=(p.fmts||[]).map(f=>({...f}));fmtOpen=false;renderFmts();cFix=(p.fissi||[]).map(f=>({...f}));renderFix();renderDays();$("cMonth").hidden=!((p.n|0)>0&&nm);$("cStat").textContent="";$("cDel").hidden=!nm;$("cliEdit").scrollIntoView({behavior:"smooth",block:"start"});if(!nm)$("cName").focus()}
 $("cliNew").onclick=()=>editClient(null);
 let cDays=new Set();const DAYN=["L","Ma","Me","G","V","S","D"];
 let cDayFmt={},cFmts=[],cFix=[];
@@ -1190,12 +1208,49 @@ let fmtOpen=false;function renderFmts(){const B=$("cFmts");B.innerHTML="";const 
 function renderDays(){const D=$("cDays");D.innerHTML="";DAYN.forEach((t,i)=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=t;c.setAttribute("aria-pressed",cDays.has(i));c.onclick=()=>{cDays.has(i)?cDays.delete(i):cDays.add(i);renderDays()};D.append(c)});
   const F=$("cDayFmt");F.innerHTML="";[...cDays].sort().forEach(i=>{const r=document.createElement("div");r.className="dfRow";r.innerHTML='<span></span><div class="chips"></div>';r.firstChild.textContent=DAYL[i];rotOpts().forEach(([k,l])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=l;c.setAttribute("aria-pressed",(cDayFmt[i]||"")===k);c.onclick=()=>{if(k)cDayFmt[i]=k;else delete cDayFmt[i];renderDays()};r.lastChild.append(c)});F.append(r)});
   if(cDays.size&&!F.dataset.hint){}}
-const cliForm=()=>({wk:Math.max(0,Math.min(30,parseInt($("cWk").value)||0)),dritte:$("cDr").value.trim(),n:Math.max(0,Math.min(60,parseInt($("cN").value)||0)),days:[...cDays].sort(),dayFmt:Object.fromEntries(Object.entries(cDayFmt).filter(([i])=>cDays.has(+i))),fmts:[...Array(4)].map((_,i)=>cFmts[i]).filter(f=>f&&f.nome),fissi:cFix.filter(f=>f.cosa&&f.cosa.trim()).map(f=>({cosa:f.cosa.trim(),n:f.n||1})),niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
+const cliForm=()=>({req:$("cReq").value.trim(),comp:cComp.filter(c=>(c.url||"").trim()||(c.nota||"").trim()).map(c=>({url:(c.url||"").trim(),nota:(c.nota||"").trim()})),wk:Math.max(0,Math.min(30,parseInt($("cWk").value)||0)),dritte:$("cDr").value.trim(),n:Math.max(0,Math.min(60,parseInt($("cN").value)||0)),days:[...cDays].sort(),dayFmt:Object.fromEntries(Object.entries(cDayFmt).filter(([i])=>cDays.has(+i))),fmts:[...Array(4)].map((_,i)=>cFmts[i]).filter(f=>f&&f.nome),fissi:cFix.filter(f=>f.cosa&&f.cosa.trim()).map(f=>({cosa:f.cosa.trim(),n:f.n||1})),niche:$("cNiche").value.trim(),target:$("cTarget").value.trim(),offer:$("cOffer").value.trim(),zone:$("cZone").value.trim(),avoid:$("cAvoid").value.trim(),pos:$("cPos").value.trim(),up:Date.now()});
 function saveClient(){const nm=$("cName").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return false}
   const P=cliProfiles();if(cliCur&&cliCur!==nm){delete P[cliCur];store.get("notes",[]).forEach(n=>{if(n.client===cliCur){n.client=nm;saveNote(n)}})}
   const old=P[nm]||(cliCur&&P[cliCur])||{},f=cliForm();if(!f.pos&&old.pos)f.pos=old.pos;P[nm]={...old,...f,ideas:old.ideas};store.set("clients",P);cliCur=nm;renderClients();renderList();renderIdeas(P[nm]);$("cDel").hidden=false;return true}
 $("cSave").onclick=()=>{if(saveClient()){$("cStat").textContent="Cliente salvato ✓";$("cMonth").hidden=!((cliProfiles()[cliCur]?.n|0)>0)}};
 $("cFixAdd").onclick=()=>{cFix.push({cosa:"",n:2});renderFix();$("cFix").querySelector(".fixRow:last-child .fx")?.focus()};
+let cComp=[];const normUrl=u=>{u=(u||"").trim();return !u?"":/^https?:\/\//i.test(u)?u:"https://"+u};
+function renderComp(){const B=$("cComp");B.innerHTML="";cComp.forEach((c,i)=>{const r=document.createElement("div");r.className="compRow";r.innerHTML='<input type="url" class="cu" placeholder="Link (es. instagram.com/nome)" inputmode="url"><a target="_blank" rel="noopener">Apri</a><button type="button" aria-label="Togli">✕</button><input type="text" class="cn" placeholder="Cosa ti piace? (es. ganci forti, caroselli puliti)">';
+  const u=r.querySelector(".cu"),n=r.querySelector(".cn"),a=r.querySelector("a");u.value=c.url||"";n.value=c.nota||"";const setA=()=>{const h=normUrl(u.value);a.hidden=!h;if(h)a.href=h};setA();
+  u.oninput=()=>{c.url=u.value;setA()};n.oninput=()=>{c.nota=n.value};r.querySelector("button").onclick=()=>{cComp.splice(i,1);renderComp()};B.append(r)})}
+$("cCompAdd").onclick=()=>{cComp.push({url:"",nota:""});renderComp();$("cComp").querySelector(".compRow:last-child .cu")?.focus()};
+/* Storie dal cliente: foto mandate dal cliente -> racconto o storie singole */
+let stImgs=[];const stIn=document.createElement("input");stIn.type="file";stIn.accept="image/*";stIn.multiple=true;stIn.hidden=true;document.body.append(stIn);
+function thumbOf(data,M=160){return new Promise(ok=>{const img=new Image();img.onload=()=>{const k=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",.7))};img.onerror=()=>ok("");img.src=data})}
+function renderSt(){const T=$("stThumbs");T.innerHTML="";stImgs.forEach((x,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span><button type="button" aria-label="Togli">✕</button>';f.querySelector("img").src=x.thumb;f.querySelector("span").textContent="Foto "+(i+1);f.querySelector("button").onclick=()=>{stImgs.splice(i,1);renderSt()};T.append(f)});
+  $("stPick").textContent=stImgs.length?"📷 Aggiungi altre foto ("+stImgs.length+" di 8)":"📷 Scegli le foto";$("stPick").disabled=stImgs.length>=8}
+$("stPick").onclick=()=>{stIn.value="";stIn.click()};
+stIn.onchange=async()=>{const fs=[...stIn.files].slice(0,8-stImgs.length);if(!fs.length)return;$("stStat").textContent="Preparo le foto…";
+  for(const f of fs){try{const data=await shrinkPhoto(f);stImgs.push({data,thumb:await thumbOf(data)})}catch(e){$("stStat").textContent=errMsg(e)}}
+  if([...stIn.files].length>fs.length)$("stStat").textContent="Al massimo 8 foto alla volta.";else $("stStat").textContent="";renderSt()};
+async function makeStories(kind){const nm0=$("cName").value.trim(),cl=nm0;if(!nm0){$("stStat").textContent="Salva prima il cliente.";return}
+  const note=$("stNote").value.trim();if(!stImgs.length&&!note){$("stStat").textContent="Scegli almeno una foto (o descrivi cosa c'è).";return}
+  const N=stImgs.length,story=kind==="racconto";const btns=[$("stStory"),$("stSingle")];btns.forEach(b=>b.disabled=true);$("stStat").textContent=story?"Sto creando il racconto…":"Sto creando le storie…";
+  const fotoTxt=N?`Ti mando ${N} foto (Foto 1 … Foto ${N}, nell'ordine in cui le vedi) che il cliente ha inviato per le storie Instagram.`:"Il cliente non ha mandato foto: lavora sulla descrizione.";
+  const how=story?`Crea un RACCONTO (storytelling) in sequenza di storie Instagram${N?" usando queste foto":""}: scegli tu l'ordine migliore (puoi non usarne qualcuna, dillo). Arco: aggancio nella prima storia, sviluppo, finale con invito all'azione chiaro (sticker o messaggio). Da ${Math.max(3,Math.min(N||5,8))} a ${Math.max(4,Math.min((N||5)+2,10))} storie.
+Per ogni storia scrivi:
+STORIA N — Foto X (oppure "senza foto: …" se serve una storia di solo testo)
+Testo sopra: massimo 12 parole, che si leggano in 3 secondi
+Sticker: sondaggio, domanda, quiz, conto alla rovescia o link, solo se serve (con il testo dello sticker)
+Nota: musica, inquadratura o come mostrarla, in poche parole`:`Crea STORIE SINGOLE: una storia indipendente per ogni foto${N?"":" (proponi 4 storie)"}, ognuna deve funzionare anche da sola.
+Per ogni storia scrivi:
+FOTO N
+Testo sopra: massimo 12 parole
+Sticker: sondaggio, domanda, quiz, conto alla rovescia o link, solo se serve (con il testo dello sticker)
+A cosa serve: Farsi conoscere, Creare fiducia o Vendere`;
+  const prompt=`${fotoTxt}${note?"\nIndicazioni dell'autore: "+note:""}
+${how}
+Guarda bene cosa c'è davvero nelle foto e non inventare fatti, prezzi o date. Linguaggio semplice e parlato, niente hashtag lunghi. Rispondi solo con le storie, senza preamboli. Formato che stai scrivendo: Storie.${ctxFor(cl)}${perfCtx(cl)}${dritteCtx()}${FUN_OFF}${langRule()}`;
+  try{const d=await api("/api/ai",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({input:prompt,images:stImgs.map(x=>x.data),tier:"default"})});const t=String(d.text||"").trim();if(!t)throw new Error("Non sono riuscito a creare le storie: riprova.");
+    const n={id:"n"+Date.now(),at:Date.now(),tr:(note||"Storie dalle foto del cliente")+(N?` (${N} foto)`:""),out:{storie:t},type:"contenuto",client:cl,st:"lavoro",title:(story?"Racconto nelle storie":"Storie singole")+" · "+cl,tags:["Storie",story?"Racconto":"Singole"],thumbs:stImgs.map(x=>x.thumb).filter(Boolean)};
+    saveNote(n);stImgs=[];renderSt();$("stNote").value="";$("stStat").textContent="";renderList();openNote(n)}
+  catch(e){$("stStat").textContent=errMsg(e)}finally{btns.forEach(b=>b.disabled=false)}}
+$("stStory").onclick=()=>makeStories("racconto");$("stSingle").onclick=()=>makeStories("singole");
 $("cFmtHand").onclick=()=>{fmtOpen=true;renderFmts();$("cFmts").querySelector("input")?.focus()};
 $("cFmtGen").onclick=()=>genFmts();
 async function genFmts(){const b=$("cFmtGen"),nm=$("cName").value.trim()||"il cliente",pos=$("cPos").value.trim(),f=cliForm();if(!pos&&!f.niche){$("cStat").textContent="Scrivi prima di cosa si occupa, oppure genera il posizionamento.";return}
@@ -1427,7 +1482,7 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
 /* Formati */
 let carN=store.get("carN",7);
 Object.defineProperty(FORMATS.carosello,"p",{get(){return `testo per carosello di ${carN} slide: una riga 'Slide N: ...' per ogni slide, titolo forte sulla prima, CTA sull'ultima. Alla fine aggiungi una sezione 'CONSIGLI GRAFICI' con, slide per slide, che foto o grafica usare (es. foto reale del prodotto in uso, primo piano di un dettaglio, persona che parla in camera, grafica con una sola frase in grande, prima/dopo, schema semplice) e una riga finale su colori e stile coerenti col brand`}});
-const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["reel","Reel"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"]]}};
+const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["reel","Reel"],["storie","Storie"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"]]}};
 let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
 const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
 function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
@@ -1574,12 +1629,12 @@ function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).len
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));if(n.thumbs?.length){const T=document.createElement("div");T.className="nThumbs";n.thumbs.forEach((u,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span>';f.querySelector("img").src=u;f.querySelector("span").textContent="Foto "+(i+1);T.append(f)});$("dOut").append(T)}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
 const FASE={TOFU:"Farsi conoscere",MOFU:"Creare fiducia",BOFU:"Vendere"},faseLbl=f=>FASE[String(f||"").toUpperCase().trim()]||String(f||"");
-const FMT_SHORT={reel:"Reel",carosello:"Carosello",instagram:"Caption",facebook:"Post",linkedin:"Post",tiktok:"TikTok"};
+const FMT_SHORT={storie:"Storie",reel:"Reel",carosello:"Carosello",instagram:"Caption",facebook:"Post",linkedin:"Post",tiktok:"TikTok"};
 const fmtLabel=k=>(PLATFORMS[plat]?.f.find(x=>x[0]===k)||[])[1]||FMT_SHORT[k]||FORMATS[k]?.n||k;
 const mainKey=n=>{const ks=orderedOut(n).filter(k=>k!=="todo");return ks.find(k=>SOCIAL.includes(baseK(k)))||ks[0]};
 const cleanPub=t=>String(t||"").split("\n").filter(l=>!/^\s*#\w/.test(l)&&!/\S+\s\|\s\S+.*\|/.test(l)).join("\n").trim();
