@@ -317,7 +317,8 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .stBtns button[aria-pressed=true][data-s=idea]{border-color:var(--muted);background:var(--paper)}
 .stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
 .stBtns button[aria-pressed=true][data-s=fatto]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
-.pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.stHelp{font-size:13px;color:var(--muted);margin:2px 0 0}
+.pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.nextStep{display:flex;flex-direction:column;gap:6px}.nextStep .btn{width:100%}.dMore{border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}.dMore>summary{cursor:pointer;padding:14px 16px;font-weight:700;color:var(--muted);list-style:none}.dMore>summary::-webkit-details-marker{display:none}.dMore[open]>summary{border-bottom:1px solid var(--line)}.dMoreBody{display:flex;flex-direction:column;gap:14px;padding:14px}
+.stHelp{font-size:13px;color:var(--muted);margin:2px 0 0}
 .pill.st-fatto{background:var(--accent-soft);color:var(--accent-strong)}
 .pill.st-idea{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
 .calBtn{display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--t-contenuto);color:var(--t-contenuto);background:var(--surface);border-radius:16px;padding:12px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
@@ -516,10 +517,10 @@ body:not(.solo) .soloOnly{display:none!important}
   <section id="v-detail" class="app" style="gap:14px" hidden>
     <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
-    <div class="organize" id="dOrg">
-      <div style="grid-column:1/-1" id="dTypeRow"><span class="lbl">Tipo</span><select id="dType" hidden></select><div class="chips" id="dTypeChips" role="group" aria-label="Tipo di nota" style="margin-top:6px"></div></div>
-      <div class="cliOpt" style="grid-column:1/-1"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
-    </div>
+    <div id="nextStep" class="nextStep" hidden><span class="lbl">Prossimo passo</span><button class="btn big" id="nextBtn"></button></div>
+    <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
+    <div class="list" id="dOut"></div>
+    <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
     <div id="dStBox" hidden style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Stato del contenuto</span>
       <div class="stBtns"><button data-s="idea">💡 Idea</button><button data-s="lavoro">✎ In creazione</button><button data-s="fatto">✓ Fatto</button><button data-s="pubblicato">📣 Pubblicato</button></div><p class="stHelp">✓ Fatto = pronto da pubblicare · 📣 Pubblicato = è online</p>
@@ -528,22 +529,26 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="cTools"><button id="gobboBtn">🎬 Gobbo</button><button id="checkBtn">✅ Controlla</button></div>
       <div id="checkBox"></div>
     </div>
-    <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
-    <div class="list" id="dOut"></div>
-    <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
-    <div class="card" id="moreFmt"><span class="lbl" id="moreLbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div>
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="share">📤 Condividi</button>
       <button class="btn ghost" id="archBtnD">✓ Fatto</button>
       <button class="btn ghost" id="remBtn">🔔 Promemoria</button>
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
+    <div id="moreSlot"><div class="card" id="moreFmt"><span class="lbl" id="moreLbl">Crea anche da questa nota</span><div class="chips" id="moreChips"></div></div></div>
+    <details class="dMore" id="dMore"><summary>⋯ Altro</summary><div class="dMoreBody">
+    <div class="organize" id="dOrg">
+      <div style="grid-column:1/-1" id="dTypeRow"><span class="lbl">Tipo</span><select id="dType" hidden></select><div class="chips" id="dTypeChips" role="group" aria-label="Tipo di nota" style="margin-top:6px"></div></div>
+      <div class="cliOpt" style="grid-column:1/-1"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
+    </div>
+    <div id="moreSlot2"></div>
     <div class="composer" id="appendBox">
       <div class="lblRow"><label class="lbl" for="addText">Aggiungi alla nota</label><button type="button" class="photoBtn" data-for="addText">📷 Da una foto</button></div>
       <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
       <div class="row"><span class="status" id="aStatus" aria-live="polite"></span><button class="btn" id="appendGo">Aggiungi e riscrivi</button></div>
     </div>
     <div class="row" style="justify-content:center;gap:10px;margin-top:10px"><button class="btn ghost sm" id="mdSave">Scarica file</button><button class="btn danger sm" id="del">Elimina nota</button></div>
+    </div></details>
   </section>
 
   <!-- UNISCI -->
@@ -1683,7 +1688,7 @@ async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textCo
     n.fid={...(n.fid||{}),[k]:list};showFid(c,list,n.out[k])}
   catch(e){c.fid.textContent=e?.code==="not_granted"?"Controllo non disponibile: non hai consentito l'uso di Claude.":"Controllo non riuscito."}}
 function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
-function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();renderRemLine();
+function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();renderRemLine();setTimeout(renderNext);
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="pill tagBtn";b.textContent="#"+faseLbl(t);b.title="Tocca: mostra le note con #"+t+". Tieni premuto: togli il tag";b.setAttribute("aria-label","Mostra le note con #"+t+"; tieni premuto per togliere il tag");
     let tm=null,t2=null,held=false;const stop=()=>{clearTimeout(tm);clearTimeout(t2);tm=null;b.classList.remove("hold")};
     b.onpointerdown=()=>{held=false;t2=setTimeout(()=>b.classList.add("hold"),250);tm=setTimeout(()=>{held=true;b.classList.remove("hold");if(confirm("Togliere il tag #"+t+" da questa nota?")){cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()}},700)};
@@ -1756,7 +1761,15 @@ function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenu
 function renderCTools(){const n=cur,isF=isPub(n);$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
   $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
 document.querySelectorAll(".resBtns button").forEach(b=>b.onclick=()=>{cur.res=cur.res===b.dataset.r?undefined:b.dataset.r;if(!cur.res)delete cur.res;cur.resAt=Date.now();saveNote(cur);renderCTools();$("dStatus").textContent=cur.res?"Grazie: Dictax ne terrà conto nei prossimi contenuti"+(cur.client?" per "+cur.client:"")+".":""});
-function renderCheck(n){const B=$("checkBox");B.innerHTML="";const k=mainKey(n);if(!k)return;const c=n.check&&n.check.k===k?n.check:null;
+const setSt=s=>{cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
+function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;const isC=typeOf(n)==="contenuto";(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
+  if(!isC||!mainKey(n)){B.hidden=true;return}const st=n.st||"idea",k=mainKey(n),ok=n.check&&n.check.k===k&&(n.check.voto|0)>=8;let t="",fn=null;
+  if(st==="idea"){t="✎ Approvalo: mettilo In creazione";fn=()=>setSt("lavoro")}
+  else if(st==="lavoro"){if(ok){t="✓ È pronto: segna come Fatto";fn=()=>setSt("fatto")}else{t="✅ Controlla il contenuto";fn=()=>{$("checkBtn").click();setTimeout(()=>$("checkBox").scrollIntoView({behavior:"smooth",block:"start"}),300)}}}
+  else if(st==="fatto"){t="📣 L'ho pubblicato";fn=()=>setSt("pubblicato")}
+  else if(st==="pubblicato"&&!n.res){t="📊 Com'è andato? Dimmelo";fn=()=>$("dRes").scrollIntoView({behavior:"smooth",block:"center"})}
+  B.hidden=!t;btn.textContent=t;btn.onclick=fn}
+function renderCheck(n){setTimeout(renderNext);const B=$("checkBox");B.innerHTML="";const k=mainKey(n);if(!k)return;const c=n.check&&n.check.k===k?n.check:null;
   if(c){const d=document.createElement("div");d.className="checkCard";d.innerHTML='<div class="score"><b></b><span>su 10</span></div><div class="rows"></div><p class="tip" style="margin:0"></p>';
     d.querySelector(".score b").textContent=c.voto;const R2=d.querySelector(".rows");[["Gancio",c.gancio],["Posizionamento",c.pos],["Invito all'azione",c.cta]].forEach(([l,x])=>{const r=document.createElement("div");r.className="row3";r.innerHTML="<i></i><span><b></b> </span>";r.querySelector("i").textContent=x?.ok?"✅":"⚠️";r.querySelector("b").textContent=l+":";r.querySelector("span").append(x?.nota||"");R2.append(r)});
     d.querySelector(".tip").textContent=c.consiglio||"";B.append(d)}
