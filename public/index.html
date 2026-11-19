@@ -296,7 +296,7 @@ body.noClients .cliOpt{display:none!important}
 .lblRow{display:flex;align-items:center;justify-content:space-between;gap:8px}.lblRow .lbl{margin:0}
 .photoBtn{border:1px solid var(--line);background:var(--surface);color:var(--accent-strong);border-radius:999px;padding:6px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;flex:none}.photoBtn:disabled{opacity:.6}
 .funRow{margin:-6px 0 12px}.funChip[aria-pressed=true]{background:#fff4d6;border-color:#e0a100;color:#7a5600}
-body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #contentWeek,body.simple .cliCard .pack{display:none!important}
+body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #contentWeek,body.simple .cliCard .pack{display:none!important}
 .themeLeg{display:flex;flex-wrap:wrap;gap:6px}.themeLeg span{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface)}.themeLeg i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .tIdea{border-left:6px solid var(--tc,var(--t-contenuto))!important;border-style:solid!important;border-top-width:1px!important;border-right-width:1px!important;border-bottom-width:1px!important;border-color:var(--line)!important;border-left-color:var(--tc)!important}.card.tIdea .ph{font-size:13px;font-weight:700;color:var(--tc)!important}.tIdea .row{gap:8px;align-items:center}.tIdea.done{opacity:.5}
 .fixBox{display:flex;flex-direction:column;gap:8px;margin-top:10px}.fixBox textarea{min-height:0}
@@ -364,6 +364,7 @@ body.simple #calOpen,body.simple .packBox,body.simple #cMonth,body.simple #calMo
 .cTabs{grid-template-columns:1fr 1fr}.cTabs button{font-size:15px;padding:10px 4px}.cPane{display:flex;flex-direction:column;gap:12px}.cPane[hidden]{display:none}
 .cTiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cTile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 6px;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff);cursor:pointer;font:inherit;color:inherit;text-align:center}.cTile span{font-size:28px}.cTile b{font-size:15px}.cTile small{font-size:12px;color:var(--muted);line-height:1.25}.cTile.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}.cTile:disabled{opacity:.45;cursor:default}
 .cNoPos{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:#fff7e6;border:1px solid #f0d9a8}
+.cCal{align-self:flex-start;font-weight:700}
 .cRecent{display:flex;flex-direction:column;gap:8px;margin-top:4px}.cRecent:empty{display:none}.cRow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);font:inherit;color:inherit;cursor:pointer}.cRow b{font-size:15px}.cRow small{color:var(--muted);font-size:13px}.cRow.done{opacity:.55}
 #cliEdit.isNew .notNew,#cliEdit:not(.isNew) .newOnly{display:none!important}.back.danger{color:var(--danger,#d33)}
 .cComp{display:flex;flex-direction:column;gap:8px}.compRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}.compRow .cu{grid-column:1/2}.compRow .cn{grid-column:1/4}.compRow a,.compRow button{font-size:14px;font-weight:700;color:var(--accent);background:none;border:0;padding:6px;text-decoration:none;cursor:pointer}.compRow button{color:var(--muted)}
@@ -717,6 +718,7 @@ body:not(.solo) .soloOnly{display:none!important}
           <div class="row tight stGo"><button class="btn" id="stStory" type="button">📖 Racconto</button><button class="btn" id="stSingle" type="button">🔹 Storie singole</button></div>
           <span class="status" id="stStat" aria-live="polite"></span>
         </div>
+          <button type="button" class="back cCal" id="cCal">📅 Calendario di questo cliente</button>
           <div id="cRecent" class="cRecent"></div>
         </div>
         <div id="cPaneScheda" class="cPane composer" hidden>
@@ -1237,6 +1239,7 @@ function cPanel(t){const I=$("cIdeasBox"),S=$("stBox");const showI=t==="idee"&&I
   $("cTiles").querySelectorAll(".cTile").forEach(b=>b.classList.toggle("on",(b.dataset.t==="idee"&&showI)||(b.dataset.t==="storie"&&showS)));(showI?I:showS?S:null)?.scrollIntoView({behavior:"smooth",block:"start"})}
 let preCli=null;
 $("cTiles").querySelectorAll(".cTile").forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t==="nuovo"){preCli=cliCur==="__me"?"":cliCur;show("home");$("status").textContent=preCli?"Registra o scrivi: il contenuto sarà per "+preCli+".":"Registra o scrivi il tuo contenuto.";scrollTo(0,0);return}cPanel(t)});
+$("cCal").onclick=()=>{calCli=cliCur&&cliCur!=="__me"?cliCur:"";raw.set("calCli",calCli);calDay="";show("cal")};
 $("cliBack").onclick=()=>{cliCur=null;$("cliEdit").hidden=true;$("cliHome").hidden=false;$("cIdeasBox").hidden=true;$("stBox").hidden=true;renderClients();scrollTo(0,0)};
 $("cGoPos").onclick=()=>{setCPane("scheda");$("posMore").open=true;$("cGen").click()};
 $("cCreate").onclick=()=>{const nm=$("cName").value.trim(),ni=$("cNiche").value.trim();if(!nm){$("cStat").textContent="Scrivi il nome del cliente.";$("cName").focus();return}if(!ni){$("cStat").textContent="Scrivi di cosa si occupa.";$("cNiche").focus();return}
