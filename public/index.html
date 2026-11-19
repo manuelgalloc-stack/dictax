@@ -410,6 +410,7 @@ body:not(.solo) .soloOnly{display:none!important}
 .archBtn{grid-column:1/-1;justify-self:center;align-self:center;margin-top:10px;color:var(--danger)!important;border:2px solid var(--danger)!important;font-weight:700;padding:12px 22px}
 .archHead{grid-column:1/-1;font-weight:700;color:var(--muted);font-size:15px}
 .note.isArch{opacity:.75}
+.remBox{background:#fff7e6;border:2px solid #f0c674;border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.remBox>b{font-size:16px}.remRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid #f3dfb2}.remRow:first-child{border-top:0}.remRow .rt{flex:1;min-width:150px;cursor:pointer}.remRow .rt b{display:block;font-size:15px}.remRow .rt small{color:#9a5b00;font-weight:700;font-size:13px}.remRow .btn{padding:6px 10px}.pill.remPill{background:#fff1d0;color:#8a5200}.pill.remPill.late{background:#fde3e3;color:var(--danger,#d33)}.remLine{display:flex;align-items:center;gap:8px;background:#fff7e6;border:1px solid #f0c674;border-radius:14px;padding:10px 12px;font-weight:700;cursor:pointer}
 .pendBox,.todayBox{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .pendBox{border-color:#e0a100;background:#fff8e6}
 .pendBox .row{gap:8px}
@@ -505,6 +506,7 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
     <div class="pendBox" id="pendBox" hidden><b id="pendTxt"></b><p class="help" style="margin:0">L'audio è salvato su questo telefono: non si perde.</p><div class="row"><button class="btn sm ghost" id="pendDel">Elimina</button><button class="btn sm" id="pendGo">🔁 Trascrivi ora</button></div></div>
+    <div class="remBox" id="remBox" hidden><b>🔔 Promemoria</b><div id="remList"></div></div>
     <div class="todayBox" id="todayBox" hidden><h3>Oggi</h3><div id="todayList"></div></div>
     <div class="list" id="list"></div>
     </div>
@@ -533,6 +535,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="row" style="justify-content:flex-start">
       <button class="btn" id="share">📤 Condividi</button>
       <button class="btn ghost" id="archBtnD">✓ Fatto</button>
+      <button class="btn ghost" id="remBtn">🔔 Promemoria</button>
     </div>
     <div class="status" id="dStatus" aria-live="polite"></div>
     <div class="composer" id="appendBox">
@@ -850,6 +853,19 @@ body:not(.solo) .soloOnly{display:none!important}
     <p class="status" id="lStatus" aria-live="polite"></p>
     <button class="btn big" id="lSave" style="background:var(--t-link)">Salva il link</button>
     <button class="btn ghost big" id="lCancel">Annulla</button>
+  </div>
+</div>
+<div class="sheetWrap" id="remSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="remTitle">
+    <h2 id="remTitle">Quando te lo ricordo?</h2>
+    <p class="lead" id="remNote" style="margin:0"></p>
+    <div class="chips" id="remQuick"></div>
+    <label class="lbl" for="remAt">Oppure scegli giorno e ora</label>
+    <input type="datetime-local" id="remAt">
+    <button class="btn big" id="remSave">🔔 Salva promemoria</button>
+    <button class="btn ghost" id="remIcs">📅 Mettilo anche nel calendario del telefono</button>
+    <p class="help" style="margin:0">Dictax ti avvisa quando è aperto. Per un avviso anche ad app chiusa, mettilo nel calendario del telefono.</p>
+    <div class="row"><button class="back danger" id="remDel" type="button">Togli promemoria</button><button class="back" id="remCancel" type="button" style="margin-left:auto">Annulla</button></div>
   </div>
 </div>
 <div class="sheetWrap" id="sheet" hidden>
@@ -1559,18 +1575,50 @@ function setTag(t){gfilter=t?tagKey(t):"";showArch=false;renderTagFilter();rende
 $("tagChip").onclick=()=>setTag("");
 $("search").oninput=e=>{query=e.target.value.trim().toLowerCase();renderList()};
 function fmtDate(t){return new Date(t).toLocaleDateString("it-IT",{day:"numeric",month:"short"})}
+/* Promemoria sulle note */
+const locISO=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,16);
+const remDue=n=>n.rem&&!n.rem.done&&new Date(n.rem.at)<=new Date();
+function remLbl(at){const d=new Date(at),t=d.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"}),ds=at.slice(0,10),td=today(),tm=locISO(new Date(Date.now()+864e5)).slice(0,10);return (ds===td?"oggi":ds===tm?"domani":d.toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}))+" alle "+t}
+function renderRem(){const B=$("remBox"),L=$("remList");if(!B)return;const now=new Date(),end=new Date();end.setHours(23,59,59);
+  const items=visNotes().filter(n=>n.rem&&!n.rem.done&&new Date(n.rem.at)<=end).sort((a,b)=>a.rem.at.localeCompare(b.rem.at));B.hidden=!items.length;L.innerHTML="";
+  items.forEach(n=>{const r=document.createElement("div");r.className="remRow";r.innerHTML='<div class="rt"><b></b><small></small></div><button class="btn sm ghost">+1 ora</button><button class="btn sm">✓ Fatto</button>';
+    r.querySelector("b").textContent=n.title;const due=new Date(n.rem.at)<=now;r.querySelector("small").textContent=(due?"⏰ ":"")+remLbl(n.rem.at);r.querySelector(".rt").onclick=()=>openNote(n);
+    const[later,ok]=r.querySelectorAll("button");later.onclick=()=>{n.rem={at:locISO(new Date(Date.now()+36e5)),done:false};saveNote(n)};ok.onclick=()=>{n.rem.done=true;saveNote(n)};L.append(r)})}
+function remCheck(){const now=new Date();let ch=false;allNotes().forEach(n=>{if(n.ex||!n.rem||n.rem.done||n.rem.nt||new Date(n.rem.at)>now)return;n.rem.nt=1;ch=true;
+  try{if("Notification"in window&&Notification.permission==="granted")new Notification("🔔 "+n.title,{body:"Promemoria di Dictax",icon:"/icon-512.png",tag:n.id})}catch{}
+  if(navigator.vibrate)try{navigator.vibrate([200,100,200])}catch{}saveNote(n)});if(!ch)renderRem()}
+setInterval(remCheck,30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)remCheck()});setTimeout(remCheck,1500);
+function remIcsFor(n,at){const d=new Date(at),f=x=>x.toISOString().replace(/[-:]/g,"").slice(0,15)+"Z",esc=t=>String(t).replace(/[\\,;]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Dictax//IT","BEGIN:VEVENT","UID:"+n.id+"-rem@dictax","DTSTAMP:"+f(new Date()),"DTSTART:"+f(d),"DTEND:"+f(new Date(+d+9e5)),"SUMMARY:"+esc("🔔 "+n.title),"DESCRIPTION:"+esc("Promemoria da Dictax"),"BEGIN:VALARM","TRIGGER:-PT0M","ACTION:DISPLAY","DESCRIPTION:"+esc(n.title),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download="promemoria.ics";document.body.append(a);a.click();a.remove()}
+let remN=null;
+function openRem(n){remN=n;$("remNote").textContent="“"+n.title+"”";const now=new Date(),at=n.rem&&!n.rem.done?n.rem.at:"";
+  const mk=(h,m,addD)=>{const d=new Date();d.setDate(d.getDate()+(addD||0));d.setHours(h,m,0,0);return d};
+  const nextMon=()=>{const d=new Date();d.setDate(d.getDate()+((8-d.getDay())%7||7));d.setHours(9,0,0,0);return d};
+  const opts=[["Tra 1 ora",new Date(+now+36e5)],now.getHours()<17?["Stasera alle 18",mk(18,0)]:["Domani alle 18",mk(18,0,1)],["Domani alle 9",mk(9,0,1)],["Lunedì alle 9",nextMon()]];
+  const Q=$("remQuick");Q.innerHTML="";opts.forEach(([l,d])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=l;b.onclick=()=>{$("remAt").value=locISO(d);Q.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b))};Q.append(b)});
+  $("remAt").value=at||"";$("remDel").hidden=!at;$("remIcs").hidden=!at;$("remSheet").hidden=false}
+$("remBtn").onclick=()=>cur&&openRem(cur);$("remCancel").onclick=()=>{$("remSheet").hidden=true};
+$("remSave").onclick=async()=>{const v=$("remAt").value;if(!v){$("remAt").focus();return}const n=remN;n.rem={at:v,done:false};saveNote(n);
+  try{if("Notification"in window&&Notification.permission==="default")await Notification.requestPermission()}catch{}
+  $("remDel").hidden=false;$("remIcs").hidden=false;$("remSave").textContent="✓ Salvato";setTimeout(()=>{$("remSave").textContent="🔔 Salva promemoria";$("remSheet").hidden=true},900);if(cur===n)renderRemLine()};
+$("remIcs").onclick=()=>{const v=$("remAt").value;if(!v)return;remIcsFor(remN,v)};
+$("remDel").onclick=()=>{const n=remN;delete n.rem;saveNote(n);$("remSheet").hidden=true;if(cur===n)renderRemLine()};
+function renderRemLine(){document.getElementById("remLine")?.remove();const n=cur;$("remBtn").textContent=n&&n.rem&&!n.rem.done?"🔔 Cambia promemoria":"🔔 Promemoria";if(!n||!n.rem||n.rem.done)return;
+  const l=document.createElement("div");l.id="remLine";l.className="remLine";l.textContent="🔔 Ti ricordo "+remLbl(n.rem.at)+(n.rem.auto?" (l'hai chiesto nella nota)":"");l.onclick=()=>openRem(n);$("dHead").after(l)}
 function noteCard(n,el){
   el.innerHTML=`<div class="meta"><span class="d"></span><span class="cat"></span></div><span class="prog" hidden></span><h3></h3><p></p><div class="pills"></div>`;el.dataset.type=typeOf(n);
   const days=Math.max(0,Math.floor((Date.now()-n.at)/864e5));const dEl=el.querySelector(".d");dEl.textContent=fmtDate(n.at)+" · "+(days===0?"oggi":days===1?"ieri":days+" giorni fa")+(n.ex?" · esempio":"");const ago=t=>{const d=Math.max(0,Math.floor((Date.now()-t)/864e5));return d===0?"oggi":d===1?"ieri":d+" giorni fa"};const pdays=n.prog?Math.floor((Date.now()-n.prog)/864e5):null;
   if((pdays??days)>oldDays){dEl.classList.add("old");dEl.title=n.prog?"Nessun avanzamento da più di "+oldDays+" giorni":"Aggiunta più di "+oldDays+" giorni fa"}
   if(n.prog){const pe=el.querySelector(".prog");pe.hidden=false;pe.textContent="Avanzata "+ago(n.prog);if(pdays>oldDays)pe.classList.add("past");pe.title="Ultima modifica: "+new Date(n.prog).toLocaleString("it-IT")}el.querySelector(".cat").textContent=TYPES[typeOf(n)].n;
   if(typeOf(n)==="contenuto"&&(n.st||n.pub)){const c=document.createElement("span");const stt=n.st||"idea";c.className="pill st-"+stt;c.textContent=ST[stt]+(n.pub?" · "+fmtDate(n.pub+"T12:00"):"");el.querySelector(".pills").append(c)}
+  if(n.rem&&!n.rem.done){const c=document.createElement("span");c.className="pill remPill"+(remDue(n)?" late":"");c.textContent="🔔 "+remLbl(n.rem.at);el.querySelector(".pills").prepend(c)}
   if(n.client){const c=document.createElement("span");c.className="pill client cliOpt";c.textContent=n.client;el.querySelector(".pills").append(c)}
   el.querySelector("h3").textContent=n.title;const txt=Object.entries(n.out).find(([k])=>k!=="todo")?.[1];if(hasTodo(n)){const ts=ensureTasks(n),dn=ts.filter(x=>x.done).length,next=ts.find(x=>!x.done);const sum=ts.length?(dn===ts.length?`✓ Tutte fatte (${ts.length})`:`☐ ${dn} su ${ts.length} fatte · prossima: ${next.t}`):"☐ Lista vuota";if(txt){el.querySelector("p").textContent=txt;const c=document.createElement("span");c.className="pill todoPill";c.textContent=ts.length?(dn===ts.length?"✓ Lista fatta":`☐ ${dn}/${ts.length}`):"☐ Lista";el.querySelector(".pills").prepend(c)}else el.querySelector("p").textContent=sum}else if(typeOf(n)==="link")el.querySelector("p").textContent="🔗 "+(n.out.link||"");else el.querySelector("p").textContent=txt||n.tr;
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill tagLink";s.textContent="#"+faseLbl(t);s.title="Mostra le note con #"+t;s.onclick=e=>{if(el.id==="dHead")return;e.stopPropagation();e.preventDefault();setTag(t);$("tagChip").scrollIntoView({block:"center",behavior:"smooth"})};el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
-function renderList(){const L=$("list");L.innerHTML="";renderToday();renderTagFilter();
+function renderList(){const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
   const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
@@ -1635,7 +1683,7 @@ async function runFid(n,k,c){if(!sampleFn)return;c.fid.innerHTML="";c.fid.textCo
     n.fid={...(n.fid||{}),[k]:list};showFid(c,list,n.out[k])}
   catch(e){c.fid.textContent=e?.code==="not_granted"?"Controllo non disponibile: non hai consentito l'uso di Claude.":"Controllo non riuscito."}}
 function copyText(s,b,sel){const old=b.textContent;navigator.clipboard.writeText(s).then(()=>{b.textContent="Copiato";setTimeout(()=>b.textContent=old,1500)}).catch(()=>{if(sel){const r=document.createRange();r.selectNodeContents(sel);const g=getSelection();g.removeAllRanges();g.addRange(r)}b.textContent="Copia non riuscita: seleziona il testo"})}
-function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();
+function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").remove();renderRemLine();
   const P=$("dHead").querySelector(".pills");P.innerHTML="";(cur.tags||[]).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="pill tagBtn";b.textContent="#"+faseLbl(t);b.title="Tocca: mostra le note con #"+t+". Tieni premuto: togli il tag";b.setAttribute("aria-label","Mostra le note con #"+t+"; tieni premuto per togliere il tag");
     let tm=null,t2=null,held=false;const stop=()=>{clearTimeout(tm);clearTimeout(t2);tm=null;b.classList.remove("hold")};
     b.onpointerdown=()=>{held=false;t2=setTimeout(()=>b.classList.add("hold"),250);tm=setTimeout(()=>{held=true;b.classList.remove("hold");if(confirm("Togliere il tag #"+t+" da questa nota?")){cur.tags=cur.tags.filter(x=>x!==t);saveNote(cur);renderHead()}},700)};
@@ -1880,8 +1928,10 @@ $("appendGo").onclick=async()=>{
 
 /* Trasforma */
 async function makeMeta(n,src){
-  const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli}.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
-  Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]})}
+  const now=new Date(),nowS=now.toLocaleString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  const meta=await sampleFn.json(`Leggi questa nota e rispondi solo con JSON {"title": titolo efficace max 9 parole, "tags": 2 tag brevi minuscoli, "promemoria": null oppure data e ora "AAAA-MM-GGTHH:MM"}.\nMetti "promemoria" SOLO se l'autore chiede esplicitamente di ricordargli qualcosa a un momento preciso (es. "ricordami domani alle 10 di…", "promemoria venerdì…"). Adesso è ${nowS}. Se dice solo il giorno senza ora usa le 09:00. Altrimenti null.\n\nNOTA:\n${src.slice(0,8000)}`,{modelTier:"quick"});
+  Object.assign(n,{title:String(meta.title||n.title),tags:Array.isArray(meta.tags)?meta.tags.slice(0,3).map(String):[]});
+  const pm=String(meta.promemoria||"");if(/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(pm)&&!n.rem)n.rem={at:pm,done:false,auto:true}}
 const useML=k=>CREATOR_PRO&&(k.endsWith(ML)||SOCIAL.includes(baseK(k))); // voce ManuLab (Triplo Gancio) su tutti i contenuti social
 const promptFor=(k,tr,cl)=>`${M().writer} Trasforma questa nota (una trascrizione vocale con possibili esitazioni, oppure un testo scritto) in: ${FORMATS[k].p}.${kwRule(k)}${useML(k)?"\n"+MANULAB_VOICE:""}${useML(k)?ctxFor(cl)+perfCtx(cl)+dritteCtx()+(genFun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF)+QUALITY:""}\n${styleText(useML(k)?"completa":"")}${voiceText()}\nMantieni le idee dell'autore, non inventare fatti. Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nNOTA:\n${tr}`;
 function openSheet(){const tr=$("transcript").value.trim();if(isUrl(tr)){openLink(tr);return}
