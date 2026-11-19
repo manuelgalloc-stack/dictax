@@ -659,6 +659,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · riprese da fare</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -957,7 +958,7 @@ const vidCtx=cl=>{const L=vstyFor(cl||(isSolo()?"__me":""));if(genVid){const v=V
 const vstyLbl=k=>(VSTY.find(v=>v[0]===k)||[])[1]||"";
 const vstyFor=cl=>{const v=(cliProfiles()[cl]||{}).vid;return VSTY.filter(x=>!v||!v.length||v.includes(x[0]))};
 let genVid="";
-function tagVid(n){const t=String(n.out?.reel||"").match(/TIPO DI VIDEO:\s*\**\s*([^\n]+)/i);if(!t)return;const raw=t[1].replace(/[*_]/g,"").trim().toLowerCase();const v=VSTY.find(x=>raw.includes(x[1].replace(/^\S+ /,"").split(" ")[0].toLowerCase())||raw.includes(x[0]));const lbl=v?v[1].replace(/^\S+ /,""):t[1].trim().slice(0,30);n.vtipo=v?v[0]:"";n.tags=[...new Set([...(n.tags||[]),lbl])]}
+function tagVid(n){const t=String(reelOf(n)||"").match(/TIPO DI VIDEO:\s*\**\s*([^\n]+)/i);if(!t)return;const raw=t[1].replace(/[*_]/g,"").trim().toLowerCase();const v=VSTY.find(x=>raw.includes(x[1].replace(/^\S+ /,"").split(" ")[0].toLowerCase())||raw.includes(x[0]));const lbl=v?v[1].replace(/^\S+ /,""):t[1].trim().slice(0,30);n.vtipo=v?v[0]:"";n.tags=[...new Set([...(n.tags||[]),lbl])]}
 const MODES={
   note:{badge:"Pro · gratis",formats:["pulito","email","todo","verbale","riassunto","diario"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio"],folders:["Idee","Lavoro","Personale","Diario"],
     tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
@@ -1004,7 +1005,7 @@ if(!raw.get("main_merged",false)){const byId=new Map();["note","creator"].forEac
 const M=()=>MODES[mode];
 const TYPES={nota:{n:"Nota",f:["pulito"],color:"var(--t-nota)"},contenuto:{n:"Contenuto",f:[],color:"var(--t-contenuto)"},link:{n:"Link",f:[],color:"var(--t-link)"}};
 const SOCIAL=MODES.creator.formats.filter(k=>!MODES.note.formats.includes(k));
-const ML="__ml";const baseK=k=>k.endsWith(ML)?k.slice(0,-ML.length):k;
+const ML="__ml";const reelOf=n=>{const o=n&&n.out||{};const k=Object.keys(o).find(k=>baseK(k)==="reel");return k?o[k]:""};const baseK=k=>k.endsWith(ML)?k.slice(0,-ML.length):k;
 const fmtName=k=>(FORMATS[baseK(k)]?.n||k)+(k.endsWith(ML)?" · voce ManuLab":"");
 const KW_FORMATS=["linkedin","facebook","instagram","carosello","reel","tiktok"];
 const kwRule=k=>KW_FORMATS.includes(baseK(k))?(/hashtag/.test(FORMATS[baseK(k)].p)?"":"\nIn fondo aggiungi una riga con 3-5 hashtag pertinenti.")+"\nPoi, ancora più in fondo, dopo una riga vuota, aggiungi una riga con 5-8 parole chiave di ricerca pertinenti al contenuto (senza #), separate da \" | \", per esempio: lavoro da remoto | produttività | smart working | organizzazione del tempo":"";
@@ -1744,7 +1745,7 @@ async function extractTasks(src){const td=today(),wd=new Date(td+"T12:00").toLoc
   const r=await sampleFn.json(`Oggi è ${wd} ${td}. Estrai da questa nota le cose concrete da fare. Ogni attività è breve e inizia con un verbo all'infinito.${langRule()} Se nella nota c'è una scadenza o un giorno (es. "venerdì", "domani", "entro il 20"), calcola la data e mettila in "scad" nel formato AAAA-MM-GG; altrimenti "scad" è null. Non inventare attività che non sono nella nota. Rispondi solo con JSON {"attivita":[{"t":"...","scad":"AAAA-MM-GG o null"}]}.\n\nNOTA:\n${src.slice(0,20000)}`);
   const a=Array.isArray(r?.attivita)?r.attivita:Array.isArray(r)?r:[];return a.map(x=>typeof x==="string"?{t:x}:x).filter(x=>x&&String(x.t||"").trim()).slice(0,40).map(x=>({t:String(x.t).trim(),done:false,...(/^\d{4}-\d{2}-\d{2}$/.test(x.scad||"")?{due:x.scad}:{})}))}
 /* Riprese da fare (reel) e "Da avere sempre" (b-roll per cliente) */
-async function makeShots(n,btn){const s=String(n.out?.reel||"");if(!s)return;if(btn){btn.disabled=true;btn.textContent="Preparo la lista…"}
+async function makeShots(n,btn){const s=String(reelOf(n)||"");if(!s)return;if(btn){btn.disabled=true;btn.textContent="Preparo la lista…"}
   try{const r=await sampleFn.json(`Da questo script di un reel prepara la lista delle RIPRESE DA GIRARE, nell'ordine in cui servono al montaggio. Una ripresa per riga, breve e concreta, che dica chi o cosa inquadrare e come (es. "In camera: il gancio 'Prima di comprare occhiali…'", "Voce fuori campo: …", "Dettaglio: le mani che puliscono la lente", "Ripresa larga del negozio"). Adatta la lista al tipo di video indicato nello script. Da 5 a 12 riprese. Rispondi solo con JSON {"riprese":["..."]}.\n\nSCRIPT:\n${s.slice(0,6000)}`,{modelTier:"quick"});
     const L=(Array.isArray(r?.riprese)?r.riprese:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,15);if(!L.length)throw new Error("Lista vuota: riprova.");
     const mine=(n.shots||[]).filter(x=>x.mine);n.shots=[...L.map(t=>({t,done:false})),...mine];saveNote(n);if(cur===n)openNote(n,true)}
@@ -1788,7 +1789,7 @@ function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).len
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));if(n.thumbs?.length){const T=document.createElement("div");T.className="nThumbs";n.thumbs.forEach((u,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span>';f.querySelector("img").src=u;f.querySelector("span").textContent="Foto "+(i+1);T.append(f)});$("dOut").append(T)}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));if(typeOf(n)==="contenuto"&&n.out?.reel)$("dOut").append(shotsCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));if(n.thumbs?.length){const T=document.createElement("div");T.className="nThumbs";n.thumbs.forEach((u,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span>';f.querySelector("img").src=u;f.querySelector("span").textContent="Foto "+(i+1);T.append(f)});$("dOut").append(T)}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));if(typeOf(n)==="contenuto"&&reelOf(n))$("dOut").append(shotsCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
@@ -1845,7 +1846,7 @@ async function fixContent(n,b,mine,auto){const k=mainKey(n);if(!k)return;const o
   catch(e){b.disabled=false;b.textContent=old;$("dStatus").textContent=errMsg(e)}}
 /* Gobbo */
 let gRun=false,gSpeed=raw.get("gSpeed",45),gLast=0,gY=0;
-$("gobboBtn").onclick=()=>{const n=cur,k=n.out.reel!=null?"reel":mainKey(n);if(!k)return;const T=$("gTxt");T.innerHTML="";
+$("gobboBtn").onclick=()=>{const n=cur,k=reelOf(n)!=null?"reel":mainKey(n);if(!k)return;const T=$("gTxt");T.innerHTML="";
   (t=>{const i=t.search(/^\s*SCRIPT\b/im);return i>=0?t.slice(i).replace(/^\s*SCRIPT[^\n]*\n/i,""):t})(cleanPub(n.out[k])).split(/(\[[^\]]*\])/).forEach(part=>{if(!part)return;if(/^\[.*\]$/.test(part)){const s=document.createElement("span");s.className="cue";s.textContent=part;T.append(s)}else T.append(part)});
   gY=0;$("gView").scrollTop=0;gStop();$("gobbo").hidden=false;try{document.documentElement.requestFullscreen?.()}catch{}try{navigator.wakeLock?.request("screen").then(l=>gLock=l).catch(()=>{})}catch{}};
 let gLock=null;
@@ -2042,7 +2043,7 @@ async function createNote(type,formats){
       n.out[k]=text;if(fidOn())jobs.push(runFid(n,k,c))}
     await Promise.all(jobs);if(type==="contenuto")n.fun=genFun;tagVid(n);saveNote(n);audTrim();$("dOrg").hidden=false;if(cur===n)openNote(n);
     $("transcript").value="";$("status").textContent="";$("timer").textContent="00:00";
-    if(type==="contenuto"&&mainKey(n))await ensureQuality(n);if(type==="contenuto"&&n.out.reel&&!n.shots)makeShots(n);
+    if(type==="contenuto"&&mainKey(n))await ensureQuality(n);if(type==="contenuto"&&reelOf(n)&&!n.shots)makeShots(n);
   }catch(e){h.isConnected?h.textContent=errMsg(e):$("dStatus").textContent=errMsg(e)}
   finally{$("go").disabled=false}
 }
