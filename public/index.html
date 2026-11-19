@@ -279,7 +279,7 @@ body.noClients .cliOpt{display:none!important}
 .accBtn{position:relative;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer;flex:none}
 .accBtn.on{border-color:var(--accent);color:var(--accent-strong)}
 .accBtn.on::after{content:"";position:absolute;right:1px;top:1px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
-.stBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stBtns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .admBox{gap:10px;display:flex;flex-direction:column}
 .dritta{border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
 .dritta.off{opacity:.55}
@@ -317,7 +317,7 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .stBtns button[aria-pressed=true][data-s=idea]{border-color:var(--muted);background:var(--paper)}
 .stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
 .stBtns button[aria-pressed=true][data-s=fatto]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
-.pill.st-lavoro{background:#fff4d6;color:#7a5600}
+.pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.stHelp{font-size:13px;color:var(--muted);margin:2px 0 0}
 .pill.st-fatto{background:var(--accent-soft);color:var(--accent-strong)}
 .pill.st-idea{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
 .calBtn{display:flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--t-contenuto);color:var(--t-contenuto);background:var(--surface);border-radius:16px;padding:12px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
@@ -341,7 +341,7 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .calLeg i.s{border:2px solid var(--fg);background:transparent!important}
 .calLeg i.sw{width:11px;height:11px;border-radius:2px}
 .calLeg i.c{width:9px;height:9px;border-radius:2px;transform:rotate(45deg);margin-left:1px;margin-right:7px}
-.cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}
+.cal .dots i.lavoro{background:#e0a100}.cal .dots i.fatto{background:var(--accent)}.cal .dots i.pubblicato{background:#2f6fdb}
 .calSum{display:flex;gap:6px 12px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .calSum i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
 .calItem{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer}
@@ -520,7 +520,7 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <div id="dStBox" hidden style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Stato del contenuto</span>
-      <div class="stBtns"><button data-s="idea">💡 Idea</button><button data-s="lavoro">✎ In creazione</button><button data-s="fatto">✓ Fatto</button></div>
+      <div class="stBtns"><button data-s="idea">💡 Idea</button><button data-s="lavoro">✎ In creazione</button><button data-s="fatto">✓ Fatto</button><button data-s="pubblicato">📣 Pubblicato</button></div><p class="stHelp">✓ Fatto = pronto da pubblicare · 📣 Pubblicato = è online</p>
       <div class="row tight"><label class="lbl" for="dPub" style="flex:none">Data di pubblicazione</label><input type="date" id="dPub" style="flex:1;min-width:0"></div>
       <div id="dRes" hidden><span class="lbl">Com'è andato?</span><div class="resBtns"><button data-r="top">🔥 Bene</button><button data-r="meh">😐 Così così</button></div></div>
       <div class="cTools"><button id="gobboBtn">🎬 Gobbo</button><button id="checkBtn">✅ Controlla</button></div>
@@ -1154,13 +1154,13 @@ $("accEmail").value=raw.get("accEmail","");
 if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
 
 /* Stato contenuti e calendario */
-const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto"};
+const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto",pubblicato:"📣 Pubblicato"};const isPub=n=>n.st==="pubblicato",isFatto=n=>n.st==="fatto"||n.st==="pubblicato";
 let calM=today().slice(0,7),calDay="";
 $("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
 $("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
 const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
 const visNotes=()=>allNotes().filter(n=>mode==="creator"||typeOf(n)!=="contenuto"); // senza Creator i contenuti restano salvati ma non si vedono
-const ST_C={idea:"#9aa59e",lavoro:"#e0a100",fatto:"var(--accent)"};
+const ST_C={idea:"#9aa59e",lavoro:"#e0a100",fatto:"var(--accent)",pubblicato:"#2f6fdb"};
 const isoLocal=t=>{const d=new Date(t);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const calDate=n=>typeOf(n)==="contenuto"?(n.pub||""):isoLocal(n.at);
 function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
@@ -1168,23 +1168,23 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
     const p=r.querySelector(".pill");p.textContent=TYPES[typeOf(n)].n;p.style.cssText=`background:${TYPES[typeOf(n)].color};color:#fff`;r.onclick=()=>openNote(n);return r}
   const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=n.title;
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
-  const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="fatto")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
+  const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="pubblicato")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 let calCli=raw.get("calCli","");
 function renderCalCli(){const C=$("calCli"),cl=clientsOn()?clients():[];if(calCli&&!cl.includes(calCli))calCli="";C.hidden=!cl.length;C.innerHTML="";if(!cl.length)return;
   [["","Tutti i clienti"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=t;b.setAttribute("aria-pressed",v===calCli);b.onclick=()=>{calCli=v;raw.set("calCli",v);calDay="";renderCal()};C.append(b)})}
 function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli();const byC=n=>!calCli||(n.client||"")===calCli;const free=packFree(calM).filter(x=>!calCli||packCli(x.k)===calCli);$("calLbl").textContent=monthLbl(calM);const all=contents().filter(byC),every=allNotes().filter(n=>!n.ex&&byC(n)),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evC=every.filter(n=>typeOf(n)==="contenuto"),evM=evC.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
-  const nLate=inM.filter(n=>(n.st||"idea")!=="fatto"&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
+  const nLate=inM.filter(n=>!isPub(n)&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
   const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="background:${c}"></i>`;
   const sw=c=>`<i class="sw" style="background:${c}"></i>`;
-  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i class="s"></i>Scadenza ${dM}</span>${free.length?`<span><i class="c free"></i>Da riempire ${free.length}</span>`:""}</div><div class="legRow"><b>Stato</b><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span><span>${sw("var(--danger)")}Scaduto ${nLate}</span></div>`;
+  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i class="s"></i>Scadenza ${dM}</span>${free.length?`<span><i class="c free"></i>Da riempire ${free.length}</span>`:""}</div><div class="legRow"><b>Stato</b><span>${sw("#2f6fdb")}Pubblicato ${cnt("pubblicato")}</span><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("#9aa59e")}Idea ${cnt("idea")}</span><span>${sw("var(--danger)")}Scaduto ${nLate}</span></div>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
     const b=document.createElement("button");b.innerHTML="<b></b><span class='dots'></span>";b.querySelector("b").textContent=d.getDate();if(ds.slice(0,7)!==calM)b.classList.add("out");if(ds===td)b.classList.add("today");b.setAttribute("aria-pressed",ds===calDay);
     const dueD=dues.filter(x=>x.due===ds);dueD.slice(0,2).forEach(x=>{const i=document.createElement("i");i.className="s"+(x.due<td?" late":"");b.querySelector(".dots").append(i)});
-    const items=evC.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4-Math.min(2,dueD.length)).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?((n.st||"idea")!=="fatto"&&n.pub<td?"var(--danger)":ST_C[n.st||"idea"]):"var(--fg)");b.querySelector(".dots").append(x)});
+    const items=evC.filter(n=>calDate(n)===ds).sort((a,b)=>(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));items.slice(0,4-Math.min(2,dueD.length)).forEach(n=>{const x=document.createElement("i");const isC=typeOf(n)==="contenuto";if(isC)x.className="c";x.style.setProperty("--dc",isC?(!isPub(n)&&n.pub<td?"var(--danger)":ST_C[n.st||"idea"]):"var(--fg)");b.querySelector(".dots").append(x)});
     const frD=free.filter(x=>x.ds===ds);frD.slice(0,Math.max(0,4-b.querySelector(".dots").children.length)).forEach(()=>{const x=document.createElement("i");x.className="c free";b.querySelector(".dots").append(x)});
     const nc=items.filter(n=>typeOf(n)==="contenuto").length;b.setAttribute("aria-label",d.toLocaleDateString("it-IT",{day:"numeric",month:"long"})+": "+nc+" contenuti, "+(items.length-nc)+" note");
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
@@ -1218,7 +1218,7 @@ function packInfo(k,m){const N=(cliProfiles()[k]||{}).n|0,done=contents().filter
   return{N,done:done.length,left,free}}
 function packFree(m){const out=[];packKeys().forEach(k=>packInfo(k,m).free.forEach(ds=>out.push({k,ds})));return out}
 function weekRange(){const t=today(),d=new Date(t+"T12:00"),wd=(d.getDay()+6)%7,a=new Date(d-wd*864e5),b=new Date(+a+6*864e5),f=x=>x.toISOString().slice(0,10);return[f(a),f(b)]}
-function weekCount(nm){const[a,b]=weekRange();let done=0,todo=0;contents().forEach(n=>{if((n.client||"")!==nm)return;const ds=n.pub||(n.at?new Date(n.at-new Date(n.at).getTimezoneOffset()*6e4).toISOString().slice(0,10):"");if(!ds||ds<a||ds>b)return;n.st==="fatto"?done++:todo++});return{done,todo}}
+function weekCount(nm){const[a,b]=weekRange();let done=0,todo=0;contents().forEach(n=>{if((n.client||"")!==nm)return;const ds=n.pub||(n.at?new Date(n.at-new Date(n.at).getTimezoneOffset()*6e4).toISOString().slice(0,10):"");if(!ds||ds<a||ds>b)return;isFatto(n)?done++:todo++});return{done,todo}}
 function wkEl(nm,p){const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';const W=p.wk|0,ok=wk.querySelector(".ok"),td=wk.querySelector(".todo");
   if(W){ok.textContent="✓ "+w.done+" di "+W+" fatti";const miss=W-w.done;if(miss<=0){td.remove();wk.classList.add("full");ok.textContent="✓ Fatti tutti ("+w.done+" di "+W+")"}else{td.textContent=miss===1?"ne manca 1":"ne mancano "+miss;const wd=(new Date(today()+"T12:00").getDay()+6)%7;if(w.done<W*(wd+1)/7-.5)wk.classList.add("late")}}
   else{ok.textContent="✓ "+w.done+(w.done===1?" fatto":" fatti");td.textContent=w.todo+" da fare"}return wk}
@@ -1234,7 +1234,7 @@ function refreshCrea(){const nm=cliCur,p=(nm&&cliProfiles()[nm])||{};$("cTitle")
   $("cNoPos").hidden=!!p.pos||!nm;{const me=nm==="__me";$("cNoPos").querySelector("p").textContent="Per iniziare serve il posizionamento: Dictax lo crea da solo partendo da "+(me?"cosa fai tu.":"cosa fa il cliente.");$("cTiles").querySelector("[data-t=storie] small").textContent=me?"dalle tue foto":"dalle foto del cliente"}$("cTiles").querySelector('[data-t=idee]').disabled=!p.pos;
   const R=$("cRecent");R.innerHTML="";if(!nm)return;const cl=nm==="__me"?"":nm;const list=contents().filter(n=>(n.client||"")===cl).sort((a,b)=>(b.up||b.at)-(a.up||a.at)).slice(0,5);
   if(!list.length)return;const h=document.createElement("span");h.className="lbl";h.textContent="Ultimi contenuti";R.append(h);
-  list.forEach(n=>{const r=document.createElement("button");r.type="button";r.className="cRow"+(n.st==="fatto"?" done":"");const st={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto"}[n.st]||"";r.innerHTML='<b></b><small></small>';r.querySelector("b").textContent=n.title||"Contenuto";r.querySelector("small").textContent=[kindOf(n),st].filter(Boolean).join(" · ");r.onclick=()=>openNote(n);R.append(r)})}
+  list.forEach(n=>{const r=document.createElement("button");r.type="button";r.className="cRow"+(isPub(n)?" done":"");const st={pubblicato:"📣 Pubblicato",idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto"}[n.st]||"";r.innerHTML='<b></b><small></small>';r.querySelector("b").textContent=n.title||"Contenuto";r.querySelector("small").textContent=[kindOf(n),st].filter(Boolean).join(" · ");r.onclick=()=>openNote(n);R.append(r)})}
 function cPanel(t){const I=$("cIdeasBox"),S=$("stBox");const showI=t==="idee"&&I.hidden,showS=t==="storie"&&S.hidden;I.hidden=!showI;S.hidden=!showS;
   $("cTiles").querySelectorAll(".cTile").forEach(b=>b.classList.toggle("on",(b.dataset.t==="idee"&&showI)||(b.dataset.t==="storie"&&showS)));(showI?I:showS?S:null)?.scrollIntoView({behavior:"smooth",block:"start"})}
 let preCli=null;
@@ -1418,7 +1418,7 @@ function downloadIcs(x,n){const d=x.due.replace(/-/g,""),uid=n.id+"-"+Math.abs([
 /* Oggi */
 function renderToday(){$("todayBox").hidden=true;return;const td=today(),items=[];
   allNotes().filter(n=>!n.ex&&!n.arch).forEach(n=>{if(hasTodo(n))ensureTasks(n).forEach(x=>{if(!x.done&&x.due&&x.due<=td)items.push({n,t:x.t,s:x.due<td?"In ritardo · "+shortDate(x.due):"Scade oggi",late:x.due<td,o:x.due})});
-    if(typeOf(n)==="contenuto"&&n.pub&&n.pub<=td&&n.st!=="fatto")items.push({n,t:n.title,s:(n.pub<td?"Da pubblicare dal "+shortDate(n.pub):"Da pubblicare oggi")+(n.client?" · "+n.client:""),late:n.pub<td,o:n.pub})});
+    if(typeOf(n)==="contenuto"&&n.pub&&n.pub<=td&&!isPub(n))items.push({n,t:n.title,s:(n.pub<td?"Da pubblicare dal "+shortDate(n.pub):"Da pubblicare oggi")+(n.client?" · "+n.client:""),late:n.pub<td,o:n.pub})});
   items.sort((a,b)=>a.o.localeCompare(b.o));$("todayBox").hidden=!items.length||showArch;const L=$("todayList");L.innerHTML="";
   items.slice(0,8).forEach(it=>{const b=document.createElement("button");b.className="todayItem";b.innerHTML="<span><b></b><br><small></small></span>›";b.querySelector("b").textContent=(typeOf(it.n)==="contenuto"?"◆ ":"☐ ")+it.t;const sm=b.querySelector("small");sm.textContent=it.s;if(it.late)sm.classList.add("late");b.onclick=()=>openNote(it.n);L.append(b)})}
 
@@ -1572,7 +1572,7 @@ function noteCard(n,el){
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){const L=$("list");L.innerHTML="";renderToday();renderTagFilter();
   const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||n.client===cfilter)&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
-  const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&n.st==="fatto";const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
+  const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
   if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
@@ -1643,7 +1643,7 @@ function renderHead(){noteCard(cur,$("dHead"));$("dHead").querySelector("p").rem
     b.onclick=e=>{if(held){e.preventDefault();held=false;return}stop();setTag(t);show("home");$("tagChip").scrollIntoView({block:"center"})};P.append(b)});
   const T=$("dType");T.innerHTML="";Object.entries(TYPES).forEach(([k,t])=>{if(k==="contenuto"&&mode!=="creator"&&typeOf(cur)!=="contenuto")return;if((k==="link")!==(typeOf(cur)==="link"))return;const o=document.createElement("option");o.value=k;o.textContent=t.n;T.append(o)});T.value=typeOf(cur);const TC=$("dTypeChips");TC.innerHTML="";[...T.options].forEach(o=>{const b=document.createElement("button");b.type="button";b.className="chip typeChip";b.textContent=o.textContent;b.style.setProperty("--c",TYPES[o.value].color);b.setAttribute("aria-pressed",o.value===T.value);b.onclick=()=>{if(T.value===o.value)return;T.value=o.value;T.dispatchEvent(new Event("change"))};TC.append(b)});$("dTypeRow").hidden=T.options.length<2;
   $("archBtnD").textContent=cur.arch?"↩︎ Riapri":"✓ Fatto";$("archBtnD").hidden=typeOf(cur)==="contenuto"&&!cur.arch;$("dClient").value=cur.client||"";cliChips($("dClient"),c=>{cur.client=c;saveNote(cur);renderHead()});const isC=typeOf(cur)==="contenuto";$("dStBox").hidden=!isC;if(isC){document.querySelectorAll(".stBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.s===(cur.st||"idea")));$("dPub").value=cur.pub||""}renderMore();if(isC)renderCTools()}
-document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(cur.st==="fatto"&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
+document.querySelectorAll(".stBtns button").forEach(b=>b.onclick=()=>{cur.st=b.dataset.s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()});
 $("dPub").onchange=e=>{cur.pub=e.target.value||"";saveNote(cur);renderHead()};
 $("dType").onchange=e=>{cur.type=e.target.value;saveNote(cur);openNote(cur,true)};
 $("dClient").onchange=e=>{cur.client=e.target.value.trim();e.target.dataset.new="";saveNote(cur);renderHead()};
@@ -1705,7 +1705,7 @@ function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenu
   if(meh.length)t+="\nCONTENUTI ANDATI POCO BENE (evita angoli e ganci simili): "+meh.map(n=>n.title).join("; ")+".";
   const ps=perfStats(same);if(ps)t+=ps;
   return t}
-function renderCTools(){const n=cur,isF=(n.st||"idea")==="fatto";$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
+function renderCTools(){const n=cur,isF=isPub(n);$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
   $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
 document.querySelectorAll(".resBtns button").forEach(b=>b.onclick=()=>{cur.res=cur.res===b.dataset.r?undefined:b.dataset.r;if(!cur.res)delete cur.res;cur.resAt=Date.now();saveNote(cur);renderCTools();$("dStatus").textContent=cur.res?"Grazie: Dictax ne terrà conto nei prossimi contenuti"+(cur.client?" per "+cur.client:"")+".":""});
 function renderCheck(n){const B=$("checkBox");B.innerHTML="";const k=mainKey(n);if(!k)return;const c=n.check&&n.check.k===k?n.check:null;
@@ -1991,6 +1991,7 @@ $("analyze").onclick=async()=>{
 /* Avvio */
 $("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
+(function migPub(){if(raw.get("migPub",false))return;const td=today();let ch=false;const ns=store.get("notes",[]);ns.forEach(n=>{if(n.st==="fatto"&&(n.res||(n.pub&&n.pub<td))){n.st="pubblicato";ch=true}});if(ch)store.set("notes",ns);raw.set("migPub",true)})();
 (function fixFasi(){const re=/^(tofu|mofu|bofu)$/i;let ch=false;const ns=store.get("notes",[]);
   ns.forEach(n=>{if(typeOf(n)!=="contenuto")return;let t=(n.tags||[]).map(x=>re.test(String(x).trim())?faseLbl(x):x);
     const fl=Object.keys(n.out||{}).filter(k=>!k.endsWith(ML)&&FMT_SHORT[k]).map(k=>FMT_SHORT[k]);fl.forEach(f=>{if(!t.some(x=>String(x).toLowerCase()===f.toLowerCase()))t.unshift(f)});
