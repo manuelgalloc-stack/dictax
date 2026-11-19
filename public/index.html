@@ -366,6 +366,7 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .cTiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cTile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 6px;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff);cursor:pointer;font:inherit;color:inherit;text-align:center}.cTile span{font-size:28px}.cTile b{font-size:15px}.cTile small{font-size:12px;color:var(--muted);line-height:1.25}.cTile.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}.cTile:disabled{opacity:.45;cursor:default}
 .cNoPos{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:#fff7e6;border:1px solid #f0d9a8}
 .cCal{align-self:flex-start;font-weight:700}
+.calCliBox select{width:100%;font:inherit;font-size:16px;font-weight:700;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);color:inherit}
 .cRecent{display:flex;flex-direction:column;gap:8px;margin-top:4px}.cRecent:empty{display:none}.cRow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);font:inherit;color:inherit;cursor:pointer}.cRow b{font-size:15px}.cRow small{color:var(--muted);font-size:13px}.cRow.done{opacity:.55}
 #cliEdit.isNew .notNew,#cliEdit:not(.isNew) .newOnly{display:none!important}.back.danger{color:var(--danger,#d33)}
 .cComp{display:flex;flex-direction:column;gap:8px}.compRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}.compRow .cu{grid-column:1/2}.compRow .cn{grid-column:1/4}.compRow a,.compRow button{font-size:14px;font-weight:700;color:var(--accent);background:none;border:0;padding:6px;text-decoration:none;cursor:pointer}.compRow button{color:var(--muted)}
@@ -583,7 +584,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="calBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Calendario contenuti</h1>
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
-    <div class="chips calCli cliOpt" id="calCli" role="group" aria-label="Cliente" hidden></div>
+    <div class="cliOpt calCliBox" id="calCli" hidden><select id="calCliSel" aria-label="Di chi vuoi vedere il calendario"></select></div>
     <div class="calSum calLeg" id="calSum"></div>
     <div class="cal" id="calGrid"></div>
     <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><button class="btn ghost sm" id="calMonth" hidden style="align-self:flex-start;color:var(--t-contenuto);border-color:var(--t-contenuto)"></button><div id="calList"></div></div>
@@ -1201,8 +1202,9 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
   const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="pubblicato")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 let calCli=raw.get("calCli","");
-function renderCalCli(){const C=$("calCli"),cl=clientsOn()?clients():[];if(calCli&&calCli!=="__pers"&&!cl.includes(calCli))calCli="";C.hidden=false;C.innerHTML="";
-  [["",cl.length?"Tutti i clienti":"Tutto"],["__pers","🙋 Personali"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=t;b.setAttribute("aria-pressed",v===calCli);b.onclick=()=>{calCli=v;raw.set("calCli",v);calDay="";renderCal()};C.append(b)})}
+function renderCalCli(){const C=$("calCli"),S=$("calCliSel"),cl=clientsOn()?clients():[];if(calCli&&calCli!=="__pers"&&!cl.includes(calCli))calCli="";C.hidden=false;S.innerHTML="";
+  [["",cl.length?"Tutti i clienti":"Tutto"],["__pers","🙋 Personali (senza cliente)"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});S.value=calCli;
+  S.onchange=()=>{calCli=S.value;raw.set("calCli",calCli);calDay="";renderCal()}}
 function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli();const PERS=calCli==="__pers",byC=n=>!calCli||(PERS?!n.client:(n.client||"")===calCli);const free=packFree(calM).filter(x=>!calCli||packCli(x.k)===calCli);$("calLbl").textContent=monthLbl(calM);const onCal=n=>!PERS&&(n.st||"idea")!=="idea",all=contents().filter(n=>byC(n)&&onCal(n)),every=allNotes().filter(n=>!n.ex&&byC(n)),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evC=every.filter(n=>typeOf(n)==="contenuto"&&onCal(n)),evM=evC.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
   const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));every.filter(n=>n.rem&&!n.rem.done&&n.rem.at).forEach(n=>dues.push({t:n.title,due:n.rem.at.slice(0,10),tm:n.rem.at.slice(11,16),rem:true,n}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
