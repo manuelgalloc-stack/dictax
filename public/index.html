@@ -505,7 +505,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <select id="clientFilter" class="cliOpt" aria-label="Filtra per cliente"></select>
       <button id="tagChip" type="button" hidden aria-label="Togli il filtro per tag"></button>
     </div>
-    <input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note">
+    <div class="row tight searchRow"><input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note" style="flex:1;min-width:0"><button class="btn ghost sm" id="askOpen" type="button" hidden>💬 Chiedi</button></div>
     <div class="pendBox" id="pendBox" hidden><b id="pendTxt"></b><p class="help" style="margin:0">L'audio è salvato su questo telefono: non si perde.</p><div class="row"><button class="btn sm ghost" id="pendDel">Elimina</button><button class="btn sm" id="pendGo">🔁 Trascrivi ora</button></div></div>
     <div class="remBox" id="remBox" hidden><b>🔔 Promemoria</b><div id="remList"></div></div>
     <div class="todayBox" id="todayBox" hidden><h3>Oggi</h3><div id="todayList"></div></div>
@@ -955,7 +955,7 @@ const MODES={
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Unisci in un riassunto le note di questa settimana","Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
   creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","facebook","instagram","carosello","reel","tiktok","storie","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
-    tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"],["voice","Clienti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
+    tabs:[["home","Note"],["cal","Calendario"],["voice","Clienti"],["conti","Conti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
 };
@@ -1057,14 +1057,14 @@ $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
 /* Profili */
 function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
-  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=mode!=="creator";
+  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=true;$("askOpen").hidden=mode!=="creator";
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=true;$("useVoice").checked=mode==="creator"&&st.ws==="mio";
   $("dockNav").innerHTML="";M().tabs.forEach(([v,n])=>{const b=document.createElement("button");b.dataset.view=v;b.innerHTML=(ICONS[v==="home"?"note":v]||"")+"<span></span>";b.querySelector("span").textContent=v==="voice"&&isSolo()?"Brand":n;b.onclick=()=>show(v);$("dockNav").append(b)});
   renderStyle();renderChips();renderTabs();renderList();renderVoice();
 }
-const ICONS={conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.9 2.6 2.7 3 5.2"/></svg>'};
+const ICONS={cal:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',conti:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',note:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h6"/></svg>',merge:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>',ask:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8"/></svg>',voice:'<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.9 2.6 2.7 3 5.2"/></svg>'};
 $("creatorSw").onclick=()=>{const v=document.querySelector("#dockNav button[aria-current=true]")?.dataset.view;setMode(mode==="creator"?"note":"creator");show(v&&M().tabs.some(t=>t[0]===v)?v:"home")};
 
 /* Conti: entrate e uscite (salvate solo su questo dispositivo) */
@@ -1187,7 +1187,7 @@ if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-toke
 /* Stato contenuti e calendario */
 const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto",pubblicato:"📣 Pubblicato"};const isPub=n=>n.st==="pubblicato",isFatto=n=>n.st==="fatto"||n.st==="pubblicato";
 let calM=today().slice(0,7),calDay="";
-$("calOpen").onclick=()=>show("cal");$("calBack").onclick=()=>show("home");
+$("calOpen").onclick=()=>show("cal");$("askOpen").onclick=()=>show("ask");$("calBack").onclick=()=>show("home");
 $("calPrev").onclick=()=>{calM=shiftM(calM,-1);calDay="";renderCal()};$("calNext").onclick=()=>{calM=shiftM(calM,1);calDay="";renderCal()};
 const contents=()=>allNotes().filter(n=>typeOf(n)==="contenuto");
 const visNotes=()=>allNotes().filter(n=>mode==="creator"||typeOf(n)!=="contenuto"); // senza Creator i contenuti restano salvati ma non si vedono
