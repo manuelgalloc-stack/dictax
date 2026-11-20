@@ -318,6 +318,12 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
 .stBtns button[aria-pressed=true][data-s=fatto]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
 .pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.nextStep{display:flex;flex-direction:column;gap:6px}.nextStep .btn{width:100%}.dMore{border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}.dMore>summary{cursor:pointer;padding:14px 16px;font-weight:700;color:var(--muted);list-style:none}.dMore>summary::-webkit-details-marker{display:none}.dMore[open]>summary{border-bottom:1px solid var(--line)}.dMoreBody{display:flex;flex-direction:column;gap:14px;padding:14px}
+.cSeg{grid-template-columns:repeat(var(--n,3),1fr)}.cSeg button{font-size:14px;padding:10px 4px}
+#v-detail.ct #dSeg{display:none!important}
+#v-detail[data-ct=testo] .shotCard,#v-detail[data-ct=testo] #dStBox>*:not(.cTools),#v-detail[data-ct=testo] #checkBtn{display:none!important}
+#v-detail[data-ct=riprese] #dOut>*:not(.shotCard),#v-detail[data-ct=riprese] #dStBox{display:none!important}
+#v-detail[data-ct=stato] #dOut,#v-detail[data-ct=stato] #gobboBtn{display:none!important}
+#v-detail[data-ct=testo] #dStBox .cTools,#v-detail[data-ct=stato] #dStBox .cTools{grid-template-columns:1fr}
 .stHelp{font-size:13px;color:var(--muted);margin:2px 0 0}
 .pill.st-fatto{background:var(--accent-soft);color:var(--accent-strong)}
 .pill.st-idea{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
@@ -523,6 +529,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
     <div id="nextStep" class="nextStep" hidden><span class="lbl">Prossimo passo</span><button class="btn big" id="nextBtn"></button></div>
+    <div class="seg cSeg" id="cSeg" hidden><button type="button" data-c="testo">📝 Testo</button><button type="button" data-c="riprese">🎬 Riprese</button><button type="button" data-c="stato">📊 Stato e voto</button></div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
     <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
@@ -547,6 +554,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="cliOpt" style="grid-column:1/-1"><label class="lbl" for="dClient">Cliente</label><input type="text" id="dClient" list="clientList" placeholder="Nessuno" autocomplete="off"></div>
     </div>
     <div id="moreSlot2"></div>
+    <button class="btn ghost sm" id="origBtn" type="button" hidden style="align-self:flex-start">🎙 Vedi cosa avevi detto</button>
     <div class="composer" id="appendBox">
       <div class="lblRow"><label class="lbl" for="addText">Aggiungi alla nota</label><button type="button" class="photoBtn" data-for="addText">📷 Da una foto</button></div>
       <textarea id="addText" rows="3" placeholder="Ti è venuto in mente altro? Dettalo qui con il microfono della tastiera."></textarea>
@@ -659,7 +667,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · riprese da fare</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · schede del contenuto</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1815,13 +1823,20 @@ function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenu
 function renderCTools(){const n=cur,isF=isPub(n);$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
   $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
 document.querySelectorAll(".resBtns button").forEach(b=>b.onclick=()=>{cur.res=cur.res===b.dataset.r?undefined:b.dataset.r;if(!cur.res)delete cur.res;cur.resAt=Date.now();saveNote(cur);renderCTools();$("dStatus").textContent=cur.res?"Grazie: Dictax ne terrà conto nei prossimi contenuti"+(cur.client?" per "+cur.client:"")+".":""});
+let ctab="testo",ctabId=null;
+function setCTab(t){const V=$("v-detail");ctab=t;V.dataset.ct=t;$("cSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===t));if($("dOrigBox").hidden===false&&t!=="testo")$("dSeg").querySelector("button").click()}
+$("cSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("dSeg").querySelector("button").click();setCTab(b.dataset.c)});
+$("origBtn").onclick=()=>{setCTab("testo");$("dSeg").querySelectorAll("button")[1].click();$("dMore").open=false;scrollTo(0,0)};
+function applyCTabs(n){const V=$("v-detail"),isC=typeOf(n)==="contenuto",hasR=!!reelOf(n);V.classList.toggle("ct",isC);$("cSeg").hidden=!isC;$("origBtn").hidden=!isC;
+  if(!isC){delete V.dataset.ct;return}$("cSeg").querySelector('[data-c=riprese]').hidden=!hasR;$("cSeg").style.setProperty("--n",hasR?3:2);
+  if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if(ctab==="riprese"&&!hasR)ctab="testo";setCTab(ctab)}
 const setSt=s=>{cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
-function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;const isC=typeOf(n)==="contenuto";(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
+function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;applyCTabs(n);const isC=typeOf(n)==="contenuto";(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
   if(!isC||!mainKey(n)){B.hidden=true;return}const st=n.st||"idea",k=mainKey(n),ok=n.check&&n.check.k===k&&(n.check.voto|0)>=8;let t="",fn=null;
   const allShot=(n.shots||[]).length&&n.shots.every(x=>x.done);if(allShot&&(st==="idea"||st==="lavoro")){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(st==="idea"){t="✎ Approvalo: mettilo In creazione";fn=()=>setSt("lavoro")}
-  else if(st==="lavoro"){const sh=n.shots||[];if(sh.length&&sh.every(x=>x.done)){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(ok){t="✓ È pronto: segna come Fatto";fn=()=>setSt("fatto")}else{t="✅ Controlla il contenuto";fn=()=>{$("checkBtn").click();setTimeout(()=>$("checkBox").scrollIntoView({behavior:"smooth",block:"start"}),300)}}}
+  else if(st==="lavoro"){const sh=n.shots||[];if(sh.length&&sh.every(x=>x.done)){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(ok){t="✓ È pronto: segna come Fatto";fn=()=>setSt("fatto")}else{t="✅ Controlla il contenuto";fn=()=>{setCTab("stato");$("checkBtn").click();setTimeout(()=>$("checkBox").scrollIntoView({behavior:"smooth",block:"start"}),300)}}}
   else if(st==="fatto"){t="📣 L'ho pubblicato";fn=()=>setSt("pubblicato")}
-  else if(st==="pubblicato"&&!n.res){t="📊 Com'è andato? Dimmelo";fn=()=>$("dRes").scrollIntoView({behavior:"smooth",block:"center"})}
+  else if(st==="pubblicato"&&!n.res){t="📊 Com'è andato? Dimmelo";fn=()=>{setCTab("stato");setTimeout(()=>$("dRes").scrollIntoView({behavior:"smooth",block:"center"}),50)}}
   B.hidden=!t;btn.textContent=t;btn.onclick=fn}
 function renderCheck(n){setTimeout(renderNext);const B=$("checkBox");B.innerHTML="";const k=mainKey(n);if(!k)return;const c=n.check&&n.check.k===k?n.check:null;
   if(c){const d=document.createElement("div");d.className="checkCard";d.innerHTML='<div class="score"><b></b><span>su 10</span></div><div class="rows"></div><p class="tip" style="margin:0"></p>';
