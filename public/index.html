@@ -267,6 +267,7 @@ body.noClients .cliOpt{display:none!important}
 .mCat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mCat .bar{height:10px;border-radius:5px;background:var(--danger);opacity:.75}
 .mList{display:flex;flex-direction:column}
+.mCliR{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;font:inherit;color:inherit;cursor:pointer}.mCliR .top{display:flex;justify-content:space-between;gap:8px;font-size:15px}.mCliR .top b{color:var(--accent-strong,var(--accent))}.mCliR .bar{height:6px;border-radius:9px;background:var(--accent);margin-top:6px;opacity:.75}.mCliR small{color:var(--muted)}.mCliMs{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px;padding:6px 4px 4px;color:var(--muted)}.mCliMs b{color:var(--fg);font-weight:600;text-align:right}#mCliSeg{margin:8px 0}.mJump{margin-top:8px}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
 .mRow div{flex:1;min-width:0}
@@ -678,7 +679,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · riempi la settimana</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · entrate per cliente</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -708,10 +709,12 @@ body:not(.solo) .soloOnly{display:none!important}
         <div><label class="lbl" for="mDate">Data</label><input type="date" id="mDate"></div>
       </div>
       <div><label class="lbl" for="mCat">Categoria</label><select id="mCat"></select></div>
+      <div id="mCliRow"><label class="lbl" for="mCli">Cliente</label><input type="text" id="mCli" list="mCliList" placeholder="Es. Frank e Saro" autocomplete="off"><datalist id="mCliList"></datalist></div>
       <div><label class="lbl" for="mDesc">Descrizione (facoltativa)</label><input type="text" id="mDesc" placeholder="Es. Fattura cliente Rossi"></div>
       <div class="row"><span class="status" id="mStat" aria-live="polite"></span><button class="btn" id="mAdd">Aggiungi</button></div>
     </div>
     <div class="card mChart"><div class="head"><span class="fmt">Ultimi 6 mesi</span></div><div id="mChart"></div><div class="mLeg"><span><i style="background:var(--accent)"></i>Entrate</span><span><i style="background:var(--danger)"></i>Uscite</span></div></div>
+    <div class="card" id="mCliBox"><div class="head"><span class="fmt">Entrate per cliente</span></div><div class="seg" id="mCliSeg" style="grid-template-columns:1fr 1fr"><button data-p="m">Questo mese</button><button data-p="y">Quest'anno</button></div><div id="mClis"></div></div>
     <div class="card" id="mCatsBox"><div class="head"><span class="fmt">Dove vanno i soldi questo mese</span></div><div id="mCats"></div></div>
     <div class="card"><div class="head"><span class="fmt">Movimenti del mese</span></div><div class="mList" id="mMoves"></div></div>
     <div class="card"><div class="head"><span class="fmt">Consigli</span><span class="pro planBadge"></span></div><p class="mTips status" id="mTips">Premi il pulsante: Dictax legge i tuoi movimenti e ti dà qualche consiglio pratico.</p><button class="btn" id="mTipsGo" style="align-self:flex-start">Dammi dei consigli</button></div>
@@ -1072,12 +1075,12 @@ const eur=v=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).fo
 const monthLbl=m=>new Date(m+"-15").toLocaleDateString("it-IT",{month:"long",year:"numeric"});
 const shiftM=(m,d)=>{const t=new Date(m+"-15");t.setMonth(t.getMonth()+d);return t.toISOString().slice(0,7)};
 const tot=(a,k)=>a.filter(x=>x.k===k).reduce((s,x)=>s+x.v,0);
-function mSetKind(k){mKind=k;document.querySelectorAll(".mKind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));$("mCat").innerHTML="";MCATS[k].forEach(c=>{const o=document.createElement("option");o.textContent=c;$("mCat").append(o)})}
+function mSetKind(k){mKind=k;$("mCliRow").hidden=k!=="in";document.querySelectorAll(".mKind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));$("mCat").innerHTML="";MCATS[k].forEach(c=>{const o=document.createElement("option");o.textContent=c;$("mCat").append(o)})}
 document.querySelectorAll(".mKind button").forEach(b=>b.onclick=()=>mSetKind(b.dataset.k));
 $("mPrev").onclick=()=>{mMonth=shiftM(mMonth,-1);renderMoney()};$("mNext").onclick=()=>{mMonth=shiftM(mMonth,1);renderMoney()};
 $("mAdd").onclick=()=>{const v=parseFloat(String($("mAmt").value).replace(",","."));if(!(v>0)){$("mStat").textContent="Scrivi un importo.";$("mAmt").focus();return}
-  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d});saveMoney(a);
-  $("mAmt").value="";$("mDesc").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta."+(mKind==="in"&&forf().on?" Metti da parte "+eur(forfPart(Math.round(v*100)/100))+".":"");mMonth=d.slice(0,7);renderMoney()};
+  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d,...(mKind==="in"&&$("mCli").value.trim()?{cl:$("mCli").value.trim()}:{})});saveMoney(a);
+  $("mAmt").value="";$("mDesc").value="";$("mCli").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta."+(mKind==="in"&&forf().on?" Metti da parte "+eur(forfPart(Math.round(v*100)/100))+".":"");mMonth=d.slice(0,7);renderMoney()};
 const forf=()=>({on:false,rate:5,coef:78,inps:26.07,...store.get("forf",{})});
 const forfPart=v=>{const f=forf();if(!f.on)return 0;const c=f.coef/100,i=f.inps/100,r=f.rate/100;return Math.round(v*c*(i+(1-i)*r)*100)/100};
 function setForf(p){store.set("forf",{...forf(),...p});renderMoney()}
@@ -1103,13 +1106,28 @@ function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate
   const byC={};cur.filter(x=>x.k==="out").forEach(x=>byC[x.c]=(byC[x.c]||0)+x.v);const cs=Object.entries(byC).sort((a,b)=>b[1]-a[1]);
   $("mCats").innerHTML="";if(!cs.length)$("mCats").innerHTML='<p class="status">Nessuna uscita in questo mese.</p>';
   cs.forEach(([c,v])=>{const r=document.createElement("div");r.className="mCat";r.innerHTML='<span></span><div class="bar"></div><b></b>';r.children[0].textContent=c;r.children[1].style.width=Math.max(4,v/cs[0][1]*100)+"%";r.children[2].textContent=eur(v)+" · "+Math.round(v/o*100)+"%";$("mCats").append(r)});
+  // entrate per cliente
+  renderMCli(all);
   // movimenti
   const L=$("mMoves");L.innerHTML="";const rows=cur.slice().sort((a,b)=>b.d.localeCompare(a.d));
-  if(!rows.length)L.innerHTML='<p class="status">Nessun movimento in questo mese. Aggiungine uno qui sopra.</p>';
+  if(!rows.length){L.innerHTML='<p class="status">Nessun movimento in questo mese. Aggiungine uno qui sopra.</p>';const last=all.map(x=>x.d.slice(0,7)).filter(m=>m<mMonth).sort().pop();if(last){const j=document.createElement("button");j.className="btn ghost sm mJump";j.textContent="‹ Vai a "+monthLbl(last).toLowerCase()+" (ultimo con movimenti)";j.onclick=()=>{mMonth=last;renderMoney()};L.append(j)}}
   rows.forEach(x=>{const r=document.createElement("div");r.className="mRow";r.innerHTML='<div><b></b><small></small></div><span></span><button class="x">✕</button>';
-    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" · "+x.c;if(x.k==="in"&&forf().on){const fp=document.createElement("small");fp.className="fPart";fp.textContent="Da mettere da parte: "+eur(forfPart(x.v));r.querySelector("div").append(fp)}
+    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=[new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"}),x.cl&&!(x.t||"").startsWith(x.cl)?x.cl:"",x.c].filter(Boolean).join(" · ");if(x.k==="in"&&forf().on){const fp=document.createElement("small");fp.className="fPart";fp.textContent="Da mettere da parte: "+eur(forfPart(x.v));r.querySelector("div").append(fp)}
     const sp=r.querySelector("span");sp.textContent=(x.k==="in"?"+":"−")+eur(x.v);sp.className=x.k==="in"?"mIn":"mOut";
     const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;addDel(x.id);saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
+let mCliP=raw.get("mCliP","m"),mCliOpen="";
+const mCliOf=x=>x.cl||"";
+function renderMCli(all){const S=$("mCliSeg");S.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.p===mCliP);b.onclick=()=>{mCliP=b.dataset.p;raw.set("mCliP",mCliP);mCliOpen="";renderMCli(money())}});
+  const yr=mMonth.slice(0,4),inP=all.filter(x=>x.k==="in"&&(mCliP==="m"?x.d.slice(0,7)===mMonth:x.d.slice(0,4)===yr)),by={};
+  inP.forEach(x=>{const c=mCliOf(x)||"Senza cliente";(by[c]=by[c]||[]).push(x)});const L=$("mClis");L.innerHTML="";
+  const ent=Object.entries(by).map(([c,a])=>[c,a,tot(a,"in")]).sort((a,b)=>b[2]-a[2]);const mx=Math.max(1,...ent.map(e=>e[2]));
+  {const dl=$("mCliList");dl.innerHTML="";[...new Set([...all.map(mCliOf).filter(Boolean),...(typeof clients==="function"?clients():[])])].sort().forEach(c=>{const o=document.createElement("option");o.value=c;dl.append(o)})}
+  if(!ent.length){L.innerHTML='<p class="status">'+(mCliP==="m"?"Nessuna entrata in questo mese.":"Nessuna entrata nel "+yr+".")+'</p>';return}
+  ent.forEach(([c,a,v])=>{const r=document.createElement("button");r.type="button";r.className="mCliR";r.innerHTML='<div class="top"><span></span><b></b></div><div class="bar"></div><small></small>';
+    r.querySelector("span").textContent=c;r.querySelector("b").textContent=eur(v);r.querySelector(".bar").style.width=Math.max(3,v/mx*100)+"%";
+    const nf=a.filter(x=>x.ft===true).length;r.querySelector("small").textContent=a.length+(a.length===1?" incasso":" incassi")+(nf?" · "+nf+" con fattura":"")+(mCliP==="y"?" · tocca per i mesi":"");
+    if(mCliP==="y")r.onclick=()=>{mCliOpen=mCliOpen===c?"":c;renderMCli(money())};L.append(r);
+    if(mCliP==="y"&&mCliOpen===c){const g=document.createElement("div");g.className="mCliMs";const bm={};a.forEach(x=>bm[x.d.slice(0,7)]=(bm[x.d.slice(0,7)]||0)+x.v);Object.keys(bm).sort().forEach(m=>{const s=document.createElement("span");s.textContent=monthLbl(m);const b=document.createElement("b");b.textContent=eur(bm[m]);g.append(s,b)});L.append(g)}})}
 $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").textContent="Aggiungi prima qualche entrata o uscita.";return}
   const ms=[...Array(3)].map((_,j)=>shiftM(mMonth,j-2));const sum=ms.map(m=>{const a=all.filter(x=>x.d.slice(0,7)===m),c={};a.filter(x=>x.k==="out").forEach(x=>c[x.c]=(c[x.c]||0)+x.v);
     return `${monthLbl(m)}: entrate ${eur(tot(a,"in"))}, uscite ${eur(tot(a,"out"))}. Uscite per categoria: ${Object.entries(c).map(([k,v])=>k+" "+eur(v)).join(", ")||"nessuna"}. Movimenti: ${a.slice(0,60).map(x=>(x.k==="in"?"+":"-")+x.v+" "+x.c+(x.t?" ("+x.t+")":"")).join("; ")}`}).join("\n");
