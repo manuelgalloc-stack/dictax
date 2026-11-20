@@ -327,6 +327,7 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .com{background:var(--paper);border-radius:12px;padding:9px 34px 9px 12px;position:relative}
 .com .cTxt{white-space:pre-wrap;word-break:break-word;font-size:15px}.com .cd{font-size:12px;color:var(--muted);margin-top:3px}
 .com .cx{position:absolute;top:6px;right:6px;border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer;width:26px;height:26px}
+.com .cFix{margin-top:8px;border:1.5px solid var(--t-contenuto);color:var(--t-contenuto);background:none;border-radius:999px;padding:6px 12px;font:inherit;font-weight:700;font-size:13px;cursor:pointer}.com .cOk{margin-top:6px;font-size:13px;font-weight:700;color:var(--accent)}.com.done .cTxt{color:var(--muted)}
 .comAdd{display:flex;gap:8px;align-items:flex-end}.comAdd textarea{flex:1;min-height:44px;resize:none}
 #v-detail[data-ct=testo] .shotCard,#v-detail[data-ct=testo] #dStBox>*:not(.cTools):not(#fixSlot),#v-detail[data-ct=testo] #checkBtn{display:none!important}
 #v-detail[data-ct=riprese] #dOut>*:not(.shotCard),#v-detail[data-ct=riprese] #dStBox{display:none!important}
@@ -575,7 +576,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="comBox" id="comBox" hidden>
       <div class="lbl">💬 Commenti</div>
       <div id="comList" class="comList"></div>
-      <div class="comAdd"><textarea id="comText" rows="1" placeholder="Scrivi un commento…"></textarea><button class="btn sm" id="comGo">Invia</button></div>
+      <div class="comAdd"><textarea id="comText" rows="1" placeholder="Commento o richiesta…"></textarea><button class="btn sm" id="comGo">Invia</button></div>
     </div>
   </section>
 
@@ -682,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · commenti</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · commenti da sistemare</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -2023,7 +2024,11 @@ function renderCom(n,isC){const B=$("comBox");B.hidden=!isC;if(!isC)return;const
   (n.com||[]).forEach(c=>{const d=document.createElement("div");d.className="com";const t=document.createElement("div");t.className="cTxt";t.textContent=c.t;
     const w=document.createElement("div");w.className="cd";const dt=new Date(c.at);w.textContent=dt.toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" alle "+dt.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
     const x=document.createElement("button");x.className="cx";x.type="button";x.textContent="✕";x.setAttribute("aria-label","Elimina commento");
-    x.onclick=()=>{if(!confirm("Eliminare questo commento?"))return;n.com=n.com.filter(y=>y.id!==c.id);saveNote(n);renderCom(n,true)};d.append(t,w,x);L.append(d)})}
+    x.onclick=()=>{if(!confirm("Eliminare questo commento?"))return;n.com=n.com.filter(y=>y.id!==c.id);saveNote(n);renderCom(n,true)};d.append(t,w,x);
+    if(mainKey(n)){if(c.done){d.classList.add("done");const ok=document.createElement("div");ok.className="cOk";ok.textContent="✓ Sistemato";d.append(ok)}
+      else{const a=document.createElement("button");a.type="button";a.className="cFix";a.textContent="✨ Sistemalo con questo";
+        a.onclick=async()=>{const k=mainKey(n),before=n.out[k];await fixContent(n,a,"Il cliente (o l'autore) ha lasciato questo commento: applicalo. "+c.t);if(n.out[k]!==before){c.done=true;saveNote(n);if(cur&&cur.id===n.id)renderCom(cur,true)}};d.append(a)}}
+    L.append(d)})}
 {const T=$("comText");T.addEventListener("input",()=>{T.style.height="auto";T.style.height=Math.min(T.scrollHeight,160)+"px"});
   $("comGo").onclick=()=>{const v=T.value.trim();if(!cur||!v){T.focus();return}(cur.com=cur.com||[]).push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:v,at:Date.now()});saveNote(cur);T.value="";T.style.height="";renderCom(cur,true)}}
 /* Aggiungi alla nota */
