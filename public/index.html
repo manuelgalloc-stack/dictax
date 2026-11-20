@@ -269,6 +269,7 @@ body.noClients .cliOpt{display:none!important}
 .mList{display:flex;flex-direction:column}
 .mCliR{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;font:inherit;color:inherit;cursor:pointer}.mCliR .top{display:flex;justify-content:space-between;gap:8px;font-size:15px}.mCliR .top b{color:var(--accent-strong,var(--accent))}.mCliR .bar{height:6px;border-radius:9px;background:var(--accent);margin-top:6px;opacity:.75}.mCliR small{color:var(--muted)}.mCliMs{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px;padding:6px 4px 4px;color:var(--muted)}.mCliMs b{color:var(--fg);font-weight:600;text-align:right}#mCliSeg{margin:8px 0}.mJump{margin-top:8px}
 .updBar{position:fixed;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));z-index:90;border:0;border-radius:14px;padding:14px 16px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
+.ftChip{display:block;width:max-content;margin-top:5px;border:1.5px solid #c98a00;background:#fff4d6;color:#7a5600;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.ftChip.on{border-color:var(--line);background:var(--paper);color:var(--muted)}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
 .mRow div{flex:1;min-width:0}
@@ -680,7 +681,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · avviso aggiornamenti</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · entrate fatturate</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -696,6 +697,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div id="fBody" hidden>
         <div class="seg" id="fRate" style="grid-template-columns:1fr 1fr"><button data-r="5">5% (primi 5 anni)</button><button data-r="15">15%</button></div>
         <div class="fSave"><div><small>Da mettere da parte questo mese</small><b id="fMonth"></b></div><div><small>Da inizio anno</small><b id="fYear"></b></div></div>
+        <p class="help" id="fNoFt" style="margin:0" hidden></p>
         <details class="fMore"><summary>Coefficiente e contributi</summary>
           <div class="mGrid"><div><label class="lbl" for="fCoef">Coefficiente %</label><input type="number" id="fCoef" inputmode="decimal" min="1" max="100" step="1"></div><div><label class="lbl" for="fInps">Contributi INPS %</label><input type="number" id="fInps" inputmode="decimal" min="0" max="50" step="0.01"></div></div>
           <p class="help" style="margin:0">Il coefficiente dipende dalla tua attività (78% per molti professionisti, 67% per altre attività, 40% per il commercio). Contributi: 26,07% per la gestione separata.</p>
@@ -710,6 +712,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <div><label class="lbl" for="mDate">Data</label><input type="date" id="mDate"></div>
       </div>
       <div><label class="lbl" for="mCat">Categoria</label><select id="mCat"></select></div>
+      <label class="toggle" id="mFtRow"><input type="checkbox" id="mFt" checked> 🧾 Con fattura</label>
       <div id="mCliRow"><label class="lbl" for="mCli">Cliente</label><input type="text" id="mCli" list="mCliList" placeholder="Es. Frank e Saro" autocomplete="off"><datalist id="mCliList"></datalist></div>
       <div><label class="lbl" for="mDesc">Descrizione (facoltativa)</label><input type="text" id="mDesc" placeholder="Es. Fattura cliente Rossi"></div>
       <div class="row"><span class="status" id="mStat" aria-live="polite"></span><button class="btn" id="mAdd">Aggiungi</button></div>
@@ -1076,12 +1079,12 @@ const eur=v=>new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).fo
 const monthLbl=m=>new Date(m+"-15").toLocaleDateString("it-IT",{month:"long",year:"numeric"});
 const shiftM=(m,d)=>{const t=new Date(m+"-15");t.setMonth(t.getMonth()+d);return t.toISOString().slice(0,7)};
 const tot=(a,k)=>a.filter(x=>x.k===k).reduce((s,x)=>s+x.v,0);
-function mSetKind(k){mKind=k;$("mCliRow").hidden=k!=="in";document.querySelectorAll(".mKind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));$("mCat").innerHTML="";MCATS[k].forEach(c=>{const o=document.createElement("option");o.textContent=c;$("mCat").append(o)})}
+function mSetKind(k){mKind=k;$("mCliRow").hidden=k!=="in";$("mFtRow").hidden=k!=="in";document.querySelectorAll(".mKind button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===k));$("mCat").innerHTML="";MCATS[k].forEach(c=>{const o=document.createElement("option");o.textContent=c;$("mCat").append(o)})}
 document.querySelectorAll(".mKind button").forEach(b=>b.onclick=()=>mSetKind(b.dataset.k));
 $("mPrev").onclick=()=>{mMonth=shiftM(mMonth,-1);renderMoney()};$("mNext").onclick=()=>{mMonth=shiftM(mMonth,1);renderMoney()};
 $("mAdd").onclick=()=>{const v=parseFloat(String($("mAmt").value).replace(",","."));if(!(v>0)){$("mStat").textContent="Scrivi un importo.";$("mAmt").focus();return}
-  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d,...(mKind==="in"&&$("mCli").value.trim()?{cl:$("mCli").value.trim()}:{})});saveMoney(a);
-  $("mAmt").value="";$("mDesc").value="";$("mCli").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta."+(mKind==="in"&&forf().on?" Metti da parte "+eur(forfPart(Math.round(v*100)/100))+".":"");mMonth=d.slice(0,7);renderMoney()};
+  const d=$("mDate").value||today();const a=money();a.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),up:Date.now(),k:mKind,v:Math.round(v*100)/100,c:$("mCat").value,t:$("mDesc").value.trim(),d,...(mKind==="in"&&$("mCli").value.trim()?{cl:$("mCli").value.trim()}:{}),...(mKind==="in"?{ft:$("mFt").checked}:{})});saveMoney(a);
+  $("mAmt").value="";$("mDesc").value="";$("mCli").value="";$("mStat").textContent=(mKind==="in"?"Entrata":"Uscita")+" aggiunta."+(mKind==="in"&&forf().on&&$("mFt").checked?" Metti da parte "+eur(forfPart(Math.round(v*100)/100))+".":"");mMonth=d.slice(0,7);renderMoney()};
 const forf=()=>({on:false,rate:5,coef:78,inps:26.07,...store.get("forf",{})});
 const forfPart=v=>{const f=forf();if(!f.on)return 0;const c=f.coef/100,i=f.inps/100,r=f.rate/100;return Math.round(v*c*(i+(1-i)*r)*100)/100};
 function setForf(p){store.set("forf",{...forf(),...p});renderMoney()}
@@ -1090,8 +1093,10 @@ document.querySelectorAll("#fRate button").forEach(b=>b.onclick=()=>setForf({rat
 $("fCoef").onchange=e=>{const v=+e.target.value;if(v>0&&v<=100)setForf({coef:v})};$("fInps").onchange=e=>{const v=+e.target.value;if(v>=0&&v<=50)setForf({inps:v})};
 function renderForf(all,cur){const f=forf();$("fOn").checked=f.on;$("fBody").hidden=!f.on;if(!f.on)return;
   document.querySelectorAll("#fRate button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.r===f.rate));$("fCoef").value=f.coef;$("fInps").value=f.inps;
-  const yr=mMonth.slice(0,4),sumP=a=>a.filter(x=>x.k==="in").reduce((s,x)=>s+forfPart(x.v),0);
-  $("fMonth").textContent=eur(sumP(cur));$("fYear").textContent=eur(sumP(all.filter(x=>x.d.slice(0,4)===yr&&x.d.slice(0,7)<=mMonth)))}
+  const yr=mMonth.slice(0,4),sumP=a=>a.filter(x=>x.k==="in"&&hasFt(x)).reduce((s,x)=>s+forfPart(x.v),0);
+  $("fMonth").textContent=eur(sumP(cur));$("fYear").textContent=eur(sumP(all.filter(x=>x.d.slice(0,4)===yr&&x.d.slice(0,7)<=mMonth)));
+  {const nf=all.filter(x=>x.k==="in"&&!hasFt(x)&&x.d.slice(0,4)===yr),v=tot(nf,"in"),E=$("fNoFt");E.hidden=!nf.length;E.textContent=nf.length?"🧾 Da fatturare nel "+yr+": "+nf.length+(nf.length===1?" incasso, ":" incassi, ")+eur(v)+". Non sono nel calcolo qui sopra: quando le fatturi, tocca \"Da fatturare\" sull'incasso e verranno contate.":""}}
+const hasFt=x=>x.ft!==false;
 function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate").value)$("mDate").value=today();
   const all=money(),cur=all.filter(x=>x.d.slice(0,7)===mMonth),i=tot(cur,"in"),o=tot(cur,"out");
   renderForf(all,cur);$("mMonthLbl").textContent=monthLbl(mMonth);$("mTotIn").textContent=eur(i);$("mTotOut").textContent=eur(o);$("mTotBal").textContent=eur(i-o);$("mTotBal").className=i-o<0?"mOut":"mIn";
@@ -1113,7 +1118,8 @@ function renderMoney(){if(!$("mCat").options.length)mSetKind(mKind);if(!$("mDate
   const L=$("mMoves");L.innerHTML="";const rows=cur.slice().sort((a,b)=>b.d.localeCompare(a.d));
   if(!rows.length){L.innerHTML='<p class="status">Nessun movimento in questo mese. Aggiungine uno qui sopra.</p>';const last=all.map(x=>x.d.slice(0,7)).filter(m=>m<mMonth).sort().pop();if(last){const j=document.createElement("button");j.className="btn ghost sm mJump";j.textContent="‹ Vai a "+monthLbl(last).toLowerCase()+" (ultimo con movimenti)";j.onclick=()=>{mMonth=last;renderMoney()};L.append(j)}}
   rows.forEach(x=>{const r=document.createElement("div");r.className="mRow";r.innerHTML='<div><b></b><small></small></div><span></span><button class="x">✕</button>';
-    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=[new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"}),x.cl&&!(x.t||"").startsWith(x.cl)?x.cl:"",x.c].filter(Boolean).join(" · ");if(x.k==="in"&&forf().on){const fp=document.createElement("small");fp.className="fPart";fp.textContent="Da mettere da parte: "+eur(forfPart(x.v));r.querySelector("div").append(fp)}
+    r.querySelector("b").textContent=x.t||x.c;r.querySelector("small").textContent=[new Date(x.d).toLocaleDateString("it-IT",{day:"numeric",month:"short"}),x.cl&&!(x.t||"").startsWith(x.cl)?x.cl:"",x.c].filter(Boolean).join(" · ");if(x.k==="in"){if(forf().on&&hasFt(x)){const fp=document.createElement("small");fp.className="fPart";fp.textContent="Da mettere da parte: "+eur(forfPart(x.v));r.querySelector("div").append(fp)}
+      const fb=document.createElement("button");fb.type="button";fb.className="ftChip"+(hasFt(x)?" on":"");fb.textContent=hasFt(x)?"🧾 Fatturata":"🧾 Da fatturare";fb.title="Tocca per cambiare";fb.onclick=()=>{const a=money(),y=a.find(z=>z.id===x.id);if(!y)return;y.ft=!hasFt(y);y.up=Date.now();saveMoney(a);renderMoney()};r.querySelector("div").append(fb)}
     const sp=r.querySelector("span");sp.textContent=(x.k==="in"?"+":"−")+eur(x.v);sp.className=x.k==="in"?"mIn":"mOut";
     const del=r.querySelector(".x");del.setAttribute("aria-label","Elimina "+(x.t||x.c));del.onclick=()=>{if(!confirm("Eliminare questo movimento?"))return;addDel(x.id);saveMoney(money().filter(y=>y.id!==x.id));renderMoney()};L.append(r)})}
 let mCliP=raw.get("mCliP","m"),mCliOpen="";
