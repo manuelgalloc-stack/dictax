@@ -299,6 +299,7 @@ body.noClients .cliOpt{display:none!important}
 body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #contentWeek,body.simple .cliCard .pack{display:none!important}
 .themeLeg{display:flex;flex-wrap:wrap;gap:6px}.themeLeg span{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface)}.themeLeg i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .tIdea{border-left:6px solid var(--tc,var(--t-contenuto))!important;border-style:solid!important;border-top-width:1px!important;border-right-width:1px!important;border-bottom-width:1px!important;border-color:var(--line)!important;border-left-color:var(--tc)!important}.card.tIdea .ph{font-size:13px;font-weight:700;color:var(--tc)!important}.tIdea .row{gap:8px;align-items:center}.tIdea.done{opacity:.5}
+.calWk{display:flex;flex-direction:column;gap:6px}.calWkRow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface,#fff);cursor:pointer}.calWkRow>b{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cwN{font-size:13px;font-weight:700;color:var(--muted)}.cwBar{grid-column:1/-1;height:6px;border-radius:9px;background:var(--paper);overflow:hidden;display:block}.cwBar i{display:block;height:100%;background:var(--accent);border-radius:9px}.calWkRow.full .cwN{color:var(--accent)}.calWkRow.late .cwN{color:var(--danger)}.calWkRow.late .cwBar i{background:var(--danger)}
 .fixBox{display:flex;flex-direction:column;gap:8px;margin-top:10px}.fixBox textarea{min-height:0}
 .checkCard{border:2px solid var(--t-contenuto);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
 .checkCard .score{display:flex;align-items:baseline;gap:10px}.checkCard .score b{font:400 44px/1 var(--display,Georgia);color:var(--t-contenuto)}
@@ -683,7 +684,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · annulla pubblicato</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · calendario solo contenuti</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -770,6 +771,9 @@ body:not(.solo) .soloOnly{display:none!important}
           <p class="help newOnly" style="margin:0">Dictax crea subito il posizionamento. Tutto il resto lo aggiungi dopo, quando vuoi.</p>
           <div class="notNew" style="display:contents">
           <label class="lbl" for="cWk">Contenuti a settimana</label><input type="number" id="cWk" min="0" max="30" inputmode="numeric" placeholder="Es. 3 (lascia vuoto se non c'è un numero fisso)">
+          <span class="lbl">📅 In quali giorni escono? (facoltativo)</span>
+          <div class="chips" id="cDays" role="group" aria-label="Giorni di pubblicazione"></div>
+          <p class="help" style="margin:-4px 0 0">Nel calendario vedrai questi giorni come "da fare" finché non c'è il contenuto.</p>
           <label class="lbl" for="cReq">📝 Richieste del cliente</label>
           <textarea id="cReq" rows="3" placeholder="Es. vuole più video dello chef, non mostrare i prezzi, a dicembre spingere i pranzi di Natale"></textarea>
           <label class="lbl" for="cDr">✍️ Le tue dritte per questo cliente</label>
@@ -796,8 +800,6 @@ body:not(.solo) .soloOnly{display:none!important}
         <div class="packBox">
           <span class="lbl">📦 Pacchetto (facoltativo)</span>
           <div class="row tight"><label for="cN" style="flex:1">Contenuti al mese</label><input type="number" id="cN" min="0" max="60" inputmode="numeric" placeholder="0" style="width:90px;flex:none"></div>
-          <span class="lbl" style="margin-top:4px">In quali giorni (facoltativo)</span>
-          <div class="chips" id="cDays" role="group" aria-label="Giorni di pubblicazione"></div>
           <div id="cDayFmt" class="dayFmt" hidden></div>
           <span class="lbl" style="margin-top:6px">⭐ Cosa va sempre bene (facoltativo)</span>
           <div id="cFix" class="cFix"></div>
@@ -1236,16 +1238,24 @@ function calRow(n){if(typeOf(n)!=="contenuto"){const r=document.createElement("d
   r.querySelector("small").textContent=[n.pub?new Date(n.pub+"T12:00").toLocaleDateString("it-IT",{weekday:"short",day:"numeric",month:"short"}):"",n.client||"",Object.keys(n.out).filter(k=>!k.endsWith(ML)).map(k=>FORMATS[k]?.n||k).join(", ")].filter(Boolean).join(" · ");
   const p=r.querySelector(".pill"),stt=n.st||"idea";if(stt==="pubblicato")r.classList.add("doneC");p.className="pill st-"+stt;p.textContent=ST[stt];r.onclick=()=>openNote(n);return r}
 let calCli=raw.get("calCli","");
-function renderCalCli(){const C=$("calCli"),S=$("calCliSel"),cl=clientsOn()?clients():[];if(calCli&&calCli!=="__pers"&&!cl.includes(calCli))calCli="";C.hidden=false;S.innerHTML="";
-  [["",cl.length?"Tutti i clienti":"Tutto"],["__pers","🙋 Personali (senza cliente)"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});S.value=calCli;
+function renderCalCli(){const C=$("calCli"),S=$("calCliSel"),cl=clientsOn()?clients():[];if(calCli&&!cl.includes(calCli))calCli="";C.hidden=false;S.innerHTML="";
+  [["",cl.length?"Tutti i clienti":"Tutto"],...cl.map(c=>[c,c])].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;S.append(o)});S.value=calCli;
   S.onchange=()=>{calCli=S.value;raw.set("calCli",calCli);calDay="";renderCal()}}
-function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli();const PERS=calCli==="__pers",byC=n=>!calCli||(PERS?!n.client:(n.client||"")===calCli);const free=packFree(calM).filter(x=>!calCli||packCli(x.k)===calCli);$("calLbl").textContent=monthLbl(calM);const onCal=n=>!PERS&&(n.st||"idea")!=="idea",all=contents().filter(n=>byC(n)&&onCal(n)),every=allNotes().filter(n=>!n.ex&&byC(n)),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evC=every.filter(n=>typeOf(n)==="contenuto"&&onCal(n)),evM=evC.filter(n=>calDate(n).slice(0,7)===calM);
+function renderCalWk(){let B=$("calWk");if(!B){B=document.createElement("div");B.id="calWk";B.className="calWk";$("calSum").before(B)}B.innerHTML="";const P=cliProfiles();
+  const ks=isSolo()?(P.__me&&(P.__me.wk|0)?["__me"]:[]):clientsOn()?Object.keys(P).filter(k=>k!=="__me"&&(P[k].wk|0)>0&&(!calCli||k===calCli)):[];
+  if(ks.length){const h=document.createElement("span");h.className="lbl";h.textContent="Questa settimana";B.append(h)}
+  ks.forEach(k=>{const W=P[k].wk|0,w=weekCount(packCli(k)),r=document.createElement("div");r.className="calWkRow";const wd=(new Date(today()+"T12:00").getDay()+6)%7;
+    r.innerHTML='<b></b><span class="cwN"></span><i class="cwBar"><i></i></i>';r.querySelector("b").textContent=packName(k);
+    const n=r.querySelector(".cwN");n.textContent=w.done>=W?"✓ "+w.done+" di "+W+" · fatti tutti":w.done+" di "+W+" fatti · "+(W-w.done===1?"ne manca 1":"ne mancano "+(W-w.done));
+    r.classList.toggle("full",w.done>=W);r.classList.toggle("late",w.done<W&&w.done<W*(wd+1)/7-.5);r.querySelector(".cwBar i").style.width=Math.min(100,100*w.done/W)+"%";
+    r.onclick=()=>{if(clientsOn()){calCli=packCli(k);raw.set("calCli",calCli);calDay="";renderCal()}};B.append(r)});B.hidden=!ks.length}
+function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli();renderCalWk();const PERS=calCli==="__pers",byC=n=>!calCli||(PERS?!n.client:(n.client||"")===calCli);const free=packFree(calM).filter(x=>!calCli||packCli(x.k)===calCli);$("calLbl").textContent=monthLbl(calM);const onCal=n=>!PERS&&(n.st||"idea")!=="idea",all=contents().filter(n=>byC(n)&&onCal(n)),every=allNotes().filter(n=>!n.ex&&byC(n)),inM=all.filter(n=>n.pub&&n.pub.slice(0,7)===calM),evC=every.filter(n=>typeOf(n)==="contenuto"&&onCal(n)),evM=evC.filter(n=>calDate(n).slice(0,7)===calM);
   const cnt=k=>inM.filter(n=>(n.st||"idea")===k).length;
-  const dues=[];every.filter(n=>hasTodo(n)&&!n.arch).forEach(n=>ensureTasks(n).forEach(x=>{if(x.due&&!x.done)dues.push({...x,n})}));every.filter(n=>n.rem&&!n.rem.done&&n.rem.at).forEach(n=>dues.push({t:n.title,due:n.rem.at.slice(0,10),tm:n.rem.at.slice(11,16),rem:true,n}));const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
+  const dues=[]; /* solo contenuti: niente scadenze né promemoria delle note */const dM=dues.filter(x=>x.due.slice(0,7)===calM).length;
   const nLate=inM.filter(n=>!isPub(n)&&n.pub<today()).length+dues.filter(x=>x.due.slice(0,7)===calM&&x.due<today()).length;
   const nN=evM.filter(n=>typeOf(n)!=="contenuto").length,ring=c=>`<i class="c" style="background:${c}"></i>`;
   const sw=c=>`<i class="sw" style="background:${c}"></i>`;
-  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuto ${inM.length}</span><span><i class="s"></i>Scadenza ${dM}</span>${free.length?`<span><i class="c free"></i>Da riempire ${free.length}</span>`:""}</div><div class="legRow"><b>Stato</b><span>${sw("#2f6fdb")}Pubblicato ${cnt("pubblicato")}</span><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("var(--danger)")}Scaduto ${nLate}</span></div>`;
+  $("calSum").innerHTML=`<div class="legRow"><b>Cosa</b><span>${ring("var(--fg)")}Contenuti ${inM.length}</span>${free.length?`<span><i class="c free"></i>Da fare ${free.length}</span>`:""}</div><div class="legRow"><b>Stato</b><span>${sw("#2f6fdb")}Pubblicato ${cnt("pubblicato")}</span><span>${sw("var(--accent)")}Fatto ${cnt("fatto")}</span><span>${sw("#e0a100")}In creazione ${cnt("lavoro")}</span><span>${sw("var(--danger)")}Scaduto ${nLate}</span></div>`;
   const G=$("calGrid");G.innerHTML="";["lun","mar","mer","gio","ven","sab","dom"].forEach(d=>{const w=document.createElement("span");w.className="wd";w.textContent=d;G.append(w)});
   const first=new Date(calM+"-01T12:00"),off=(first.getDay()+6)%7,start=new Date(first);start.setDate(1-off);const td=today();
   for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);if(i>=35&&ds.slice(0,7)!==calM)break;
@@ -1257,11 +1267,11 @@ function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli(
     b.onclick=()=>{calDay=calDay===ds?"":ds;renderCal()};G.append(b)}
   const L=$("calList");L.innerHTML="";const list=(calDay?evC.filter(n=>calDate(n)===calDay):evM).slice().sort((a,b)=>calDate(a).localeCompare(calDate(b))||(typeOf(b)==="contenuto")-(typeOf(a)==="contenuto"));
   $("calPlan").hidden=!calDay||calDay<today()||PERS;{const mk=isSolo()?"__me":calCli,okM=mk&&packKeys().includes(mk)&&calM>=today().slice(0,7)&&packInfo(mk,calM).free.length;$("calMonth").hidden=!okM;if(okM){$("calMonth").textContent="🎯 Pianifica "+monthLbl(calM).split(" ")[0].toLowerCase()+" ("+packInfo(mk,calM).free.length+")";$("calMonth").onclick=()=>openPlanner(mk,calM)}}
-  {const cardEl=$("calDayLbl").closest(".card");cardEl.hidden=!calDay;let h=document.getElementById("calHint");if(!h){h=document.createElement("p");h.id="calHint";h.className="help";h.style.cssText="margin:0;text-align:center";h.textContent="👆 Tocca un giorno per vedere i contenuti di quel giorno";cardEl.before(h)}h.hidden=!!calDay}
+  {const cardEl=$("calDayLbl").closest(".card");cardEl.hidden=!calDay;let h=document.getElementById("calHint");if(!h){h=document.createElement("p");h.id="calHint";h.className="help";h.style.cssText="margin:0;text-align:center";h.textContent="👆 Tocca un giorno per vedere i contenuti e quelli da fare";cardEl.before(h)}h.hidden=!!calDay}
   $("calDayLbl").textContent=calDay?new Date(calDay+"T12:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"}):"Tutto il mese";
   const dl=(calDay?dues.filter(x=>x.due===calDay):dues.filter(x=>x.due.slice(0,7)===calM)).sort((a,b)=>a.due.localeCompare(b.due));
   dl.forEach(x=>{const r=document.createElement("div");r.className="calItem";r.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';r.querySelector("b").textContent=x.rem?"🔔 "+x.t:"☐ "+x.t;r.querySelector("small").textContent=x.rem?shortDate(x.due)+" alle "+x.tm+(x.n.client?" · "+x.n.client:""):shortDate(x.due)+" · "+x.n.title;const pl=r.querySelector(".pill");pl.textContent=x.due<td?"In ritardo":x.rem?"Promemoria":"Scadenza";pl.style.cssText=x.due<td?"background:var(--danger);color:#fff":"background:#fff4d6;color:#7a5600";r.onclick=()=>openNote(x.n);L.append(r)});
-  (calDay?free.filter(x=>x.ds===calDay):free).forEach(x=>{const r=document.createElement("div");r.className="calItem freeRow";r.innerHTML='<div><b></b><small></small></div><button class="btn sm">+ Crea</button>';r.querySelector("b").textContent="◇ Posto libero · "+packName(x.k);r.querySelector("small").textContent=shortDate(x.ds);r.querySelector("button").onclick=e=>{e.stopPropagation();setPlan(x.ds,packCli(x.k));show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};L.append(r)});
+  (calDay?free.filter(x=>x.ds===calDay):free).forEach(x=>{const r=document.createElement("div");r.className="calItem freeRow";r.innerHTML='<div><b></b><small></small></div><button class="btn sm">+ Crea</button>';r.querySelector("b").textContent="◇ Da fare · "+packName(x.k);r.querySelector("small").textContent=shortDate(x.ds);r.querySelector("button").onclick=e=>{e.stopPropagation();setPlan(x.ds,packCli(x.k));show("home");setTimeout(()=>{$("composer").scrollIntoView({behavior:"smooth",block:"center"});$("transcript").focus()},50)};L.append(r)});
   if(!list.length&&!dl.length&&!free.some(x=>!calDay||x.ds===calDay))L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
   const nd=all.filter(n=>!n.pub&&n.st==="lavoro");$("calNoDateBox").hidden=!nd.length;$("calNoDate").innerHTML="";nd.forEach(n=>$("calNoDate").append(calRow(n)))}
 
@@ -1275,7 +1285,7 @@ function clientCtx(cl){const p=cliProfiles()[cl];let t=cl==="__me"?"\nIl contenu
   if(p.niche)t+=` Settore e nicchia: ${p.niche}.`;if(p.target)t+=` Pubblico: ${p.target}.`;if(p.offer)t+=` Offerta: ${p.offer}.`;if(p.zone)t+=` Zona: ${p.zone}.`;if(p.avoid)t+=` Da evitare: ${p.avoid}.`;if(p.dritte)t+=`\nINDICAZIONI DELL'AUTORE PER QUESTO CLIENTE (rispettale sempre): ${p.dritte}`;if(p.req)t+=`\nRICHIESTE DEL CLIENTE (rispettale sempre): ${p.req}`;{const cp=(p.comp||[]).filter(c=>c.nota||c.url);if(cp.length)t+=`\nCOMPETITOR DA CUI PRENDERE SPUNTO (prendi lo spirito di ciò che piace all'autore, non copiare frasi né idee precise):\n${cp.map(c=>"- "+[c.nota,c.url].filter(Boolean).join(" — ")).join("\n")}`}
   if(p.pos)t+=`\nPosizionamento del cliente (sistema ManuLab): rispetta i temi, la regola north-star, il tono e le parole da usare o evitare.\n${p.pos.slice(0,5000)}`;return t}
 /* Pacchetti: contenuti promessi al mese per cliente e posti liberi nel calendario */
-const packKeys=()=>{const P=cliProfiles();return Object.keys(P).filter(k=>(P[k].n|0)>0&&(isSolo()?k==="__me":k!=="__me"&&clientsOn()))};
+const packKeys=()=>{const P=cliProfiles();return Object.keys(P).filter(k=>((P[k].n|0)>0||(P[k].wk|0)>0)&&(isSolo()?k==="__me":k!=="__me"&&clientsOn()))};
 const packCli=k=>k==="__me"?"":k,packName=k=>k==="__me"?"Il tuo brand":k;
 const ofPack=(n,k)=>(n.client||"")===packCli(k);
 function packSlots(k,m){const p=cliProfiles()[k]||{},N=p.n|0;if(!N)return[];const days=new Date(+m.slice(0,4),+m.slice(5,7),0).getDate(),all=[...Array(days)].map((_,i)=>m+"-"+String(i+1).padStart(2,"0"));
@@ -1284,7 +1294,16 @@ function packSlots(k,m){const p=cliProfiles()[k]||{},N=p.n|0;if(!N)return[];cons
 function packInfo(k,m){const N=(cliProfiles()[k]||{}).n|0,done=contents().filter(n=>n.pub&&n.pub.slice(0,7)===m&&ofPack(n,k)),taken=new Set(done.map(n=>n.pub)),td=today();
   let free=packSlots(k,m).filter(ds=>!taken.has(ds));const left=Math.max(0,N-done.length);const fut=free.filter(ds=>ds>=td),past=free.filter(ds=>ds<td);free=[...fut,...past].slice(0,left).filter(ds=>ds>=td).sort();
   return{N,done:done.length,left,free}}
-function packFree(m){const out=[];packKeys().forEach(k=>packInfo(k,m).free.forEach(ds=>out.push({k,ds})));return out}
+function packFree(m){const out=[];packKeys().forEach(k=>{const p=cliProfiles()[k]||{};(p.n|0?packInfo(k,m).free:wkFree(k,m)).forEach(ds=>out.push({k,ds}))});return out}
+/* Uscite a settimana: N contenuti a settimana nei giorni scelti (o distribuiti), i posti vuoti sono "da fare" */
+const WK_DEF={1:[2],2:[1,3],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,3,4],6:[0,1,2,3,4,5]};
+const isoD=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function wkFree(k,m){const p=cliProfiles()[k]||{},W=p.wk|0;if(!W)return[];const td=today(),days=(p.days&&p.days.length?[...p.days].sort():WK_DEF[Math.min(W,7)]||[0,1,2,3,4,5,6]);
+  const first=new Date(m+"-01T12:00"),start=new Date(first);start.setDate(1-((first.getDay()+6)%7));const out=[];
+  for(let w=0;w<6;w++){const mon=new Date(start);mon.setDate(start.getDate()+w*7);const wDays=[...Array(7)].map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return isoD(d)});if(wDays[0].slice(0,7)>m)break;
+    const inW=contents().filter(n=>ofPack(n,k)&&n.pub&&n.pub>=wDays[0]&&n.pub<=wDays[6]&&(n.st||"idea")!=="idea"),taken=new Set(inW.map(n=>n.pub));let left=W-inW.length;
+    days.map(i=>wDays[i]).filter(ds=>!taken.has(ds)).forEach(ds=>{if(left>0){left--;if(ds>=td&&ds.slice(0,7)===m)out.push(ds)}})}
+  return out}
 function weekRange(){const t=today(),d=new Date(t+"T12:00"),wd=(d.getDay()+6)%7,a=new Date(d-wd*864e5),b=new Date(+a+6*864e5),f=x=>x.toISOString().slice(0,10);return[f(a),f(b)]}
 function weekCount(nm){const[a,b]=weekRange();let done=0,todo=0;contents().forEach(n=>{if((n.client||"")!==nm)return;const ds=n.pub||(n.at?new Date(n.at-new Date(n.at).getTimezoneOffset()*6e4).toISOString().slice(0,10):"");if(!ds||ds<a||ds>b)return;isFatto(n)?done++:todo++});return{done,todo}}
 function wkEl(nm,p){const w=weekCount(nm),wk=document.createElement("span");wk.className="wk";wk.innerHTML='<span class="t">Questa settimana</span><span class="ok"></span><span class="todo"></span>';const W=p.wk|0,ok=wk.querySelector(".ok"),td=wk.querySelector(".todo");
