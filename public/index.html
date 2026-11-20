@@ -321,6 +321,13 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.nextStep{display:flex;flex-direction:column;gap:6px}.nextStep .btn{width:100%}.dMore{border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}.dMore>summary{cursor:pointer;padding:14px 16px;font-weight:700;color:var(--muted);list-style:none}.dMore>summary::-webkit-details-marker{display:none}.dMore[open]>summary{border-bottom:1px solid var(--line)}.dMoreBody{display:flex;flex-direction:column;gap:14px;padding:14px}
 .cSeg{grid-template-columns:repeat(var(--n,3),1fr)}.cSeg button{font-size:14px;padding:10px 4px}
 #v-detail.ct #dSeg{display:none!important}
+#v-detail.ct #appendBox{display:none!important}
+.comBox{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--surface,#fff)}
+.comList{display:flex;flex-direction:column;gap:8px}.comList:empty{display:none}
+.com{background:var(--paper);border-radius:12px;padding:9px 34px 9px 12px;position:relative}
+.com .cTxt{white-space:pre-wrap;word-break:break-word;font-size:15px}.com .cd{font-size:12px;color:var(--muted);margin-top:3px}
+.com .cx{position:absolute;top:6px;right:6px;border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer;width:26px;height:26px}
+.comAdd{display:flex;gap:8px;align-items:flex-end}.comAdd textarea{flex:1;min-height:44px;resize:none}
 #v-detail[data-ct=testo] .shotCard,#v-detail[data-ct=testo] #dStBox>*:not(.cTools):not(#fixSlot),#v-detail[data-ct=testo] #checkBtn{display:none!important}
 #v-detail[data-ct=riprese] #dOut>*:not(.shotCard),#v-detail[data-ct=riprese] #dStBox{display:none!important}
 #v-detail[data-ct=stato] #fixSlot,#v-detail[data-ct=stato] #dOut,#v-detail[data-ct=stato] #gobboBtn{display:none!important}
@@ -565,6 +572,11 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <div class="row" style="justify-content:center;gap:10px;margin-top:10px"><button class="btn ghost sm" id="mdSave">Scarica file</button><button class="btn danger sm" id="del">Elimina nota</button></div>
     </div></details>
+    <div class="comBox" id="comBox" hidden>
+      <div class="lbl">💬 Commenti</div>
+      <div id="comList" class="comList"></div>
+      <div class="comAdd"><textarea id="comText" rows="1" placeholder="Scrivi un commento…"></textarea><button class="btn sm" id="comGo">Invia</button></div>
+    </div>
   </section>
 
   <!-- UNISCI -->
@@ -670,7 +682,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · sistemalo con le mie dritte</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · commenti</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1835,7 +1847,7 @@ function applyCTabs(n){const V=$("v-detail"),isC=typeOf(n)==="contenuto",hasR=!!
   if(!isC){delete V.dataset.ct;return}$("cSeg").querySelector('[data-c=riprese]').hidden=!hasR;$("cSeg").style.setProperty("--n",hasR?3:2);
   if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if(ctab==="riprese"&&!hasR)ctab="testo";setCTab(ctab)}
 const setSt=s=>{cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
-function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;applyCTabs(n);const isC=typeOf(n)==="contenuto";(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
+function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;applyCTabs(n);const isC=typeOf(n)==="contenuto";renderCom(n,isC);(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
   if(!isC||!mainKey(n)){B.hidden=true;return}const st=n.st||"idea",k=mainKey(n),ok=n.check&&n.check.k===k&&(n.check.voto|0)>=8;let t="",fn=null;
   const allShot=(n.shots||[]).length&&n.shots.every(x=>x.done);if(allShot&&(st==="idea"||st==="lavoro")){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(st==="idea"){t="✎ Approvalo: mettilo In creazione";fn=()=>setSt("lavoro")}
   else if(st==="lavoro"){const sh=n.shots||[];if(sh.length&&sh.every(x=>x.done)){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(ok){t="✓ È pronto: segna come Fatto";fn=()=>setSt("fatto")}else if(n.check&&n.check.k===k){t="✨ Voto "+(n.check.voto|0)+" su 10: miglioralo";fn=()=>{setCTab("testo");setTimeout(()=>{const f=document.querySelector("#fixSlot .fixBox textarea");f?.scrollIntoView({behavior:"smooth",block:"center"});f?.focus()},60)}}else{t="✅ Controlla il contenuto";fn=()=>{setCTab("stato");$("checkBtn").click();setTimeout(()=>$("checkBox").scrollIntoView({behavior:"smooth",block:"start"}),300)}}}
@@ -2006,6 +2018,14 @@ $("del").onclick=()=>{if($("del").textContent==="Elimina"){$("del").textContent=
 /* Prompt comuni */
 const voiceText=()=>{return"";const v=voice||EX_VOICE;return `\nScrivi con questa voce di brand — Tono: ${v.tono}. Lessico: ${v.lessico}. Struttura: ${v.struttura}. Da evitare: ${v.evitare}. In sintesi: ${v.sintesi}\n`};
 
+/* Commenti (contenuti) */
+function renderCom(n,isC){const B=$("comBox");B.hidden=!isC;if(!isC)return;const L=$("comList");L.innerHTML="";
+  (n.com||[]).forEach(c=>{const d=document.createElement("div");d.className="com";const t=document.createElement("div");t.className="cTxt";t.textContent=c.t;
+    const w=document.createElement("div");w.className="cd";const dt=new Date(c.at);w.textContent=dt.toLocaleDateString("it-IT",{day:"numeric",month:"short"})+" alle "+dt.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+    const x=document.createElement("button");x.className="cx";x.type="button";x.textContent="✕";x.setAttribute("aria-label","Elimina commento");
+    x.onclick=()=>{if(!confirm("Eliminare questo commento?"))return;n.com=n.com.filter(y=>y.id!==c.id);saveNote(n);renderCom(n,true)};d.append(t,w,x);L.append(d)})}
+{const T=$("comText");T.addEventListener("input",()=>{T.style.height="auto";T.style.height=Math.min(T.scrollHeight,160)+"px"});
+  $("comGo").onclick=()=>{const v=T.value.trim();if(!cur||!v){T.focus();return}(cur.com=cur.com||[]).push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:v,at:Date.now()});saveNote(cur);T.value="";T.style.height="";renderCom(cur,true)}}
 /* Aggiungi alla nota */
 $("appendGo").onclick=async()=>{
   const add=$("addText").value.trim();if(!cur||!add)return $("aStatus").textContent="Scrivi o detta cosa aggiungere.";
