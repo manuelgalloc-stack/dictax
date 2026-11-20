@@ -306,8 +306,9 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .checkCard .tip{font-weight:600}
 #gobbo{position:fixed;inset:0;background:#000;color:#fff;z-index:80;display:flex;flex-direction:column}
 #gobbo[hidden]{display:none}
-.gView{flex:1;overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 80%,transparent)}
+.gView{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;position:relative;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 80%,transparent)}
 .gTxt{padding:40vh 22px 60vh;font:600 34px/1.45 var(--body);white-space:pre-wrap;max-width:760px;margin:0 auto}
+.gView::-webkit-scrollbar{display:none}
 .gTxt .cue{color:#8b8b8b;font-size:22px;font-weight:500}
 .gX{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;z-index:2;background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer}
 .gBar{display:flex;justify-content:center;align-items:center;gap:26px;padding:16px 16px max(22px,env(safe-area-inset-bottom))}
@@ -668,7 +669,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · voto automatico</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · gobbo scorrevole</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1872,9 +1873,13 @@ $("gobboBtn").onclick=()=>{const n=cur,k=reelOf(n)!=null?"reel":mainKey(n);if(!k
   gY=0;$("gView").scrollTop=0;gStop();$("gobbo").hidden=false;try{document.documentElement.requestFullscreen?.()}catch{}try{navigator.wakeLock?.request("screen").then(l=>gLock=l).catch(()=>{})}catch{}};
 let gLock=null;
 function gStop(){gRun=false;$("gPlay").textContent="▶";$("gPlay").setAttribute("aria-label","Avvia")}
-function gTick(t){if(!gRun)return;const V=$("gView");if(gLast)gY+=gSpeed*(t-gLast)/1000;gLast=t;V.scrollTop=gY;if(V.scrollTop+V.clientHeight>=V.scrollHeight-2){gStop();return}requestAnimationFrame(gTick)}
+function gTick(t){if(!gRun)return;const V=$("gView");if(gHold){gY=V.scrollTop;gLast=t;requestAnimationFrame(gTick);return}if(gLast)gY+=gSpeed*(t-gLast)/1000;gLast=t;V.scrollTop=gY;if(V.scrollTop+V.clientHeight>=V.scrollHeight-2){gStop();return}requestAnimationFrame(gTick)}
 $("gPlay").onclick=()=>{if(gRun){gStop();return}gRun=true;gLast=0;gY=$("gView").scrollTop;$("gPlay").textContent="❚❚";$("gPlay").setAttribute("aria-label","Pausa");requestAnimationFrame(gTick)};
-$("gView").onclick=()=>$("gPlay").click();
+let gHold=false,gMoved=false,gWT=null;{const V=$("gView");
+  V.addEventListener("touchstart",()=>{gHold=true;gMoved=false},{passive:true});V.addEventListener("touchmove",()=>{gMoved=true},{passive:true});
+  V.addEventListener("touchend",()=>{setTimeout(()=>{gHold=false;gY=V.scrollTop},350)},{passive:true});
+  V.addEventListener("wheel",()=>{gHold=true;gMoved=true;clearTimeout(gWT);gWT=setTimeout(()=>{gHold=false;gY=V.scrollTop;gMoved=false},250)},{passive:true});
+  V.onclick=()=>{if(gMoved){gMoved=false;return}$("gPlay").click()}}
 $("gSlow").onclick=()=>{gSpeed=Math.max(15,gSpeed-10);raw.set("gSpeed",gSpeed)};$("gFast").onclick=()=>{gSpeed=Math.min(160,gSpeed+10);raw.set("gSpeed",gSpeed)};
 $("gX").onclick=()=>{gStop();$("gobbo").hidden=true;try{document.fullscreenElement&&document.exitFullscreen()}catch{}try{gLock?.release();gLock=null}catch{}};
 /* Settimana di contenuti */
