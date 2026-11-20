@@ -64,5 +64,6 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 - Do not copy AudioPen's texts, illustrations or look; functional ideas only.
 
 ## Checks before pushing
+- **Always change the `#appVer` text** ("Versione <data> · <cosa>") on every release: the app fetches `/?v=` on start, on focus and every 10 min, compares the online `#appVer` with its own and, if different, shows a green bar ".updBar" "🔄 C'è una versione nuova di Dictax · Tocca per aggiornare" (reload). Same text = no banner.
 - `node --check` on the page script (extract the `<script>` block) and `npx wrangler pages functions build --outdir=.build`.
 - Test the page with Playwright at 390px width: no console errors, no horizontal scroll.
