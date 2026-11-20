@@ -318,7 +318,7 @@ body.simple .packBox,body.simple #cMonth,body.simple #calMonth,body.simple #cont
 .stBtns button[aria-pressed=true][data-s=idea]{border-color:var(--muted);background:var(--paper)}
 .stBtns button[aria-pressed=true][data-s=lavoro]{border-color:#c98a00;background:#fff4d6;color:#7a5600}
 .stBtns button[aria-pressed=true][data-s=fatto]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-strong)}
-.pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.nextStep{display:flex;flex-direction:column;gap:6px}.nextStep .btn{width:100%}.dMore{border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}.dMore>summary{cursor:pointer;padding:14px 16px;font-weight:700;color:var(--muted);list-style:none}.dMore>summary::-webkit-details-marker{display:none}.dMore[open]>summary{border-bottom:1px solid var(--line)}.dMoreBody{display:flex;flex-direction:column;gap:14px;padding:14px}
+.pill.st-lavoro{background:#fff4d6;color:#7a5600}.pill.st-pubblicato{background:#e5eefc;color:#1f4fa8}.stBtns button[aria-pressed=true][data-s=pubblicato]{border-color:#2f6fdb;background:#e5eefc;color:#1f4fa8}.nextStep{display:flex;flex-direction:column;gap:6px}.nextStep .btn{width:100%}.nextUndo{align-self:center;border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:700;text-decoration:underline;cursor:pointer;padding:6px}.dMore{border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}.dMore>summary{cursor:pointer;padding:14px 16px;font-weight:700;color:var(--muted);list-style:none}.dMore>summary::-webkit-details-marker{display:none}.dMore[open]>summary{border-bottom:1px solid var(--line)}.dMoreBody{display:flex;flex-direction:column;gap:14px;padding:14px}
 .cSeg{grid-template-columns:repeat(var(--n,3),1fr)}.cSeg button{font-size:14px;padding:10px 4px}
 #v-detail.ct #dSeg{display:none!important}
 #v-detail.ct #appendBox{display:none!important}
@@ -538,7 +538,7 @@ body:not(.solo) .soloOnly{display:none!important}
   <section id="v-detail" class="app" style="gap:14px" hidden>
     <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
-    <div id="nextStep" class="nextStep" hidden><span class="lbl">Prossimo passo</span><button class="btn big" id="nextBtn"></button></div>
+    <div id="nextStep" class="nextStep" hidden><span class="lbl">Prossimo passo</span><button class="btn big" id="nextBtn"></button><button type="button" class="nextUndo" id="nextUndo" hidden></button></div>
     <div class="seg cSeg" id="cSeg" hidden><button type="button" data-c="testo">📝 Testo</button><button type="button" data-c="riprese">🎬 Riprese</button><button type="button" data-c="stato">📊 Stato e voto</button></div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
@@ -683,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · carosello caso cliente</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · annulla pubblicato</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1848,7 +1848,7 @@ $("origBtn").onclick=()=>{setCTab("testo");$("dSeg").querySelectorAll("button")[
 function applyCTabs(n){const V=$("v-detail"),isC=typeOf(n)==="contenuto",hasR=!!reelOf(n);V.classList.toggle("ct",isC);$("cSeg").hidden=!isC;$("origBtn").hidden=!isC;
   if(!isC){delete V.dataset.ct;return}$("cSeg").querySelector('[data-c=riprese]').hidden=!hasR;$("cSeg").style.setProperty("--n",hasR?3:2);
   if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if(ctab==="riprese"&&!hasR)ctab="testo";setCTab(ctab)}
-const setSt=s=>{cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
+let undoSt=null;const setSt=(s,undo)=>{if(!undo)undoSt={id:cur.id,st:cur.st||"idea"};else undoSt=null;cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
 function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;applyCTabs(n);const isC=typeOf(n)==="contenuto";renderCom(n,isC);(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
   if(!isC||!mainKey(n)){B.hidden=true;return}const st=n.st||"idea",k=mainKey(n),ok=n.check&&n.check.k===k&&(n.check.voto|0)>=8;let t="",fn=null;
   const allShot=(n.shots||[]).length&&n.shots.every(x=>x.done);if(allShot&&(st==="idea"||st==="lavoro")){t="✓ Tutto girato: segna come Fatto";fn=()=>setSt("fatto")}else if(st==="idea"){t="✎ Approvalo: mettilo In creazione";fn=()=>setSt("lavoro")}
@@ -1858,7 +1858,10 @@ function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)ret
   const busy=voteBusy.has(n.id);if(!busy&&!(n.check&&n.check.k===k)&&!isPub(n)&&!autoVoted.has(n.id)){autoVoted.add(n.id);voteBusy.add(n.id);
     runCheck(n).catch(()=>{}).finally(()=>{voteBusy.delete(n.id);if(cur&&cur.id===n.id){renderCTools();renderHead()}})}
   if(voteBusy.has(n.id)){t="⏳ Sto dando il voto…";fn=null;btn.disabled=true}else btn.disabled=false;
-  B.hidden=!t;btn.textContent=t;btn.onclick=fn}
+  const U=$("nextUndo");let ut="",uf=null;
+  if(undoSt&&undoSt.id===n.id&&undoSt.st!==st){const ps=undoSt.st;ut="↩︎ Annulla: torna a "+ST[ps];uf=()=>setSt(ps,true)}
+  else if(st==="pubblicato"){ut="↩︎ Non l'ho pubblicato: torna a Fatto";uf=()=>setSt("fatto",true)}
+  U.hidden=!ut;U.textContent=ut;U.onclick=uf;btn.hidden=!t;B.hidden=!t&&!ut;btn.textContent=t;btn.onclick=fn}
 const autoVoted=new Set(),voteBusy=new Set();
 function renderCheck(n){setTimeout(renderNext);const B=$("checkBox");B.innerHTML="";$("fixSlot").innerHTML="";const k=mainKey(n);if(!k)return;const c=n.check&&n.check.k===k?n.check:null;
   if(c){const d=document.createElement("div");d.className="checkCard";d.innerHTML='<div class="score"><b></b><span>su 10</span></div><div class="rows"></div><p class="tip" style="margin:0"></p>';
