@@ -683,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · commenti da sistemare</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · carosello caso cliente</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -959,6 +959,7 @@ const FORMATS={
   facebook:{n:"Post Facebook",p:"post Facebook coinvolgente e colloquiale, paragrafi brevi, una domanda o call to action finale e 2-3 hashtag"},
   linkedin:{n:"Post LinkedIn",p:"post LinkedIn con gancio iniziale forte, paragrafi brevi, chiusura con domanda o call to action"},
   instagram:{n:"Caption Instagram",p:"caption Instagram breve e coinvolgente con call to action e 5 hashtag pertinenti in fondo"},
+  caso:{n:"Caso cliente",p:"carosello 'Caso cliente' di 3 slide che racconta la storia vera di un cliente: prima, cosa ho fatto e perché, dopo. Usa solo i fatti della nota: non inventare nomi, numeri, tempi o risultati; se manca qualcosa metti un segnaposto tra parentesi quadre, es. [nome o tipo di cliente]. Scrivi in prima persona, frasi corte, parole semplici. Slide 1 (il problema): chi è arrivato da me e, tra virgolette, la frase con cui mi ha raccontato il suo problema, con le sue parole, così chi legge si riconosce. Slide 2 (la scelta): cosa ho deciso di fare e soprattutto PERCHÉ, cioè il ragionamento legato proprio a quel problema, non l'elenco dei servizi. Slide 3 (il dopo): cosa è cambiato davvero per il cliente, nella vita o nel lavoro di tutti i giorni (cosa riesce a fare ora, cosa non lo blocca più), concreto e credibile, niente numeri gonfiati; chiudi con l'invito 'Scrivimi [PAROLA] e ti spiego come posso farlo anche per te' scegliendo una parola breve legata al tema. Formato: una riga 'Slide N: ...' per slide (titolo breve, poi il testo). Dopo le slide aggiungi una breve caption per il post (2-3 frasi + la stessa CTA) e una sezione 'CONSIGLI GRAFICI' con, slide per slide, che foto usare (meglio foto reale del cliente o del lavoro) e quale parola evidenziare"},
   carosello:{n:"Carosello",p:"testo per carosello Instagram di 6 slide, una riga 'Slide N: ...' per slide, titolo forte sulla prima, CTA sull'ultima"},
   reel:{n:"Script reel",p:"script per reel di 30-45 secondi, semplicissimo. Prima una sezione '3 GANCI' con 3 ganci alternativi numerati (1, 2, 3), brevissimi (massimo 10 parole ciascuno), diversi tra loro. Poi una sezione 'SCRIPT' che sviluppa il gancio migliore, indicato con '(gancio N)': GANCIO (primi 3 secondi), CORPO, CTA, frasi corte e parole di tutti i giorni, con indicazioni visive tra parentesi quadre. Nella primissima riga scrivi 'TIPO DI VIDEO: …' e adatta tutto lo script a quel tipo di video"},
   tiktok:{n:"Caption TikTok",p:"caption TikTok brevissima e diretta, con 3-4 hashtag"},
@@ -988,7 +989,7 @@ const MODES={
     tabs:[["home","Note"],["ask","Chiedi"],["conti","Conti"]],writer:"Sei un assistente di scrittura italiano.",fmtLabel:"Trasforma in",
     ph:"Parla con il pulsante verde, oppure scrivi o incolla qui un testo da riordinare.",mergeLead:"Scegli più note e Dictax le unisce in un unico riassunto con punti chiave e prossime azioni.",mergeHow:"Es. resoconto per il mio socio",
     qph:"Es. Cosa devo fare questa settimana?",sugg:["Unisci in un riassunto le note di questa settimana","Cosa devo fare questa settimana?","Quali scadenze ho annotato?","Riassumi le mie ultime note"]},
-  creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","facebook","instagram","carosello","reel","tiktok","storie","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
+  creator:{badge:"Creator · gratis",formats:["pulito","email","todo","verbale","riassunto","diario","linkedin","facebook","instagram","carosello","caso","reel","tiktok","storie","ganci","newsletter","idee","piano"],def:["pulito"],styles:["chiaro","descrittivo","elenco","professionale","amichevole","mio","diretto","ironico","ispirazionale"],folders:["Idee","Lavoro","Personale","Diario","Contenuti","Clienti","Pubblicati"],
     tabs:[["home","Note"],["cal","Calendario"],["voice","Clienti"],["conti","Conti"]],writer:"Sei un assistente di scrittura e social media manager italiano.",fmtLabel:"Trasforma in",
     ph:"Racconta l'idea del contenuto a voce, oppure incolla appunti, un vecchio post o un brief.",mergeLead:"Scegli più note e Dictax le unisce in un piano: riassunto, messaggi chiave e contenuti da pubblicare.",mergeHow:"Es. piano editoriale della settimana per il cliente",
     qph:"Es. Quali idee non ho ancora pubblicato?",sugg:["Quali idee non ho ancora pubblicato?","Fammi un piano per la prossima settimana","Cosa ho detto sul cliente del ristorante?"]}
@@ -1604,7 +1605,7 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
 /* Formati */
 let carN=store.get("carN",7);
 Object.defineProperty(FORMATS.carosello,"p",{get(){return `testo per carosello di ${carN} slide: una riga 'Slide N: ...' per ogni slide, titolo forte sulla prima, CTA sull'ultima. Alla fine aggiungi una sezione 'CONSIGLI GRAFICI' con, slide per slide, che foto o grafica usare (es. foto reale del prodotto in uso, primo piano di un dettaglio, persona che parla in camera, grafica con una sola frase in grande, prima/dopo, schema semplice) e una riga finale su colori e stile coerenti col brand`}});
-const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["reel","Reel"],["storie","Storie"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"]]}};
+const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["caso","Caso cliente"],["reel","Reel"],["storie","Storie"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["caso","Caso cliente"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"],["caso","Caso cliente"]]}};
 let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
 const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
 function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
@@ -1819,7 +1820,7 @@ function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
 const FASE={TOFU:"Farsi conoscere",MOFU:"Creare fiducia",BOFU:"Vendere"},faseLbl=f=>FASE[String(f||"").toUpperCase().trim()]||String(f||"");
-const FMT_SHORT={storie:"Storie",reel:"Reel",carosello:"Carosello",instagram:"Caption",facebook:"Post",linkedin:"Post",tiktok:"TikTok"};
+const FMT_SHORT={storie:"Storie",reel:"Reel",carosello:"Carosello",caso:"Caso cliente",instagram:"Caption",facebook:"Post",linkedin:"Post",tiktok:"TikTok"};
 const fmtLabel=k=>(PLATFORMS[plat]?.f.find(x=>x[0]===k)||[])[1]||FMT_SHORT[k]||FORMATS[k]?.n||k;
 const mainKey=n=>{const ks=orderedOut(n).filter(k=>k!=="todo");return ks.find(k=>SOCIAL.includes(baseK(k)))||ks[0]};
 const cleanPub=t=>String(t||"").split("\n").filter(l=>!/^\s*#\w/.test(l)&&!/\S+\s\|\s\S+.*\|/.test(l)).join("\n").trim();
