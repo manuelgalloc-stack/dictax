@@ -681,7 +681,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 20 nov · entrate fatturate</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 22 nov · settimana da lunedì</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1142,6 +1142,9 @@ $("mTipsGo").onclick=async()=>{const all=money();if(!all.length){$("mTips").text
   try{const{text}=await sampleFn(`Sei un consulente di finanza personale e per piccole attività, pratico e gentile. Ecco i movimenti di una persona negli ultimi 3 mesi:\n${sum}\n\nDai 3-5 consigli concreti e brevi basati solo su questi numeri (dove si spende di più, cosa tagliare, come va il saldo, se le entrate sono costanti, quanto mettere da parte). Usa cifre in euro quando aiuta. Linguaggio semplice, niente gergo, niente consigli di investimento su prodotti specifici. Elenco puntato con "•", senza markdown, in italiano.`,{onText:({text})=>{$("mTips").textContent=text}});$("mTips").textContent=text}
   catch(e){$("mTips").textContent=errMsg(e)}finally{b.disabled=false}};
 
+/* Cambio giorno (es. lunedì: nuova settimana): ridisegna contatori e calendario se l'app resta aperta */
+(function(){let last=today();const tick=()=>{const t=today();if(t===last)return;last=t;try{if(!$("v-cal").hidden)renderCal();if(!$("cliHome").hidden)renderClients();if(cliCur&&!$("cliEdit").hidden)refreshCrea();renderList()}catch{}};
+  setInterval(tick,60000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")tick()})})();
 /* Avviso nuova versione: confronta la versione caricata con quella online */
 (function(){const mine=()=>$("appVer").textContent.trim();let shown=false;
   async function check(){if(shown||!navigator.onLine)return;try{const r=await fetch("/?v="+Date.now(),{cache:"no-store"});const t=await r.text();const m=/id="appVer"[^>]*>([^<]+)</.exec(t);if(m&&m[1].trim()!==mine()){shown=true;
