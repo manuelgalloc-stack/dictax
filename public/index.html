@@ -271,6 +271,7 @@ body.noClients .cliOpt{display:none!important}
 .updBar{position:fixed;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));z-index:90;border:0;border-radius:14px;padding:14px 16px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
 .ftChip{display:block;width:max-content;margin-top:5px;border:1.5px solid #c98a00;background:#fff4d6;color:#7a5600;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.ftChip.on{border-color:var(--line);background:var(--paper);color:var(--muted)}
 .authGate{position:fixed;inset:0;z-index:200;background:var(--bg,#fff);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:max(40px,env(safe-area-inset-top)) 20px 40px}.authGate[hidden]{display:none}.agBox{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;margin-top:6vh}.agLogo{font-family:var(--display,"Young Serif",serif);font-size:34px;color:var(--fg)}.agLogo span{color:var(--accent)}.agBox h1{margin:6px 0 0}.agBox .lead{margin:0}body.gated{overflow:hidden}
+.shareApp{display:flex;flex-direction:column;gap:10px;border:1px solid var(--accent);border-radius:16px;padding:14px;background:var(--accent-soft)}.shareApp>div:first-child{display:flex;flex-direction:column;gap:3px}.shareApp small{color:var(--muted);font-size:14px}.shareApp .row .btn{flex:1}
 .accTop{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface,#fff)}.accTop>div{display:flex;flex-direction:column;min-width:0}.accTop small{color:var(--muted);font-size:12px;font-weight:700}.accTop b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.accTop .btn{flex:none;color:var(--danger);border-color:var(--danger)}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
@@ -625,6 +626,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="accBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Il tuo profilo</h1>
     <div class="accTop" id="accTop" hidden><div><small>Sei dentro come</small><b id="accTopMail"></b></div><button class="btn ghost sm" id="accTopOut" type="button">🚪 Esci</button></div>
+    <div class="shareApp"><div><b>📣 Fai conoscere Dictax</b><small>Manda il link a un amico o a un collega: entra con la sua email e prova subito.</small></div><div class="row tight"><button class="btn" id="shareApp" type="button">Condividi Dictax</button><button class="btn ghost" id="shareWa" type="button">WhatsApp</button></div><p class="status" id="shareStat" aria-live="polite" style="margin:0"></p></div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Come usi Dictax?</span>
       <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Per il mio lavoro</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
@@ -685,7 +687,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · guida di benvenuto</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · condividi Dictax</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1229,6 +1231,11 @@ $("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""
   const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: controlla di usare l'ultima email arrivata, oppure fatti mandare un nuovo codice.":"Fatto!";if(!error)show("account")};
 $("accLogout").onclick=async()=>{if(!confirm("Vuoi uscire dal tuo account? Le note restano salvate: le ritrovi quando rientri con la tua email."))return;try{await sb?.auth.signOut()}catch{}user=null;renderAccount();show("home");showGate()};
 $("accTopOut").onclick=()=>$("accLogout").click();
+/* Condividi Dictax con altri */
+const APP_URL="https://dictax.pages.dev/",SHARE_TXT="Ti consiglio Dictax: parli e lui scrive per te note, email, verbali e anche i contenuti social. Provalo qui:";
+$("shareApp").onclick=async()=>{const S=$("shareStat");try{if(navigator.share){await navigator.share({title:"Dictax",text:SHARE_TXT,url:APP_URL});S.textContent="Grazie per averlo condiviso!";return}}catch(e){if(e&&e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(SHARE_TXT+" "+APP_URL);S.textContent="Link copiato: incollalo dove vuoi."}catch{S.textContent=APP_URL}};
+$("shareWa").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(SHARE_TXT+" "+APP_URL),"_blank","noopener");
 /* Accesso obbligatorio: senza email non si entra (schermata #authGate) */
 let gateWait=false;const gateLater=()=>{if(gateWait&&$("welcome").hidden&&$("guide").hidden&&!user){gateWait=false;showGate()}};
 function showGate(){const G=$("authGate");if(!G.hidden)return;if(!$("welcome").hidden||!$("guide").hidden){gateWait=true;return}G.hidden=false;document.body.classList.add("gated");$("gEmail").value=$("gEmail").value||raw.get("accEmail","")}
