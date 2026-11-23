@@ -271,6 +271,7 @@ body.noClients .cliOpt{display:none!important}
 .updBar{position:fixed;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));z-index:90;border:0;border-radius:14px;padding:14px 16px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
 .ftChip{display:block;width:max-content;margin-top:5px;border:1.5px solid #c98a00;background:#fff4d6;color:#7a5600;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.ftChip.on{border-color:var(--line);background:var(--paper);color:var(--muted)}
 .authGate{position:fixed;inset:0;z-index:200;background:var(--bg,#fff);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:max(40px,env(safe-area-inset-top)) 20px 40px}.authGate[hidden]{display:none}.agBox{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;margin-top:6vh}.agLogo{font-family:var(--display,"Young Serif",serif);font-size:34px;color:var(--fg)}.agLogo span{color:var(--accent)}.agBox h1{margin:6px 0 0}.agBox .lead{margin:0}body.gated{overflow:hidden}
+.accTop{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface,#fff)}.accTop>div{display:flex;flex-direction:column;min-width:0}.accTop small{color:var(--muted);font-size:12px;font-weight:700}.accTop b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.accTop .btn{flex:none;color:var(--danger);border-color:var(--danger)}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
 .mRow div{flex:1;min-width:0}
@@ -623,6 +624,7 @@ body:not(.solo) .soloOnly{display:none!important}
   <section id="v-account" class="app" style="gap:14px" hidden>
     <button class="homeBtn" id="accBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <h1>Il tuo profilo</h1>
+    <div class="accTop" id="accTop" hidden><div><small>Sei dentro come</small><b id="accTopMail"></b></div><button class="btn ghost sm" id="accTopOut" type="button">🚪 Esci</button></div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <span class="lbl">Come usi Dictax?</span>
       <div class="kindSeg" id="kindSeg" role="group" aria-label="Come usi Dictax"><button data-k="personale">📝 Per il mio lavoro</button><button data-k="solo">👤 Creator singolo</button><button data-k="agency">👥 Creator con clienti</button></div>
@@ -669,7 +671,7 @@ body:not(.solo) .soloOnly{display:none!important}
     </div>
     <div id="accIn" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="card"><div class="head"><span class="fmt">Sei dentro come</span></div><b id="accMail" style="font-size:18px;overflow-wrap:anywhere"></b><p class="status" id="accSync"></p></div>
-      <div class="row"><button class="btn ghost" id="accLogout">Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
+      <div class="row"><button class="btn ghost" id="accLogout">🚪 Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
       <div class="card admBox" id="admBox" hidden>
         <div class="head"><span class="fmt">🧭 Dritte del momento</span><span class="pill">Solo tu</span></div>
         <p class="help" style="margin:0">Cosa funziona adesso e come scrivere. Dictax le usa in tutti i contenuti di tutti, scegliendo quelle giuste per il settore e per il formato (es. solo nelle caption).</p>
@@ -683,7 +685,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · prima la guida, poi l'email</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · esci dall'account</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1198,7 +1200,7 @@ async function syncPull(){if(!user)return;const{data,error}=await sb.from("user_
   rawSet("syncT",t);rawSet("syncDone",done);
   if(changed){loadMode();applyMode();if(!$("v-conti").hidden)renderMoney()}}
 async function syncAll(){syncMsg("Sto sincronizzando…");try{await syncPull();await syncPush()}catch(e){syncMsg("Sincronizzazione non riuscita: controlla la connessione.")}}
-function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";setTimeout(checkAdmin,0)}
+function renderAccount(){$("accBtn").classList.toggle("on",!!user);$("accOut").hidden=!!user;$("accIn").hidden=!user;if(user)$("accMail").textContent=user.email||"";$("accTop").hidden=!user;if(user)$("accTopMail").textContent=user.email||"";setTimeout(checkAdmin,0)}
 /* Dritte del momento: indicazioni di ManuLab per tutti, modificabili solo dall'amministratore */
 let dritte=raw.get("dritte",[]),isAdm=false;
 async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?select=settore,testo,formato&attiva=eq.true&order=updated_at.desc",{headers:{apikey:SB_KEY}});if(!r.ok)return;dritte=await r.json();raw.set("dritte",dritte);raw.set("dritteAt",Date.now())}catch{}}
@@ -1225,7 +1227,8 @@ $("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@
   catch{$("accStat").textContent="Serve la connessione a internet."}finally{b.disabled=false}};
 $("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""),email=$("accEmail").value.trim();if(token.length<6){$("accStat").textContent="Scrivi il codice che trovi nell'email.";return}
   const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: controlla di usare l'ultima email arrivata, oppure fatti mandare un nuovo codice.":"Fatto!";if(!error)show("account")};
-$("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount();showGate()};
+$("accLogout").onclick=async()=>{if(!confirm("Vuoi uscire dal tuo account? Le note restano salvate: le ritrovi quando rientri con la tua email."))return;try{await sb?.auth.signOut()}catch{}user=null;renderAccount();show("home");showGate()};
+$("accTopOut").onclick=()=>$("accLogout").click();
 /* Accesso obbligatorio: senza email non si entra (schermata #authGate) */
 let gateWait=false;const gateLater=()=>{if(gateWait&&$("welcome").hidden&&$("guide").hidden&&!user){gateWait=false;showGate()}};
 function showGate(){const G=$("authGate");if(!G.hidden)return;if(!$("welcome").hidden||!$("guide").hidden){gateWait=true;return}G.hidden=false;document.body.classList.add("gated");$("gEmail").value=$("gEmail").value||raw.get("accEmail","")}
