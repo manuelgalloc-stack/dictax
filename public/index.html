@@ -683,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · dritte solo in Creator</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · prima la guida, poi l'email</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1227,7 +1227,8 @@ $("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""
   const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: controlla di usare l'ultima email arrivata, oppure fatti mandare un nuovo codice.":"Fatto!";if(!error)show("account")};
 $("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount();showGate()};
 /* Accesso obbligatorio: senza email non si entra (schermata #authGate) */
-function showGate(){const G=$("authGate");if(!G.hidden)return;G.hidden=false;document.body.classList.add("gated");$("gEmail").value=$("gEmail").value||raw.get("accEmail","")}
+let gateWait=false;const gateLater=()=>{if(gateWait&&$("welcome").hidden&&$("guide").hidden&&!user){gateWait=false;showGate()}};
+function showGate(){const G=$("authGate");if(!G.hidden)return;if(!$("welcome").hidden||!$("guide").hidden){gateWait=true;return}G.hidden=false;document.body.classList.add("gated");$("gEmail").value=$("gEmail").value||raw.get("accEmail","")}
 function hideGate(){$("authGate").hidden=true;document.body.classList.remove("gated")}
 $("gSend").onclick=async()=>{const email=$("gEmail").value.trim(),S=$("gStat");if(!/^\S+@\S+\.\S+$/.test(email)){S.textContent="Scrivi un'email valida.";$("gEmail").focus();return}
   const b=$("gSend");b.disabled=true;S.textContent="Invio in corso…";
@@ -1245,7 +1246,7 @@ $("accCode").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("accVerify")
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&user&&Date.now()-lastPull>30000)syncAll()});
 $("accEmail").value=raw.get("accEmail","");
 if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
-else showGate();
+else setTimeout(showGate,0);
 
 /* Stato contenuti e calendario */
 const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto",pubblicato:"📣 Pubblicato"};const isPub=n=>n.st==="pubblicato",isFatto=n=>n.st==="fatto"||n.st==="pubblicato";
@@ -1472,7 +1473,7 @@ async function ideaToContent(x){const nm0=$("cName").value.trim(),nm=nm0==="__me
 const qClientOn=()=>mode==="creator"&&!isSolo()&&useClients&&clients().length>0;
 const usoNow=()=>mode==="creator"?ckind:"personale";
 function setUso(u){raw.set("uso",u);if(u!=="personale"){ckind=u;raw.set("ckind",u)}const m=u==="personale"?"note":"creator";if(m!==mode)setMode(m);else applyKind();renderList()}
-document.querySelectorAll("#welcome .typeBtn").forEach(b=>b.onclick=()=>{$("welcome").hidden=true;setUso(b.dataset.u);show("home");if(!raw.get("guideDone",false))guideShow(0)});
+document.querySelectorAll("#welcome .typeBtn").forEach(b=>b.onclick=()=>{$("welcome").hidden=true;setUso(b.dataset.u);show("home");if(!raw.get("guideDone",false))guideShow(0);setTimeout(gateLater,0)});
 function applyKind(){const u=usoNow();$("kindHelp").textContent=u==="personale"?"Note, liste e conti. Accendi Creator in alto quando vuoi creare contenuti social.":u==="solo"?"Crei contenuti per te: niente clienti, il tuo posizionamento vale per tutti i contenuti.":"Crei contenuti per i clienti: ognuno ha il suo posizionamento e in Chiedi scegli per chi.";document.body.classList.toggle("solo",isSolo());document.body.classList.toggle("noClients",!clientsOn());
   if(!clientsOn())cfilter="";document.querySelectorAll("#kindSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===u));
   const vb=document.querySelector('#dockNav button[data-view=voice] span');if(vb)vb.textContent=isSolo()?"Brand":"Clienti"}
@@ -1539,7 +1540,7 @@ $("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay,calCli||null);show("h
 const GUIDE_P=[["🎙","Parla, anche in macchina","Dopo una chiamata o un sopralluogo, tocca il microfono verde e racconta. Dictax scrive la nota pulita e corretta."],["☑️","Cose da fare e scadenze","Dentro la nota tocca \"Crea la lista delle cose da fare\": Dictax trova i compiti e le date (\"entro venerdì\")."],["📤","Pronto da mandare","Dalla stessa nota crei l'email, il verbale o il riassunto da mandare al cliente, con un tocco."],["💶","Conti e tasse","In Conti segni entrate e spese. Se sei in forfettario, Dictax ti dice quanto mettere da parte per tasse e contributi a ogni fattura."]];
 let GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["☑️","Nota e lista","Dictax scrive la nota pulita. Dentro la nota puoi creare la lista delle cose da fare, da spuntare."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
 let gi=0;const GUIDE_C=GUIDE;function guideShow(i){if(i===0)GUIDE=raw.get("uso","")==="personale"?GUIDE_P:GUIDE_C;gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?"Inizia":"Avanti";$("guide").hidden=false}
-const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true)};
+const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true);gateLater()};
 $("guideNext").onclick=()=>gi<GUIDE.length-1?guideShow(gi+1):guideEnd();$("guideSkip").onclick=guideEnd;
 $("guideAgain").onclick=()=>{show("home");guideShow(0)};
 
