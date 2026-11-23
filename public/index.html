@@ -270,6 +270,7 @@ body.noClients .cliOpt{display:none!important}
 .mCliR{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;font:inherit;color:inherit;cursor:pointer}.mCliR .top{display:flex;justify-content:space-between;gap:8px;font-size:15px}.mCliR .top b{color:var(--accent-strong,var(--accent))}.mCliR .bar{height:6px;border-radius:9px;background:var(--accent);margin-top:6px;opacity:.75}.mCliR small{color:var(--muted)}.mCliMs{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:14px;padding:6px 4px 4px;color:var(--muted)}.mCliMs b{color:var(--fg);font-weight:600;text-align:right}#mCliSeg{margin:8px 0}.mJump{margin-top:8px}
 .updBar{position:fixed;left:12px;right:12px;top:max(10px,env(safe-area-inset-top));z-index:90;border:0;border-radius:14px;padding:14px 16px;background:var(--accent);color:#fff;font:inherit;font-weight:700;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
 .ftChip{display:block;width:max-content;margin-top:5px;border:1.5px solid #c98a00;background:#fff4d6;color:#7a5600;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.ftChip.on{border-color:var(--line);background:var(--paper);color:var(--muted)}
+.authGate{position:fixed;inset:0;z-index:200;background:var(--bg,#fff);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:max(40px,env(safe-area-inset-top)) 20px 40px}.authGate[hidden]{display:none}.agBox{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;margin-top:6vh}.agLogo{font-family:var(--display,"Young Serif",serif);font-size:34px;color:var(--fg)}.agLogo span{color:var(--accent)}.agBox h1{margin:6px 0 0}.agBox .lead{margin:0}body.gated{overflow:hidden}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
 .mRow div{flex:1;min-width:0}
@@ -682,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 22 nov · commenti anche nelle note</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · accesso con email</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -825,6 +826,22 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="guideDots" id="guideDots"></div>
     <button class="btn big" id="guideNext" style="width:100%">Avanti</button>
     <button class="back" id="guideSkip" style="align-self:center">Salta</button>
+  </div>
+</div>
+<div class="authGate" id="authGate" hidden>
+  <div class="agBox">
+    <div class="agLogo">Dict<span>ax</span></div>
+    <h1>Entra in Dictax</h1>
+    <p class="lead">Scrivi la tua email: ti mandiamo un codice di 6 cifre. Niente password. Così le tue note sono al sicuro e le ritrovi su ogni dispositivo.</p>
+    <label class="lbl" for="gEmail">La tua email</label>
+    <input type="email" id="gEmail" autocomplete="email" inputmode="email" placeholder="nome@esempio.it">
+    <button class="btn big" id="gSend">Mandami il codice</button>
+    <div id="gCodeBox" hidden style="display:flex;flex-direction:column;gap:10px">
+      <p class="help" style="margin:0">Controlla la posta (anche Spam o Promozioni): è arrivata un'email da <b>Dictax</b>. Scrivi qui il codice.</p>
+      <input type="text" id="gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Codice a 6 cifre" style="font-size:24px;letter-spacing:5px;text-align:center">
+      <button class="btn big" id="gVerify">Entra</button>
+    </div>
+    <p class="status" id="gStat" aria-live="polite"></p>
   </div>
 </div>
 <div class="sheetWrap" id="welcome" hidden>
@@ -1039,9 +1056,10 @@ const allStyles=()=>{const o={};M().styles.forEach(k=>o[k]=BASE_STYLES[k]);custo
 /* Server di Dictax */
 async function api(path,opts={}){
   const h=new Headers(opts.headers||{});const code=raw.get("code","");if(code)h.set("x-access-code",code);
+  try{if(sb){const{data}=await sb.auth.getSession();const t=data?.session?.access_token;if(t)h.set("authorization","Bearer "+t)}}catch{}
   let r;try{r=await fetch(path,{...opts,headers:h})}catch{throw {code:"offline"}}
   let data={};try{data=await r.json()}catch{}
-  if(!r.ok){if(r.status===401)showLock();throw {code:data.code||(r.status===401?"locked":"upstream_error"),message:data.error||""}}
+  if(!r.ok){if(r.status===401){if(data.code==="login")showGate();else showLock()}throw {code:data.code||(r.status===401?"locked":"upstream_error"),message:data.error||""}}
   return data}
 function parseJSON(t){try{return JSON.parse(t)}catch{}
   const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f){try{return JSON.parse(f[1])}catch{}}
@@ -1159,7 +1177,7 @@ raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Dat
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
 function syncMsg(m){const e=$("accSync");if(e)e.textContent=m}
 function loadSb(){if(sb)return Promise.resolve(sb);return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=SB_LIB;sc.onload=()=>{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
-  sb.auth.onAuthStateChange((ev,ses)=>{const was=user?.id;user=ses?.user||null;renderAccount();if(user&&user.id!==was)syncAll()});ok(sb)};sc.onerror=()=>ko(new Error("offline"));document.head.append(sc)})}
+  sb.auth.onAuthStateChange((ev,ses)=>{const was=user?.id;user=ses?.user||null;renderAccount();if(user)hideGate();else if(ev==="SIGNED_OUT"||ev==="INITIAL_SESSION")showGate();if(user&&user.id!==was)syncAll()});ok(sb)};sc.onerror=()=>ko(new Error("offline"));document.head.append(sc)})}
 async function syncPush(){if(!user)return;const t=raw.get("syncT",{}),done=raw.get("syncDone",{}),rows=[];
   for(const k of SYNC){if((t[k]||0)>(done[k]||0)){const v=raw.get(k,undefined);if(v!==undefined)rows.push({user_id:user.id,key:k,value:v,updated_at:new Date(t[k]).toISOString()})}}
   if(!rows.length){syncMsg("Tutto sincronizzato ✓");return}
@@ -1207,12 +1225,27 @@ $("accSend").onclick=async()=>{const email=$("accEmail").value.trim();if(!/^\S+@
   catch{$("accStat").textContent="Serve la connessione a internet."}finally{b.disabled=false}};
 $("accVerify").onclick=async()=>{const token=$("accCode").value.replace(/\D/g,""),email=$("accEmail").value.trim();if(token.length<6){$("accStat").textContent="Scrivi il codice che trovi nell'email.";return}
   const{error}=await sb.auth.verifyOtp({email,token,type:"email"});$("accStat").textContent=error?"Codice non valido o scaduto: controlla di usare l'ultima email arrivata, oppure fatti mandare un nuovo codice.":"Fatto!";if(!error)show("account")};
-$("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount()};
+$("accLogout").onclick=async()=>{await sb?.auth.signOut();user=null;renderAccount();showGate()};
+/* Accesso obbligatorio: senza email non si entra (schermata #authGate) */
+function showGate(){const G=$("authGate");if(!G.hidden)return;G.hidden=false;document.body.classList.add("gated");$("gEmail").value=$("gEmail").value||raw.get("accEmail","")}
+function hideGate(){$("authGate").hidden=true;document.body.classList.remove("gated")}
+$("gSend").onclick=async()=>{const email=$("gEmail").value.trim(),S=$("gStat");if(!/^\S+@\S+\.\S+$/.test(email)){S.textContent="Scrivi un'email valida.";$("gEmail").focus();return}
+  const b=$("gSend");b.disabled=true;S.textContent="Invio in corso…";
+  try{await loadSb();const{error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+"/",shouldCreateUser:true}});
+    if(error){S.textContent=/rate|limit|seconds/i.test(error.message)?"Troppe email in poco tempo: aspetta qualche minuto e riprova.":"Non sono riuscito a mandare l'email: "+error.message;return}
+    raw.set("accEmail",email);$("accEmail").value=email;S.textContent="Codice inviato a "+email+".";$("gCodeBox").hidden=false;b.textContent="Rimanda il codice";b.classList.add("ghost");setTimeout(()=>$("gCode").focus(),50)}
+  catch{S.textContent="Serve la connessione a internet."}finally{b.disabled=false}};
+$("gVerify").onclick=async()=>{const token=$("gCode").value.replace(/\D/g,""),email=$("gEmail").value.trim(),S=$("gStat");if(token.length<6){S.textContent="Scrivi il codice che trovi nell'email.";return}
+  const b=$("gVerify");b.disabled=true;S.textContent="Controllo il codice…";
+  try{await loadSb();const{error}=await sb.auth.verifyOtp({email,token,type:"email"});if(error){S.textContent="Codice non valido o scaduto: usa l'ultima email arrivata, oppure fatti mandare un nuovo codice.";return}S.textContent="Fatto!";hideGate()}
+  catch{S.textContent="Serve la connessione a internet."}finally{b.disabled=false}};
+$("gCode").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("gVerify").click()}};$("gEmail").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("gSend").click()}};
 $("accSyncNow").onclick=()=>syncAll();
 $("accCode").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("accVerify").click()}};$("accEmail").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("accSend").click()}};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&user&&Date.now()-lastPull>30000)syncAll()});
 $("accEmail").value=raw.get("accEmail","");
 if(Object.keys(localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token"))||/access_token=|error_description=/.test(location.hash)){const hashErr=/error_description=/.test(location.hash);loadSb().then(()=>{if(/access_token=/.test(location.hash))show("account");if(hashErr){show("account");renderAccount();$("accStat").textContent="Questo link è scaduto o è già stato usato. Chiedi una nuova email e usa sempre l'ultima che arriva.";history.replaceState(null,"",location.pathname)}}).catch(()=>{})}
+else showGate();
 
 /* Stato contenuti e calendario */
 const ST={idea:"💡 Idea",lavoro:"✎ In creazione",fatto:"✓ Fatto",pubblicato:"📣 Pubblicato"};const isPub=n=>n.st==="pubblicato",isFatto=n=>n.st==="fatto"||n.st==="pubblicato";

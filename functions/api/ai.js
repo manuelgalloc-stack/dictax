@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { json, checkAccess, claudeKey } from "../../lib/util.js";
+import { json, checkUser, claudeKey } from "../../lib/util.js";
 
 // Rewriting, titles, fidelity check, super notes and "chat with notes" all go
 // through this one endpoint. The page sends the full prompt (or chat turns).
@@ -51,7 +51,7 @@ async function runWorkersAI(env, messages, quick, warning) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const denied = checkAccess(request, env);
+  const denied = await checkUser(request, env);
   if (denied) return denied;
 
   if (!claudeKey(env) && !env.AI) {

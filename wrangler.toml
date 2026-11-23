@@ -10,6 +10,9 @@ binding = "AI"
 # Non-secret settings. Secrets (ANTHROPIC_API_KEY, ACCESS_CODE) are set in the
 # Cloudflare dashboard: Settings > Variables and Secrets.
 [vars]
+# Sign-in check for the paid endpoints (publishable key, not a secret). REQUIRE_LOGIN = "off" disables it.
+SUPABASE_URL = "https://kzrxedaahwgltzrbuctl.supabase.co"
+SUPABASE_KEY = "sb_publishable_BjM67cgulXV01z7nRtaOFQ_uZ_dnEK1"
 CLAUDE_MODEL = "claude-opus-5-5"
 # Used for rewriting when ANTHROPIC_API_KEY is not set
 CF_TEXT_MODEL = "@cf/google/gemma-4-26b-a4b-it"

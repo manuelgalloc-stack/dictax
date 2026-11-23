@@ -1,4 +1,4 @@
-import { json, checkAccess } from "../../lib/util.js";
+import { json, checkUser } from "../../lib/util.js";
 
 // Speech-to-text with Whisper on Cloudflare Workers AI (AI binding in wrangler.toml).
 const MODEL = "@cf/openai/whisper-large-v3-turbo";
@@ -15,7 +15,7 @@ function toBase64(buffer) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const denied = checkAccess(request, env);
+  const denied = await checkUser(request, env);
   if (denied) return denied;
 
   if (!env.AI) {
