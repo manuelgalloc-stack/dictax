@@ -683,7 +683,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · accesso con email</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · dritte solo in Creator</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1079,7 +1079,7 @@ $("codeIn").onkeydown=e=>{if(e.key==="Enter")$("codeSave").click()};
 /* Profili */
 function setMode(m){mode=m;raw.set("mode",m);loadMode();applyMode()}
 function applyMode(){
-  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=true;$("askOpen").hidden=mode!=="creator";
+  $("dock").hidden=false;$("creatorSw").setAttribute("aria-pressed",mode==="creator");applyKind();$("calOpen").hidden=true;$("askOpen").hidden=mode!=="creator";try{$("admBox").hidden=!isAdm||mode!=="creator"}catch{}
   document.querySelectorAll(".planBadge").forEach(s=>s.textContent=M().badge);
   $("transcript").placeholder="Es. domani chiamare il commercialista per l'IVA…";$("mLead").textContent=M().mergeLead;$("mHow").placeholder=M().mergeHow;$("q").placeholder=M().qph;
   $("voiceToggle").hidden=true;$("useVoice").checked=mode==="creator"&&st.ws==="mio";
@@ -1205,7 +1205,7 @@ async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?sele
 if(Date.now()-raw.get("dritteAt",0)>36e5)loadDritte();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-raw.get("dritteAt",0)>36e5)loadDritte()});
 function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [settore: ${x.settore||"Tutti"} · formato: ${x.formato||"Tutti"}] ${x.testo}`).join("\n")+"\nLe indicazioni con un formato (es. Caption, Reel, Carosello) valgono solo quando scrivi quel formato."}
-async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm;if(isAdm)renderAdm()}
+async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm||mode!=="creator";if(isAdm&&mode==="creator")renderAdm()}
 async function renderAdm(){const L=$("admList");const{data,error}=await sb.from("dritte").select("*").order("updated_at",{ascending:false});if(error){$("admStatus").textContent="Non riesco a leggere le dritte: riprova.";return}L.innerHTML="";
   (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Settore" placeholder="Settore (es. Tutti, Ristoranti)"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><div class="dRow"><span class="dLbl">Formato</span><select class="fm" aria-label="Formato"></select></div><textarea rows="3" aria-label="Indicazione"></textarea>';
     const fm=d.querySelector(".fm");["Tutti","Caption","Reel","Carosello","Post","Storie","TikTok","Ganci","Newsletter"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v==="Tutti"?"Tutti i formati":v;fm.append(o)});fm.value=x.formato||"Tutti";fm.onchange=()=>save({formato:fm.value});
