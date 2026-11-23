@@ -273,7 +273,8 @@ body.noClients .cliOpt{display:none!important}
 .authGate{position:fixed;inset:0;z-index:200;background:var(--bg,#fff);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:max(40px,env(safe-area-inset-top)) 20px 40px}.authGate[hidden]{display:none}.agBox{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;margin-top:6vh}.agLogo{font-family:var(--display,"Young Serif",serif);font-size:34px;color:var(--fg)}.agLogo span{color:var(--accent)}.agBox h1{margin:6px 0 0}.agBox .lead{margin:0}body.gated{overflow:hidden}
 .shareApp{display:flex;flex-direction:column;gap:10px;border:1px solid var(--accent);border-radius:16px;padding:14px;background:var(--accent-soft)}.shareApp>div:first-child{display:flex;flex-direction:column;gap:3px}.shareApp small{color:var(--muted);font-size:14px}.shareApp .row .btn{flex:1}
 .accTop{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface,#fff)}.accTop>div{display:flex;flex-direction:column;min-width:0}.accTop small{color:var(--muted);font-size:12px;font-weight:700}.accTop b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}.accTop .btn{flex:none;color:var(--danger);border-color:var(--danger)}
-.noDateBox{border-color:#c98a00;background:#fffaf0}.ndRow{border-top:1px solid var(--line);padding:6px 0}.ndRow:first-child{border-top:0}.ndRow .calItem{border:0;padding-bottom:4px}.ndDate{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#7a5600}.ndDate input{flex:1;min-width:0;max-width:200px}
+.noDateBox{border-color:#c98a00;background:#fffaf0}.ndRow{border-top:1px solid var(--line);padding:6px 0}.ndRow:first-child{border-top:0}.ndRow .calItem{border:0;padding-bottom:4px}.ndNext{margin-top:6px;color:var(--accent-strong,var(--accent));border-color:var(--accent)}#ndAll{align-self:flex-start;background:#c98a00}
+.ndDate{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#7a5600}.ndDate input{flex:1;min-width:0;max-width:200px}
 .mRow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
 .mRow:last-child{border-bottom:0}
 .mRow div{flex:1;min-width:0}
@@ -617,7 +618,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="mMonth"><button id="calPrev" aria-label="Mese precedente">‹</button><b id="calLbl"></b><button id="calNext" aria-label="Mese successivo">›</button></div>
     <div class="cliOpt calCliBox" id="calCli" hidden><select id="calCliSel" aria-label="Di chi vuoi vedere il calendario"></select></div>
     <div class="calSum calLeg" id="calSum"></div>
-    <div class="card noDateBox" id="calNoDateBox" hidden><div class="head"><span class="fmt" id="calNoDateLbl">📌 In creazione, senza giorno</span></div><p class="help" style="margin:0">Scegli il giorno di uscita e il contenuto va nel calendario.</p><div id="calNoDate"></div></div>
+    <div class="card noDateBox" id="calNoDateBox" hidden><div class="head"><span class="fmt" id="calNoDateLbl">📌 In creazione, senza giorno</span></div><p class="help" style="margin:0">Scegli il giorno di uscita, oppure lascia fare a Dictax: mette ogni contenuto nel primo giorno libero di quel cliente.</p><button class="btn sm" id="ndAll" type="button">⚡ Assegna tutti al prossimo giorno utile</button><div id="calNoDate"></div></div>
     <div class="cal" id="calGrid"></div>
     <div class="card"><div class="head"><span class="fmt" id="calDayLbl"></span></div><button class="btn sm" id="calPlan" hidden style="align-self:flex-start;background:var(--t-contenuto)">+ Contenuto per questo giorno</button><div id="calList"></div></div>
   </section>
@@ -688,7 +689,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · calendario sistemato</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · prossimo giorno utile</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1332,7 +1333,14 @@ function renderCal(){document.querySelector(".weekDone")?.remove();renderCalCli(
   if(!list.length&&!dl.length&&!free.some(x=>!calDay||x.ds===calDay))L.innerHTML='<p class="status">Niente in questa data. Per i contenuti, apri il contenuto e scegli la data di pubblicazione.</p>';list.forEach(n=>L.append(calRow(n)));
   const nd=all.filter(n=>!n.pub&&!isPub(n)).sort((a,b)=>(b.at||0)-(a.at||0));$("calNoDateBox").hidden=!nd.length;$("calNoDateLbl").textContent="📌 In creazione, senza giorno ("+nd.length+")";$("calNoDate").innerHTML="";
   nd.forEach(n=>{const w=document.createElement("div");w.className="ndRow";w.append(calRow(n));const i=document.createElement("input");i.type="date";i.min=today();i.setAttribute("aria-label","Giorno di uscita per "+(n.title||"contenuto"));
-    i.onchange=()=>{if(!i.value)return;n.pub=i.value;saveNote(n);calM=i.value.slice(0,7);calDay=i.value;renderCal()};const lb=document.createElement("label");lb.className="ndDate";lb.append("📅 Giorno: ",i);w.append(lb);$("calNoDate").append(w)})}
+    i.onchange=()=>{if(!i.value)return;n.pub=i.value;saveNote(n);calM=i.value.slice(0,7);calDay=i.value;renderCal()};const lb=document.createElement("label");lb.className="ndDate";lb.append("📅 Giorno: ",i);w.append(lb);
+    const nb=document.createElement("button");nb.type="button";nb.className="btn ghost sm ndNext";const nx=nextUseful(n.client||"",new Set());nb.textContent="⚡ Prossimo giorno utile: "+shortDate(nx);nb.onclick=()=>{n.pub=nextUseful(n.client||"",new Set());saveNote(n);calM=n.pub.slice(0,7);calDay=n.pub;renderCal()};w.append(nb);$("calNoDate").append(w)});
+  $("ndAll").hidden=nd.length<2;$("ndAll").onclick=()=>{const used={};nd.forEach(n=>{const cl=n.client||"",u=used[cl]||(used[cl]=new Set());n.pub=nextUseful(cl,u);u.add(n.pub);saveNote(n)});const first=nd.map(n=>n.pub).sort()[0];calM=first.slice(0,7);calDay="";renderCal();
+    $("calSum").insertAdjacentHTML("beforebegin",'<p class="status weekDone" style="margin:0">✓ Ho dato un giorno a '+nd.length+' contenuti.</p>')}}
+/* Prossimo giorno utile per un cliente: il primo posto "da fare" della sua settimana, altrimenti il primo giorno feriale (da oggi) senza altri suoi contenuti */
+function nextUseful(cl,extra){const key=cl||(isSolo()?"__me":""),td=today(),busy=new Set([...contents().filter(n=>(n.client||"")===cl&&n.pub&&(n.st||"idea")!=="idea").map(n=>n.pub),...extra]);
+  if(key&&packKeys().includes(key)){for(let k=0;k<3;k++){const m=shiftM(td.slice(0,7),k);const f=wkFree(key,m).filter(ds=>ds>=td&&!busy.has(ds)).sort();if(f.length)return f[0]}}
+  const d=new Date(td+"T12:00");for(let i=0;i<120;i++){const ds=isoD(d),wd=(d.getDay()+6)%7;if(wd<5&&!busy.has(ds))return ds;d.setDate(d.getDate()+1)}return td}
 
 /* Clienti e posizionamento (sistema ManuLab) */
 let cliCur=null;
