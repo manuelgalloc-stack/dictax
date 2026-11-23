@@ -685,7 +685,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · esci dall'account</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 23 nov · guida di benvenuto</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1542,8 +1542,9 @@ $("calPlan").onclick=()=>{if(!calDay)return;setPlan(calDay,calCli||null);show("h
 /* Guida al primo uso */
 const GUIDE_P=[["🎙","Parla, anche in macchina","Dopo una chiamata o un sopralluogo, tocca il microfono verde e racconta. Dictax scrive la nota pulita e corretta."],["☑️","Cose da fare e scadenze","Dentro la nota tocca \"Crea la lista delle cose da fare\": Dictax trova i compiti e le date (\"entro venerdì\")."],["📤","Pronto da mandare","Dalla stessa nota crei l'email, il verbale o il riassunto da mandare al cliente, con un tocco."],["💶","Conti e tasse","In Conti segni entrate e spese. Se sei in forfettario, Dictax ti dice quanto mettere da parte per tasse e contributi a ogni fattura."]];
 let GUIDE=[["🎙","Parla","Tocca il microfono verde e dì quello che hai in mente. Oppure scrivi nella casella sotto."],["☑️","Nota e lista","Dictax scrive la nota pulita. Dentro la nota puoi creare la lista delle cose da fare, da spuntare."],["👆","Tutto a portata di dito","Tocca una nota per aprirla. Tienila premuta per segnarla Fatta o eliminarla. In alto a destra trovi profilo e impostazioni."]];
-let gi=0;const GUIDE_C=GUIDE;function guideShow(i){if(i===0)GUIDE=raw.get("uso","")==="personale"?GUIDE_P:GUIDE_C;gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?"Inizia":"Avanti";$("guide").hidden=false}
-const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true);gateLater()};
+const GUIDE_W=[["👋","Benvenuto in Dictax","Il quaderno vocale: tu parli, Dictax scrive. Ti mostro in 4 passi cosa puoi fare."],["🎙","Parla, Dictax scrive","Tocca il microfono verde e racconta, anche in macchina. Ti ritrovi la nota pulita e corretta, senza esitazioni."],["✨","Dalla voce a tutto il resto","Da una nota crei email, verbali, liste di cose da fare. Se fai contenuti: script dei reel, caroselli, calendario e clienti."],["💶","Conti e tasse","Segni entrate e spese: se sei in forfettario Dictax ti dice quanto mettere da parte per le tasse."],["🔒","Le tue note al sicuro","Entri con la tua email, senza password: ritrovi tutto sul telefono e sul computer."]];
+let gi=0,gWel=false;const GUIDE_C=GUIDE;function guideShow(i,wel){if(i===0){gWel=!!wel;GUIDE=wel?GUIDE_W:raw.get("uso","")==="personale"?GUIDE_P:GUIDE_C}gi=i;const[g,t,x]=GUIDE[i];$("guideIcon").textContent=g;$("guideTitle").textContent=t;$("guideText").textContent=x;$("guideDots").innerHTML=GUIDE.map((_,j)=>`<i class="${j===i?"on":""}"></i>`).join("");$("guideNext").textContent=i===GUIDE.length-1?(gWel?"Iniziamo":"Inizia"):"Avanti";$("guide").hidden=false}
+const guideEnd=()=>{$("guide").hidden=true;raw.set("guideDone",true);if(gWel&&!raw.get("uso","")){gWel=false;$("welcome").hidden=false;return}gWel=false;gateLater()};
 $("guideNext").onclick=()=>gi<GUIDE.length-1?guideShow(gi+1):guideEnd();$("guideSkip").onclick=guideEnd;
 $("guideAgain").onclick=()=>{show("home");guideShow(0)};
 
@@ -2159,7 +2160,7 @@ $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min
     t=[...new Set(t)];if(JSON.stringify(t)!==JSON.stringify(n.tags||[])){n.tags=t;n.up=Date.now();ch=true}});
   if(ch)store.set("notes",ns);
   const P=store.get("clients",{});let pc=false;Object.values(P).forEach(p=>{if(p.pos&&/\b(TOFU|MOFU|BOFU)\b/.test(p.pos)){p.pos=p.pos.replace(/\bTOFU\b/g,"Farsi conoscere").replace(/\bMOFU\b/g,"Creare fiducia").replace(/\bBOFU\b/g,"Vendere");pc=true}(p.ideas||[]).forEach(x=>{if(x&&re.test(String(x.fase||"").trim())){x.fase=faseLbl(x.fase);pc=true}})});if(pc)store.set("clients",P)})();
-loadMode();applyMode();show("home");renderPend();if(!raw.get("uso",""))$("welcome").hidden=false;
+loadMode();applyMode();show("home");renderPend();if(!raw.get("uso","")){if(!raw.get("guideDone",false))guideShow(0,true);else $("welcome").hidden=false}
 fetch("/api/health").then(r=>r.json()).then(h=>{
   if(h.locked&&!raw.get("code",""))showLock();
   if(!h.rewrite)$("status").textContent="Per ora puoi registrare e trascrivere. La riscrittura con l'AI si attiva quando sul server c'è la chiave di Claude.";
