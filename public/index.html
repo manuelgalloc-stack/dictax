@@ -463,7 +463,7 @@ body:not(.solo) .soloOnly{display:none!important}
 .typeTabs button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:7px;cursor:pointer}
 .typeTabs .dot{width:11px;height:11px;border-radius:50%;flex:none}
 .typeTabs button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
-#clientFilter{flex:1;min-width:170px;width:auto}
+#clientFilter,#dateFilter{flex:1;min-width:170px;width:auto}
 #tagChip{border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent-strong);border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
 #dHead .pill.tagBtn{border:0;font:inherit;font-size:13px;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #dHead .pill.tagBtn.hold{background:var(--danger);color:#fff}
@@ -528,6 +528,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="filters">
       <div class="typeTabs" id="tabs" role="toolbar" aria-label="Tipo di nota"></div>
       <select id="clientFilter" class="cliOpt" aria-label="Filtra per cliente"></select>
+      <select id="dateFilter" aria-label="Filtra per data"><option value="">📅 Più recenti prima</option><option value="old">📅 Più vecchie prima</option><option value="oggi">📅 Oggi</option><option value="7">📅 Ultimi 7 giorni</option><option value="mese">📅 Questo mese</option><option value="prec">📅 Mese scorso</option></select>
       <button id="tagChip" type="button" hidden aria-label="Togli il filtro per tag"></button>
     </div>
     <div class="row tight searchRow"><input type="search" id="search" placeholder="Cerca nelle note…" aria-label="Cerca nelle note" style="flex:1;min-width:0"><button class="btn ghost sm" id="askOpen" type="button" hidden>💬 Chiedi</button></div>
@@ -689,7 +690,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · più semplice</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · note ordinate per data</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1717,6 +1718,12 @@ function renderTabs(){const T=$("tabs");T.innerHTML="";
   if(cfilter!=="__pers"&&!cl.includes(cfilter))cfilter="";S.value=cfilter;S.hidden=!cl.length;
   const D=$("clientList");D.innerHTML="";cl.forEach(c=>{const o=document.createElement("option");o.value=c;D.append(o)})}
 $("clientFilter").onchange=e=>{cfilter=e.target.value;renderList()};
+/* Ordine per data di inserimento + filtro per periodo */
+var dfilter=raw.get("dfilter","");try{$("dateFilter").value=dfilter;if($("dateFilter").value!==dfilter){dfilter="";$("dateFilter").value=""}}catch{}
+$("dateFilter").onchange=e=>{dfilter=e.target.value;raw.set("dfilter",dfilter);renderList()};
+function inPeriod(n){if(!dfilter||dfilter==="old")return true;const t=new Date(n.at||0),d=new Date();d.setHours(0,0,0,0);
+  if(dfilter==="oggi")return t>=d;if(dfilter==="7"){d.setDate(d.getDate()-6);return t>=d}
+  const m0=new Date(d.getFullYear(),d.getMonth(),1);if(dfilter==="mese")return t>=m0;const p0=new Date(d.getFullYear(),d.getMonth()-1,1);return t>=p0&&t<m0}
 let gfilter="";const tagKey=t=>String(t).trim().toLowerCase();
 function renderTagFilter(){const C=$("tagChip");C.hidden=!gfilter;C.textContent="#"+gfilter+"  ✕"}
 function setTag(t){gfilter=t?tagKey(t):"";showArch=false;renderTagFilter();renderList()}
@@ -1768,11 +1775,11 @@ function noteCard(n,el){
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
 function renderList(){try{readyBox("homeReady",cfilter&&cfilter!=="__pers"?cfilter:cfilter==="__pers"?"":undefined,B=>$("remBox").after(B))}catch{}try{if(splitMixed()&&cur&&!$("v-detail").hidden){const x=allNotes().find(y=>y.id===cur.id);if(x)cur=x}}catch{}const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
-  const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||(cfilter==="__pers"?!n.client:n.client===cfilter))&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
+  const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||(cfilter==="__pers"?!n.client:n.client===cfilter))&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query))&&inPeriod(n)).sort((a,b)=>dfilter==="old"?(a.at||0)-(b.at||0):(b.at||0)-(a.at||0));
   const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
-  if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
+  if(!ns.length){L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":dfilter&&dfilter!=="old"?"Nessuna nota in questo periodo.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
   ns.forEach(n=>{const w=document.createElement("div");w.className="swipeWrap";const del=document.createElement("button");del.className="swipeDel";del.innerHTML="🗑<span>Elimina</span>";del.setAttribute("aria-label","Elimina "+n.title);
     const b=document.createElement("button");b.className="note"+(isDone(n)?" doneC":"");noteCard(n,b);b.onclick=e=>{if(w.classList.contains("open")){e.preventDefault();closeSwipes();return}openNote(n)};
     del.onclick=()=>{deleteNote(n);renderList()};w.append(del,b);swipeable(w,b,n);L.append(w)});archBtn()}
