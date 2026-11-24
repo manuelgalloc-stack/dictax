@@ -689,7 +689,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · prepara tutta la settimana</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · reel e carosello separati</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1052,7 +1052,7 @@ function loadMode(){
   customStyles=store.get("cstyles",[]);customFolders=store.get("folders",[]);exEdits=store.get("exedits",{});
   $("useFid").checked=store.get("fid",false);
   job="generico";
-  selected=new Set(store.get("cformats",["linkedin","instagram"]).filter(k=>SOCIAL.includes(k)));tfilter="tutte";cfilter="";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
+  selected=new Set(store.get("cformats",["linkedin","instagram"]).filter(k=>SOCIAL.includes(k)));{let one=false;[...selected].forEach(k=>{if(["reel","carosello","caso","storie"].includes(k)){if(one)selected.delete(k);one=true}})}tfilter="tutte";cfilter="";query="";$("search").value="";picked.clear();turns=[];$("chat").innerHTML="";
 }
 const fmts=()=>[...JOBS[job].f,...M().formats];
 const folders=()=>[...M().folders,...customFolders];
@@ -1697,12 +1697,14 @@ $("nsSave").onclick=()=>{const n=$("nsName").value.trim(),r=$("nsRule").value.tr
 /* Formati */
 let carN=store.get("carN",7);
 Object.defineProperty(FORMATS.carosello,"p",{get(){return `testo per carosello di ${carN} slide: una riga 'Slide N: ...' per ogni slide, titolo forte sulla prima, CTA sull'ultima. Alla fine aggiungi una sezione 'CONSIGLI GRAFICI' con, slide per slide, che foto o grafica usare (es. foto reale del prodotto in uso, primo piano di un dettaglio, persona che parla in camera, grafica con una sola frase in grande, prima/dopo, schema semplice) e una riga finale su colori e stile coerenti col brand`}});
+/* Un contenuto = un pezzo: Reel, Carosello, Caso cliente e Storie non si scelgono insieme */
+const MAINF=["reel","carosello","caso","storie"];
 const PLATFORMS={instagram:{n:"Instagram",f:[["instagram","Caption"],["carosello","Carosello"],["caso","Caso cliente"],["reel","Reel"],["storie","Storie"]]},facebook:{n:"Facebook",f:[["facebook","Post"],["caso","Caso cliente"],["reel","Reel"]]},tiktok:{n:"TikTok",f:[["tiktok","Caption"],["reel","Video"]]},linkedin:{n:"LinkedIn",f:[["linkedin","Post"],["carosello","Carosello"],["caso","Caso cliente"]]}};
 let plat=store.get("cplat","instagram");if(!PLATFORMS[plat])plat="instagram";
 const platFormats=()=>PLATFORMS[plat].f.map(x=>x[0]);
 function renderChips(){const P=$("platforms");P.innerHTML="";Object.entries(PLATFORMS).forEach(([k,v])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v.n;c.setAttribute("aria-pressed",k===plat);c.onclick=()=>{plat=k;store.set("cplat",k);if(!platFormats().some(x=>selected.has(x)))selected.add(platFormats()[0]);renderChips()};P.append(c)});
   const showSl=platFormats().includes("carosello")&&selected.has("carosello");{const hasR=selected.has("reel");$("funChip").parentElement.hidden=!hasR;if(!hasR)$("funChip").setAttribute("aria-pressed","false");$("vidRow").hidden=!hasR;if(!hasR)genVid="";else{const VC=$("vidChips");VC.innerHTML="";const cl=clientsOn()?$("sClient").value.trim():"";[["","✨ Scegli tu"],...vstyFor(cl||(isSolo()?"__me":"")).map(v=>[v[0],v[1]])].forEach(([k,l])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=l;c.setAttribute("aria-pressed",genVid===k);c.onclick=()=>{genVid=k;VC.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c))};VC.append(c)})}}$("slideRow").hidden=!showSl;const SC=$("slideChips");SC.innerHTML="";[2,3,4,5,6,7,8,9,10].forEach(v=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=v;c.setAttribute("aria-pressed",v===carN);c.onclick=()=>{carN=v;store.set("carN",v);renderChips()};SC.append(c)});
-  const F=$("formats");F.innerHTML="";PLATFORMS[plat].f.forEach(([k,label])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=label;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{selected.has(k)?selected.delete(k):selected.add(k);store.set("cformats",[...selected]);renderChips()};F.append(c)})}
+  const F=$("formats");F.innerHTML="";PLATFORMS[plat].f.forEach(([k,label])=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=label;c.setAttribute("aria-pressed",selected.has(k));c.onclick=()=>{if(selected.has(k))selected.delete(k);else{if(MAINF.includes(k))MAINF.forEach(x=>selected.delete(x));selected.add(k)}store.set("cformats",[...selected]);renderChips()};F.append(c)})}
 const ICONS_SPARK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
 
 /* Cartelle, ricerca, lista */
@@ -1764,7 +1766,7 @@ function noteCard(n,el){
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill tagLink";s.textContent="#"+faseLbl(t);s.title="Mostra le note con #"+t;s.onclick=e=>{if(el.id==="dHead")return;e.stopPropagation();e.preventDefault();setTag(t);$("tagChip").scrollIntoView({block:"center",behavior:"smooth"})};el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
-function renderList(){const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
+function renderList(){try{if(splitMixed()&&cur&&!$("v-detail").hidden){const x=allNotes().find(y=>y.id===cur.id);if(x)cur=x}}catch{}const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
   const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||(cfilter==="__pers"?!n.client:n.client===cfilter))&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query)));
   const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
@@ -2201,6 +2203,16 @@ $("analyze").onclick=async()=>{
 /* Avvio */
 $("useClients").checked=useClients;$("useClients").onchange=e=>{useClients=e.target.checked;raw.set("useClients",useClients);applyKind();renderList()};
 $("oldDays").value=oldDays;$("oldDays").onchange=e=>{const v=Math.max(1,Math.min(365,parseInt(e.target.value,10)||7));e.target.value=v;oldDays=v;raw.set("oldDays",v);renderList()};
+/* Contenuti nati con Reel + Carosello insieme: il reel diventa un contenuto a parte (con le sue riprese) */
+function splitMixed(){const ns=store.get("notes",[]);let ch=false;const add=[],RE=/^reel(__ml)?$/,OTH=k=>["carosello","caso","storie"].includes(baseK(k));
+  ns.forEach(n=>{if(n.type!=="contenuto"||!n.out)return;const ks=Object.keys(n.out),rk=ks.filter(k=>RE.test(k));if(!rk.length||!ks.some(OTH))return;
+    const now=Date.now(),vl=n.vtipo?(VSTY.find(v=>v[0]===n.vtipo)||[])[1]:"",vlab=vl?vl.replace(/^\S+ /,""):"",isMainTag=t=>["Carosello","Caso cliente","Storie"].includes(t);
+    const r={...n,id:n.id+"r",at:(n.at||now)+1,out:{},title:(n.title||"Contenuto")+" · Reel",tags:(n.tags||[]).filter(t=>!isMainTag(t)),com:[],up:now};rk.forEach(k=>r.out[k]=n.out[k]);
+    if(n.check&&!RE.test(n.check.k||""))delete r.check;delete r.thumbs;
+    rk.forEach(k=>delete n.out[k]);delete n.shots;if(n.check&&RE.test(n.check.k||""))delete n.check;if(n.fid)rk.forEach(k=>delete n.fid[k]);delete n.vtipo;
+    n.tags=(n.tags||[]).filter(t=>t!=="Reel"&&t!==vlab);n.up=now;if(!ns.some(x=>x.id===r.id))add.push(r);ch=true});
+  if(ch){store.set("notes",[...ns,...add]);return true}return false}
+try{splitMixed()}catch{}
 (function migLav(){if(raw.get("migLav",false))return;const ns=store.get("notes",[]);let ch=false;ns.forEach(n=>{if(n.type==="contenuto"&&!n.st&&n.out&&Object.keys(n.out).length){n.st="lavoro";n.up=Date.now();ch=true}});if(ch)store.set("notes",ns);raw.set("migLav",true)})();
 (function migWk(){if(raw.get("migWk",false))return;const P=store.get("clients",{});let ch=false;Object.values(P).forEach(p=>{if((p.n|0)>0&&!(p.wk|0)){p.wk=Math.max(1,Math.round(p.n/4.3));ch=true}});if(ch)store.set("clients",P);raw.set("migWk",true)})();
 (function migPub(){if(raw.get("migPub",false))return;const td=today();let ch=false;const ns=store.get("notes",[]);ns.forEach(n=>{if(n.st==="fatto"&&(n.res||(n.pub&&n.pub<td))){n.st="pubblicato";ch=true}});if(ch)store.set("notes",ns);raw.set("migPub",true)})();
