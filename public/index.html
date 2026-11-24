@@ -476,7 +476,15 @@ body:not(.solo) .soloOnly{display:none!important}
   section.app:not(#v-home){max-width:760px;margin-inline:auto}
   #v-home{display:grid;grid-template-columns:minmax(360px,420px) minmax(0,1fr);gap:36px;align-items:start}
   .homeLeft{position:sticky;top:calc(16px + env(safe-area-inset-top,0px))}
-  .homeRight .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;align-items:start}
+  .homeRight .list{display:flex;flex-direction:column;gap:6px}
+  .homeRight .list .note{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"h meta" "p pills";align-items:center;gap:2px 16px;padding:10px 16px;min-height:0}
+  .homeRight .list .note h3{grid-area:h;margin:0;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .homeRight .list .note.hasTick h3{display:flex;align-items:center}
+  .homeRight .list .note .meta{grid-area:meta;justify-self:end;gap:10px;margin:0;white-space:nowrap}
+  .homeRight .list .note>p{grid-area:p;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px;-webkit-line-clamp:unset;display:block}
+  .homeRight .list .note .pills{grid-area:pills;justify-self:end;flex-wrap:nowrap;margin:0;max-width:420px;overflow:hidden}
+  .homeRight .list .note .prog{display:none}
+  .homeRight .list .note .tick{width:22px;height:22px;margin:0}
   .homeRight .empty{grid-column:1/-1}
   .sheetWrap{align-items:center}
   .sheet{border-radius:26px;max-width:520px;padding-bottom:22px}
@@ -691,7 +699,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · progetti e spunta</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 24 nov · lista su computer</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
