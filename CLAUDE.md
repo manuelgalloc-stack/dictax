@@ -68,6 +68,10 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 - Brand: white background, green accent `#1e9a55`, fonts Young Serif / Figtree / JetBrains Mono.
 - Do not copy AudioPen's texts, illustrations or look; functional ideas only.
 
+## Simplicity pass (24 nov)
+- Calendar: the per-client "✨ Riempi la settimana" buttons are hidden (`if(false&&…)` in `renderCalWk`; `fillWeek` stays, used by "⚡ Prepara tutta la settimana", whose help line is one short sentence). `#calReady` ("🎬 Già pronti") and `#calNoDateBox` ("📌 Senza giorno (N)") are folded to one line by default (`foldify(B,header)`: `.fold`/`.open`/`.foldH`, open state kept in `foldOpen` for the session); the home "Già pronti" stays open.
+- Content detail: the fix box `#fixBoxF` is folded behind "✨ Sistemalo con le mie dritte" (`.fixOpen`); it opens by itself when the vote is under 8 and when "miglioralo" is tapped.
+
 ## Checks before pushing
 - **Always change the `#appVer` text** ("Versione <data> · <cosa>") on every release: the app fetches `/?v=` on start, on focus and every 10 min, compares the online `#appVer` with its own and, if different, shows a green bar ".updBar" "🔄 C'è una versione nuova di Dictax · Tocca per aggiornare" (reload). Same text = no banner.
 - `node --check` on the page script (extract the `<script>` block) and `npx wrangler pages functions build --outdir=.build`.
