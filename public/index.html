@@ -690,7 +690,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 25 nov · dritte per obiettivo</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 25 nov · home più pulita</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1364,7 +1364,7 @@ function renderToWrite(L){let B=$("toWriteBox");if(!L.length){if(B)B.hidden=true
   [...L].sort((a,b)=>(a.pub||"9").localeCompare(b.pub||"9")).forEach(n=>{const r=document.createElement("button");r.type="button";r.className="rbRow";r.innerHTML='<span><b></b><small></small></span><i>›</i>';r.querySelector("b").textContent=n.title;
     const x=n.idea||{},late=n.pub&&n.pub<td;r.querySelector("small").textContent=[n.client,x.formato?fmtLabel(x.formato):"",x.fase?faseLbl(x.fase):"",n.pub?(late?"⚠️ doveva uscire ":"")+shortDate(n.pub):""].filter(Boolean).join(" · ");if(late)r.classList.add("late");r.onclick=()=>openNote(n);B.append(r)});
   foldify(B,B.querySelector(".rbT"))}
-function renderTodaySt(){let B=$("todaySt");const L=mode==="creator"?todayStories():[];if(!L.length){if(B)B.hidden=true;return}
+function renderTodaySt(on){let B=$("todaySt");const L=mode==="creator"&&on?todayStories():[];if(!L.length){if(B)B.hidden=true;return}
   if(!B){B=document.createElement("div");B.id="todaySt";B.className="readyBox stToday";$("remBox").after(B)}B.hidden=false;B.innerHTML='<b class="rbT">📱 Storie di oggi</b>';
   L.forEach(({n,g})=>{const r=document.createElement("button");r.type="button";r.className="rbRow";r.innerHTML='<span><b></b><small></small></span><i>›</i>';r.querySelector("b").textContent=(n.client?n.client+" · ":"")+g.tipo;r.querySelector("small").textContent=g.idea+(g.azione?" → "+g.azione:"");r.onclick=()=>openNote(n);B.append(r)})}
 var AUTO=null;
@@ -1890,9 +1890,9 @@ function noteCard(n,el){
   (n.tags||[]).forEach(t=>{const s=document.createElement("span");s.className="pill tagLink";s.textContent="#"+faseLbl(t);s.title="Mostra le note con #"+t;s.onclick=e=>{if(el.id==="dHead")return;e.stopPropagation();e.preventDefault();setTag(t);$("tagChip").scrollIntoView({block:"center",behavior:"smooth"})};el.querySelector(".pills").append(s)});
 }
 const haystack=n=>[n.title,n.tr,...Object.values(n.out),...(n.tags||[]),n.client||""].join(" ").toLowerCase();
-function renderList(){try{renderTodaySt()}catch{}try{readyBox("homeReady",cfilter&&cfilter!=="__pers"?cfilter:cfilter==="__pers"?"":undefined,B=>$("remBox").after(B))}catch{}try{if(splitMixed()&&cur&&!$("v-detail").hidden){const x=allNotes().find(y=>y.id===cur.id);if(x)cur=x}}catch{}const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
+function renderList(){const cOnly=tfilter==="contenuto";try{renderTodaySt(cOnly)}catch{}try{readyBox("homeReady",cfilter&&cfilter!=="__pers"?cfilter:cfilter==="__pers"?"":undefined,B=>$("remBox").after(B))}catch{}try{if(splitMixed()&&cur&&!$("v-detail").hidden){const x=allNotes().find(y=>y.id===cur.id);if(x)cur=x}}catch{}const L=$("list");L.innerHTML="";renderToday();renderRem();renderTagFilter();
   const base=visNotes().filter(n=>(tfilter==="tutte"||typeOf(n)===tfilter)&&(!cfilter||(cfilter==="__pers"?!n.client:n.client===cfilter))&&(!gfilter||(n.tags||[]).some(t=>tagKey(t)===gfilter))&&(!query||haystack(n).includes(query))&&inPeriod(n)).sort((a,b)=>dfilter==="old"?(a.at||0)-(b.at||0):(b.at||0)-(a.at||0));
-  const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const toW=query||showArch||mode!=="creator"?[]:base.filter(n=>typeOf(n)==="contenuto"&&unwritten(n)&&!n.arch);renderToWrite(toW);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch&&!toW.includes(n)&&!n.stw),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
+  const nArch=base.filter(n=>n.arch).length;const isDone=n=>typeOf(n)==="contenuto"&&isPub(n);const toW=query||showArch||mode!=="creator"||!cOnly?[]:base.filter(n=>typeOf(n)==="contenuto"&&unwritten(n)&&!n.arch);renderToWrite(toW);const ns0=base.filter(n=>query?true:showArch?n.arch:!n.arch&&!toW.includes(n)&&!n.stw&&!(typeOf(n)==="contenuto"&&unwritten(n))),ns=[...ns0.filter(n=>!isDone(n)),...ns0.filter(isDone)];
   const archBtn=()=>{if(!nArch&&!showArch)return;const a=document.createElement("button");a.className="btn ghost archBtn";a.textContent=showArch?"← Torna alle note":`✓ Note fatte (${nArch})`;a.onclick=()=>{showArch=!showArch;renderTabs();renderList();if(showArch)a.scrollIntoView?.({block:"start"})};L.append(a)};
   if(showArch&&!query){const h=document.createElement("div");h.className="archHead";h.textContent="✓ Note fatte";L.append(h)}
   if(!ns.length){if(toW.length){archBtn();return}L.insertAdjacentHTML("beforeend",`<div class="empty">${query?"Nessuna nota trovata.":dfilter&&dfilter!=="old"?"Nessuna nota in questo periodo.":showArch?"Nessuna nota fatta.":"Nessuna nota qui. Tocca il microfono per crearne una."}</div>`);archBtn();return}
@@ -2085,7 +2085,7 @@ function setGir(n,on){if(on){n.gir=Date.now();(n.shots||[]).forEach(x=>x.done=tr
 /* Già pronti: girati da montare + fatti da pubblicare, perché non te li dimentichi */
 function readyList(cl){return contents().filter(n=>!isPub(n)&&!n.stw&&(cl===undefined||(n.client||"")===cl)&&(isFatto(n)||isShot(n))).sort((a,b)=>(a.pub||"9").localeCompare(b.pub||"9"))}
 const foldOpen=new Set();function foldify(B,H){B.classList.add("fold");H.classList.add("foldH");B.classList.toggle("open",foldOpen.has(B.id));H.onclick=()=>{B.classList.toggle("open");B.classList.contains("open")?foldOpen.add(B.id):foldOpen.delete(B.id)}}
-function readyBox(id,cl,where,fold){let B=$(id);const L=mode==="creator"?readyList(cl):[];if(!L.length){if(B)B.hidden=true;return}
+function readyBox(id,cl,where,fold){let B=$(id);const L=mode==="creator"&&(id!=="homeReady"||tfilter==="contenuto")?readyList(cl):[];if(!L.length){if(B)B.hidden=true;return}
   if(!B){B=document.createElement("div");B.id=id;B.className="readyBox";where(B)}B.hidden=false;B.innerHTML='<b class="rbT"></b><p class="help" style="margin:0">Usa prima questi: sono già fatti o girati, manca solo l\'ultimo passo.</p>';
   B.querySelector(".rbT").textContent="🎬 Già pronti ("+L.length+")";const td=today();
   [["✂️ Girati, da montare",L.filter(n=>!isFatto(n))],["📣 Pronti da pubblicare",L.filter(isFatto)]].forEach(([h,G])=>{if(!G.length)return;const t=document.createElement("span");t.className="lbl";t.textContent=h;B.append(t);
