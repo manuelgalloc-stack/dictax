@@ -80,6 +80,11 @@ Voice-to-text web app (PWA) in Italian. The owner (non-technical) asks for chang
 - Calendar: the per-client "✨ Riempi la settimana" buttons are hidden (`if(false&&…)` in `renderCalWk`; `fillWeek` stays, used by "⚡ Prepara tutta la settimana", whose help line is one short sentence). `#calReady` ("🎬 Già pronti") and `#calNoDateBox` ("📌 Senza giorno (N)") are folded to one line by default (`foldify(B,header)`: `.fold`/`.open`/`.foldH`, open state kept in `foldOpen` for the session); the home "Già pronti" stays open.
 - Content detail: the fix box `#fixBoxF` is folded behind "✨ Sistemalo con le mie dritte" (`.fixOpen`); it opens by itself when the vote is under 8 and when "miglioralo" is tapped.
 
+## Clarity pass (25 nov)
+- Note detail: the main output card of a plain note is labelled "Testo" (not the key "nota"); "Crea anche" on plain notes lists only non-social formats (social formats belong to Contenuto); `#archBtnD` "◯ Segna come fatta" is green, not red.
+- Client Scheda: "Cosa vende o offre" (`#cOffer`) is now a hidden input (replaced by "🛍 Servizi e prodotti"; an old `p.offer` prefills `#cServ` when `p.serv` is empty). "📝 Richieste del cliente" (`#cReqWrap`) shows only if `p.req` already has text; the dritte field is labelled "✍️ Dritte e richieste per questo cliente". Competitor and "Tipi di video" moved inside the closed "Altri dettagli (competitor, tipi di video…)" (`#cliMore`, always closed on open).
+- Labels: Idee panel title "💡 Idee"; client tile "Storie dalle foto" (to avoid confusion with "📱 Storie della settimana"); profile login text no longer mentions "voce di brand".
+
 ## Checks before pushing
 - **Always change the `#appVer` text** ("Versione <data> · <cosa>") on every release: the app fetches `/?v=` on start, on focus and every 10 min, compares the online `#appVer` with its own and, if different, shows a green bar ".updBar" "🔄 C'è una versione nuova di Dictax · Tocca per aggiornare" (reload). Same text = no banner.
 - `node --check` on the page script (extract the `<script>` block) and `npx wrangler pages functions build --outdir=.build`.
