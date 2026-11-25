@@ -698,7 +698,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 25 nov · 4 stati e Oggi</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 25 nov · senza prepara settimana</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1396,7 +1396,7 @@ function autoTodo(){return contents().filter(n=>unwritten(n)&&(!calCli||(n.clien
 function renderAuto(B){if(mode!=="creator")return;const box=document.createElement("div");box.id="autoBox";box.className="autoBox";B.append(box);updAuto()}
 function updAuto(){const box=$("autoBox");if(!box)return;const A=AUTO;box.innerHTML="";
   if(!A&&!isSolo()){const stMiss=autoScope().filter(k=>!storyWeekFor(packCli(k),stTarget(k))).length;if(!stMiss){box.hidden=true;return}box.hidden=false;
-    box.innerHTML='<button type="button" class="btn autoGo"></button><p class="help" style="margin:0">Per ogni cliente, cosa raccontare nelle storie giorno per giorno. I contenuti li aggiungi toccando i giorni del calendario.</p>';const b=box.querySelector("button");b.textContent="📱 Prepara le storie della settimana ("+stMiss+")";b.onclick=()=>autoWeek(true);return}
+    box.innerHTML='<button type="button" class="btn autoGo"></button><p class="help" style="margin:0">Solo le storie, giorno per giorno. I post e i reel li aggiungi toccando un giorno del calendario.</p>';const b=box.querySelector("button");b.textContent="📱 Storie di questa settimana: preparale ("+stMiss+(stMiss===1?" cliente)":" clienti)");b.onclick=()=>autoWeek(true);return}
   if(!A){const slots=autoScope().reduce((s,k)=>s+weekSlots(k).ds.length,0),stMiss=autoScope().filter(k=>!storyWeekFor(packCli(k),stTarget(k))).length,N=slots+stMiss;if(!N&&!autoScope().length){box.hidden=true;return}box.hidden=false;
     box.innerHTML='<button type="button" class="btn big autoGo"></button><p class="help" style="margin:0"></p>';const b=box.querySelector("button");
     b.textContent=N?"⚡ Prepara tutta la settimana ("+N+")":"✓ Settimana già preparata";b.disabled=!N;
