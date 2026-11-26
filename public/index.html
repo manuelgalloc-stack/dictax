@@ -685,6 +685,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <div id="accIn" hidden style="display:flex;flex-direction:column;gap:14px">
       <div class="card"><div class="head"><span class="fmt">Sei dentro come</span></div><b id="accMail" style="font-size:18px;overflow-wrap:anywhere"></b><p class="status" id="accSync"></p></div>
       <div class="row"><button class="btn ghost" id="accLogout">🚪 Esci</button><button class="btn" id="accSyncNow">Sincronizza ora</button></div>
+      <div class="card admBox" id="admUsers" hidden><div class="head"><span class="fmt">👥 Chi usa Dictax</span><span class="pill">Solo tu</span></div><p class="oggiSum" id="auSum"></p><div id="auList" style="display:flex;flex-direction:column;gap:6px"></div><button class="back" id="auMore" type="button" hidden style="align-self:flex-start"></button></div>
       <div class="card admBox" id="admBox" hidden>
         <div class="head"><span class="fmt">🧭 Dritte del momento</span><span class="pill">Solo tu</span></div>
         <p class="help" style="margin:0">Cosa funziona adesso e come scrivere. Lascia vuoto "per quali clienti" e vale per <b>🌍 tutti i clienti</b>; puoi limitarla a un settore, a un formato o ai contenuti con un obiettivo (es. solo quelli che vendono).</p><datalist id="drSett"><option value="Ristoranti"><option value="Ottica"><option value="Estetica e benessere"><option value="Gioielleria"><option value="Negozi"><option value="Professionisti"></datalist>
@@ -698,7 +699,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 26 nov · scheda Opzioni</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 26 nov · promemoria in contenuto e accessi</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1211,7 +1212,7 @@ raw.set=(k,v)=>{rawSet(k,v);if(SYNC.has(k)){const t=raw.get("syncT",{});t[k]=Dat
 function addDel(id){const d=store.get("dels",[]);if(!d.includes(id)){d.push(id);store.set("dels",d.slice(-3000))}}
 function syncMsg(m){const e=$("accSync");if(e)e.textContent=m}
 function loadSb(){if(sb)return Promise.resolve(sb);return new Promise((ok,ko)=>{const sc=document.createElement("script");sc.src=SB_LIB;sc.onload=()=>{sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"implicit"}});
-  sb.auth.onAuthStateChange((ev,ses)=>{const was=user?.id;user=ses?.user||null;renderAccount();if(user)hideGate();else if(ev==="SIGNED_OUT"||ev==="INITIAL_SESSION")showGate();if(user&&user.id!==was)syncAll()});ok(sb)};sc.onerror=()=>ko(new Error("offline"));document.head.append(sc)})}
+  sb.auth.onAuthStateChange((ev,ses)=>{const was=user?.id;user=ses?.user||null;renderAccount();if(user){hideGate();if(!window._dxOpen){window._dxOpen=1;sb.rpc("track_open").then(()=>{},()=>{})}}else if(ev==="SIGNED_OUT"||ev==="INITIAL_SESSION")showGate();if(user&&user.id!==was)syncAll()});ok(sb)};sc.onerror=()=>ko(new Error("offline"));document.head.append(sc)})}
 async function syncPush(){if(!user)return;const t=raw.get("syncT",{}),done=raw.get("syncDone",{}),rows=[];
   for(const k of SYNC){if((t[k]||0)>(done[k]||0)){const v=raw.get(k,undefined);if(v!==undefined)rows.push({user_id:user.id,key:k,value:v,updated_at:new Date(t[k]).toISOString()})}}
   if(!rows.length){syncMsg("Tutto sincronizzato ✓");return}
@@ -1239,7 +1240,17 @@ async function loadDritte(){try{const r=await fetch(SB_URL+"/rest/v1/dritte?sele
 if(Date.now()-raw.get("dritteAt",0)>36e5)loadDritte();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&Date.now()-raw.get("dritteAt",0)>36e5)loadDritte()});
 function dritteCtx(){const d=(dritte||[]).filter(x=>x&&x.testo);if(!d.length)return"";return "\nDRITTE DEL MOMENTO (indicazioni aggiornate di ManuLab su cosa funziona adesso sui social: hanno la priorità sulle altre indicazioni di stile; usa solo quelle che riguardano tutti o il settore di questo cliente/brand, ignora le altre):\n"+d.map(x=>`- [clienti: ${x.settore||"Tutti"} · formato: ${x.formato||"Tutti"} · contenuti: ${x.obiettivo&&x.obiettivo!=="Tutti"?"solo quelli per "+x.obiettivo.toLowerCase():"tutti"}] ${x.testo}`).join("\n")+"\nLe indicazioni con un formato (es. Caption, Reel, Carosello) valgono solo quando scrivi quel formato. Quelle con un obiettivo (es. Vendere) valgono solo per i contenuti con quell'obiettivo: se il contenuto vende (presenta un servizio o un prodotto, chiede di comprare o prenotare) applica sempre quelle per Vendere."}
-async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm||mode!=="creator";if(isAdm&&mode==="creator")renderAdm()}
+async function checkAdmin(){if(!user||!sb){isAdm=false;$("admBox").hidden=true;$("admUsers").hidden=true;return}try{const{data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();if(error)throw error;isAdm=!!data}catch(e){if(isAdm)return;isAdm=false}$("admBox").hidden=!isAdm||mode!=="creator";if(isAdm&&mode==="creator")renderAdm();$("admUsers").hidden=!isAdm;if(isAdm)renderUsers()}
+/* 👥 Contatore accessi (solo admin): funzione admin_stats su Supabase */
+let auAll=false;
+async function renderUsers(){const L=$("auList");const{data,error}=await sb.rpc("admin_stats");if(error){$("auSum").textContent="Non riesco a leggere gli accessi: riprova.";return}
+  const U=data||[],td=today(),dd=x=>x?Math.round((new Date(td+"T12:00")-new Date(String(x).slice(0,10)+"T12:00"))/864e5):null,last=u=>{const a=u.last_open,b=u.last_sign_in?String(u.last_sign_in).slice(0,10):null;return a&&b?(a>b?a:b):(a||b)};
+  const act=k=>U.filter(u=>{const d=dd(last(u));return d!==null&&d<k}).length,nw=U.filter(u=>dd(u.created_at)!==null&&dd(u.created_at)<7).length;
+  $("auSum").textContent=U.length+" iscritti · "+act(1)+" oggi · "+act(7)+" negli ultimi 7 giorni · "+nw+" nuovi questa settimana";
+  const ago=d=>d===null?"mai":d===0?"oggi":d===1?"ieri":d+" giorni fa",USO={agency:"Creator con clienti",solo:"Creator singolo",personale:"Per il lavoro"};L.innerHTML="";
+  (auAll?U:U.slice(0,10)).forEach(u=>{const r=document.createElement("div");r.className="rbRow";r.style.cursor="default";r.innerHTML="<span><b></b><small></small></span>";r.querySelector("b").textContent=u.email||"(senza email)";
+    r.querySelector("small").textContent=["ultimo accesso "+ago(dd(last(u))),u.opens_7?u.opens_7+" aperture in 7 giorni":"",u.days_30?u.days_30+" giorni attivi su 30":"",u.notes+" note",USO[u.uso]||""].filter(Boolean).join(" · ");L.append(r)});
+  const m=$("auMore");m.hidden=U.length<=10;m.textContent=auAll?"Mostra meno":"Mostra tutti ("+U.length+")";m.onclick=()=>{auAll=!auAll;renderUsers()}}
 async function renderAdm(){const L=$("admList");const{data,error}=await sb.from("dritte").select("*").order("updated_at",{ascending:false});if(error){$("admStatus").textContent="Non riesco a leggere le dritte: riprova.";return}L.innerHTML="";
   (data||[]).forEach(x=>{const d=document.createElement("div");d.className="dritta"+(x.attiva?"":" off");d.innerHTML='<div class="dRow"><input type="text" aria-label="Per quali clienti" placeholder="Tutti i clienti, oppure un settore (es. Ristoranti)" list="drSett"><button class="tg"></button><button class="del" aria-label="Elimina">🗑</button></div><div class="dRow"><span class="dLbl">Formato</span><select class="fm" aria-label="Formato"></select></div><div class="dRow"><span class="dLbl">Per i contenuti</span><select class="ob" aria-label="Obiettivo"></select></div><textarea rows="3" aria-label="Indicazione"></textarea>';
     const fm=d.querySelector(".fm");["Tutti","Caption","Reel","Carosello","Post","Storie","TikTok","Ganci","Newsletter"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v==="Tutti"?"Tutti i formati":v;fm.append(o)});fm.value=x.formato||"Tutti";fm.onchange=()=>save({formato:fm.value});
@@ -2156,6 +2167,11 @@ function applyCTabs(n){const V=$("v-detail"),isC=typeOf(n)==="contenuto",hasR=!!
   if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if(ctab==="riprese"&&!hasR)ctab="testo";setCTab(ctab)}
 /* Girato: il video è registrato ma non ancora montato/pubblicato */
 function isShot(n){return !!reelOf(n)&&(!!n.gir||((n.shots||[]).length>0&&n.shots.every(x=>x.done)))}
+/* Promemoria del calendario → contenuto vero (testo, voto, riprese) */
+async function memoToContent(n,f,btn){const txt=String(n.out?.pulito||n.tr||n.title||"").trim();btn.disabled=true;btn.textContent="Sto scrivendo…";
+  try{n.tr=txt;n.idea={formato:f,tema:"",fase:"",gancio:"",angolo:txt.slice(0,200)};delete n.memo;delete n.plain;n.out={};n.tags=[...new Set([...(n.tags||[]).filter(t=>t!=="Memo"),fmtLabel(f)])];n.st="lavoro";saveNote(n);
+    await writeIdea(n);openNote(n,true);$("dStatus").textContent="✓ Scritto come "+(f==="instagram"?"Post":fmtLabel(f))+(reelOf(n)?": trovi le riprese nella scheda 🎬 Riprese.":".")}
+  catch(e){btn.disabled=false;btn.textContent="Riprova";$("dStatus").textContent=errMsg(e)}}
 function setGir(n,on){if(on){n.gir=Date.now();(n.shots||[]).forEach(x=>x.done=true)}else{delete n.gir;(n.shots||[]).forEach(x=>x.done=false)}saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent=on?"🎥 Segnato come girato: lo trovi in \"Già pronti\" finché non lo pubblichi.":""}}
 /* Già pronti: girati da montare + fatti da pubblicare, perché non te li dimentichi */
 function readyList(cl){return contents().filter(n=>!isPub(n)&&!n.stw&&(cl===undefined||(n.client||"")===cl)&&(isFatto(n)||isShot(n))).sort((a,b)=>(a.pub||"9").localeCompare(b.pub||"9"))}
@@ -2168,6 +2184,8 @@ function readyBox(id,cl,where,fold){let B=$(id);const L=mode==="creator"&&(id!==
       const late=n.pub&&n.pub<td;r.querySelector("small").textContent=[n.client,n.pub?(late?"⚠️ doveva uscire ":"esce ")+shortDate(n.pub):"senza giorno"].filter(Boolean).join(" · ");if(late)r.classList.add("late");r.onclick=()=>openNote(n);B.append(r)})});if(fold)foldify(B,B.querySelector(".rbT"))}
 let undoSt=null;const setSt=(s,undo)=>{if(!undo)undoSt={id:cur.id,st:cur.st||"idea"};else undoSt=null;cur.st=s;if(isFatto(cur)&&!cur.pub)cur.pub=today();saveNote(cur);renderHead()};
 function renderNext(){const n=cur,B=$("nextStep"),btn=$("nextBtn");if(!n||!B)return;applyCTabs(n);const isC=typeOf(n)==="contenuto";renderCom(n,isC);(isC?$("moreSlot2"):$("moreSlot")).append($("moreFmt"));
+  if(isC&&n.memo){const g=guessFromTr((n.title||"")+" "+(n.out?.pulito||n.tr||"")),f=g.f==="post"?"instagram":(g.f||"reel"),alt=f==="reel"?"carosello":"reel",nm=x=>x==="instagram"?"Post":fmtLabel(x);
+    btn.hidden=false;btn.disabled=false;btn.textContent="✨ Scrivilo come "+nm(f);btn.onclick=()=>memoToContent(n,f,btn);const U=$("nextUndo");U.hidden=false;U.textContent="oppure come "+nm(alt);U.onclick=()=>memoToContent(n,alt,btn);B.hidden=false;return}
   if(!isC||!mainKey(n)||n.stw||n.memo){B.hidden=true;return}const st=n.st||"idea",k=mainKey(n),ok=n.check&&n.check.k===k&&(n.check.voto|0)>=8;let t="",fn=null;
   const allShot=(n.shots||[]).length&&n.shots.every(x=>x.done);if(allShot&&(st==="idea"||st==="lavoro")){t="✂️ Montato: è pronto";fn=()=>setSt("fatto")}else if(st==="idea"){t="✎ Mettilo in lavorazione";fn=()=>setSt("lavoro")}
   else if(st==="lavoro"){if(isShot(n)){t="✂️ Montato: è pronto";fn=()=>setSt("fatto")}else if(ok&&reelOf(n)){t="🎥 L'ho girato";fn=()=>setGir(n,true)}else if(ok){t="✓ È pronto da pubblicare";fn=()=>setSt("fatto")}else if(n.check&&n.check.k===k){t="✨ Voto "+(n.check.voto|0)+" su 10: miglioralo";fn=()=>{setCTab("testo");setTimeout(()=>{$("fixBoxF")?.classList.add("open");const f=document.querySelector("#fixSlot .fixBox textarea");f?.scrollIntoView({behavior:"smooth",block:"center"});f?.focus()},60)}}else{t="✅ Controlla il contenuto";fn=()=>{setCTab("stato");$("checkBtn").click();setTimeout(()=>$("checkBox").scrollIntoView({behavior:"smooth",block:"start"}),300)}}}
