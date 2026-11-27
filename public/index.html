@@ -339,6 +339,9 @@ body.noClients .cliOpt{display:none!important}
 .comAdd{display:flex;gap:8px;align-items:flex-end}.comAdd textarea{flex:1;min-height:44px;resize:none}
 #v-detail[data-ct=testo] .shotCard,#v-detail[data-ct=testo] #dStBox>*:not(.cTools):not(#fixSlot),#v-detail[data-ct=testo] #checkBtn{display:none!important}
 #v-detail[data-ct=riprese] #dOut>*:not(.shotCard),#v-detail[data-ct=riprese] #dStBox{display:none!important}
+#v-detail:not([data-ct=monta]) .montCard,#v-detail[data-ct=monta] #dOut>*:not(.montCard),#v-detail[data-ct=monta] #dStBox,#v-detail[data-ct=monta] #gobboBtn{display:none!important}
+.cSeg.five button{font-size:12px;padding:10px 1px}.montCard{display:flex;flex-direction:column;gap:14px}.mSec{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--line)}.mH{font-size:16px}.mCaps{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:320px;overflow:auto}.mCap{display:grid;grid-template-columns:40px 1fr;gap:6px;align-items:center}.mCap small{color:var(--muted);font-family:var(--mono,monospace);font-size:12px}.mCap input{padding:6px 8px;font-size:14px}.mCapsD summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+.mEdTop{margin:0;font-weight:600;font-size:14px}.mSteps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}.mSteps li{padding-left:2px}.msTop{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.msT{color:var(--muted);font-size:13px;white-space:nowrap;font-family:var(--mono,monospace)}.msClip,.msTxt,.msNote{font-size:14px;margin-top:2px}.msTxt{font-weight:700;color:#5a2fb0}.msNote{color:var(--muted)}
 #v-detail[data-ct=stato] #fixSlot,#v-detail[data-ct=stato] #dOut,#v-detail[data-ct=stato] #gobboBtn{display:none!important}
 #v-detail[data-ct=testo] #dStBox .cTools,#v-detail[data-ct=stato] #dStBox .cTools{grid-template-columns:1fr}
 .pill.votePill{background:#fff4d6;color:#7a5600;cursor:pointer}.pill.votePill.ok{background:#e3f4ea;color:#1e9a55}
@@ -547,7 +550,7 @@ body:not(.solo) .soloOnly{display:none!important}
     <button class="homeBtn" id="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Tutte le note</button>
     <div class="note" style="cursor:default" id="dHead"></div>
     <div id="nextStep" class="nextStep" hidden><span class="lbl">Prossimo passo</span><button class="btn big" id="nextBtn"></button><button type="button" class="nextUndo" id="nextUndo" hidden></button></div>
-    <div class="seg cSeg" id="cSeg" hidden><button type="button" data-c="testo">📝 Testo</button><button type="button" data-c="riprese">🎬 Riprese</button><button type="button" data-c="stato">📊 Stato</button><button type="button" data-c="altro">⚙️ Opzioni</button></div>
+    <div class="seg cSeg" id="cSeg" hidden><button type="button" data-c="testo">📝 Testo</button><button type="button" data-c="riprese">🎬 Riprese</button><button type="button" data-c="monta">✂️ Monta</button><button type="button" data-c="stato">📊 Stato</button><button type="button" data-c="altro">⚙️ Opzioni</button></div>
     <div class="seg" id="dSeg" style="grid-template-columns:1fr 1fr"><button aria-pressed="true" data-p="out">Nota</button><button aria-pressed="false" data-p="orig">Trascrizione</button></div>
     <div class="list" id="dOut"></div>
     <div class="card" id="dOrigBox" hidden><div class="orig" id="dOrig"></div></div>
@@ -713,7 +716,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 27 nov · virali da studiare e consigli</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 27 nov · montaggio: sottotitoli e scaletta</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -2186,6 +2189,65 @@ async function makeShots(n,btn){const s=String(reelOf(n)||"");if(!s)return;if(bt
     const L=(Array.isArray(r?.riprese)?r.riprese:[]).map(x=>String(x).trim()).filter(Boolean).slice(0,15);if(!L.length)throw new Error("Lista vuota: riprova.");
     const mine=(n.shots||[]).filter(x=>x.mine);n.shots=[...L.map(t=>({t,done:false})),...mine];saveNote(n);if(cur===n)openNote(n,true)}
   catch(e){if(btn){btn.disabled=false;btn.textContent=errMsg(e)}}}
+/* ✂️ Montaggio (scheda a parte, solo reel): sottotitoli dal video girato + scaletta di montaggio */
+const fmtT=(t,c)=>{t=Math.max(0,t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=Math.floor(t%60),ms=Math.round((t%1)*1000);const p=(x,k=2)=>String(x).padStart(k,"0");return p(h)+":"+p(m)+":"+p(s)+(c||",")+p(ms,3)};
+const mmss=t=>Math.floor(t/60)+":"+String(Math.floor(t%60)).padStart(2,"0");
+function vttSegs(v){const out=[];String(v||"").split(/\n\n+/).forEach(b=>{const m=b.match(/(\d+:)?(\d+):(\d+)[.,](\d+)\s*-->\s*(\d+:)?(\d+):(\d+)[.,](\d+)/);if(!m)return;const T=(h,mi,s,ms)=>(+(h||"0").replace(":",""))*3600+(+mi)*60+(+s)+(+ms)/1000;
+  out.push({start:T(m[1],m[2],m[3],m[4]),end:T(m[5],m[6],m[7],m[8]),text:b.split("\n").slice(1).join(" ").replace(/^.*-->.*$/,"").trim(),words:[]})});return out}
+/* righe brevi da reel: max 4 parole / 26 caratteri, si chiude anche sulle pause e sulla punteggiatura */
+function capsFrom(segs){const caps=[];let cur=null;const push=()=>{if(cur&&cur.t.trim())caps.push({s:cur.s,e:cur.e,t:cur.t.trim()});cur=null};
+  segs.forEach(g=>{let W=(g.words||[]).filter(w=>w&&String(w.w).trim());
+    if(!W.length){const ws=String(g.text||"").trim().split(/\s+/).filter(Boolean),d=(g.end-g.start)/Math.max(1,ws.length);W=ws.map((w,i)=>({w,s:g.start+i*d,e:g.start+(i+1)*d}))}
+    W.forEach(w=>{const word=String(w.w).trim();if(cur&&(w.s-cur.e>0.6||cur.n>=4||(cur.t+" "+word).length>26))push();if(!cur)cur={s:w.s,e:w.e,t:"",n:0};cur.t+=(cur.t?" ":"")+word;cur.e=w.e;cur.n++;if(/[.!?]$/.test(word))push()})});push();
+  for(let i=0;i<caps.length-1;i++)if(caps[i].e>caps[i+1].s)caps[i].e=caps[i+1].s;return caps}
+const srtOf=caps=>caps.map((c,i)=>(i+1)+"\n"+fmtT(c.s)+" --> "+fmtT(c.e)+"\n"+c.t).join("\n\n")+"\n";
+async function videoToSubs(n,file,say){if(file.size>400*1024*1024)throw new Error("Il video è troppo pesante (più di 400 MB): esportalo più leggero o taglialo.");
+  say("Tiro fuori l'audio dal video…");let decoded;try{decoded=await decodeAudio(file)}catch{throw new Error("Non riesco a leggere l'audio di questo video. Prova a esportarlo in MP4.")}
+  const rate=16000,len=Math.max(1,Math.ceil(decoded.duration*rate)),OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,off=new OAC(1,len,rate),src=off.createBufferSource();src.buffer=decoded;src.connect(off.destination);src.start(0);
+  const data=(await off.startRendering()).getChannelData(0),step=rate*60*8,parts=Math.ceil(data.length/step);let segs=[];
+  for(let i=0;i<parts;i++){say(parts>1?`Ascolto il video: parte ${i+1} di ${parts}…`:"Ascolto il video…");const off0=i*step/rate;
+    const r=await api("/api/transcribe?lang=it&ts=1",{method:"POST",headers:{"content-type":"audio/wav"},body:pcmWav(data.subarray(i*step,Math.min(data.length,(i+1)*step)),rate)});
+    let g=Array.isArray(r.segments)&&r.segments.length?r.segments:vttSegs(r.vtt);if(!g.length&&r.text)g=[{start:0,end:Math.min(480,(data.length-i*step)/rate),text:r.text,words:[]}];
+    segs.push(...g.map(x=>({start:x.start+off0,end:x.end+off0,text:x.text,words:(x.words||[]).map(w=>({w:w.w,s:w.s+off0,e:w.e+off0}))})))}
+  let caps=capsFrom(segs);if(!caps.length)throw new Error("Non ho sentito parole nel video.");
+  say("Correggo le parole…");
+  try{const r=await sampleFn.json(`Questi sono i sottotitoli di un reel, divisi in righe numerate. Correggi solo errori di trascrizione (parole capite male, nomi, ortografia, punteggiatura), usando lo script come riferimento per nomi e parole difficili. Non unire, non dividere, non spostare righe: stesso numero di righe, stesso ordine, stesso senso; ogni riga resta breve. Niente punto finale a fine riga, tieni ? e !. Rispondi solo con JSON {"righe":["..."]}.\nSCRIPT:\n${String(reelOf(n)||"").slice(0,3000)}\n\nRIGHE:\n${caps.map((c,i)=>(i+1)+". "+c.t).join("\n")}`,{modelTier:"quick"});
+    const R=r?.righe;if(Array.isArray(R)&&R.length===caps.length)caps=caps.map((c,i)=>({...c,t:String(R[i]||c.t).trim()||c.t}))}catch{}
+  caps=caps.map(c=>({...c,t:c.t.replace(/[.,;]$/,"")}));n.subs={caps,dur:decoded.duration,name:file.name,at:Date.now()};saveNote(n);return n.subs}
+function montCard(n){const d=document.createElement("article");d.className="card montCard";
+  d.innerHTML=`<div class="head"><span class="fmt">✂️ Montaggio</span></div>
+  <section class="mSec"><b class="mH">1 · 📝 Sottotitoli dal video</b><p class="help" style="margin:0">Carica il video che hai girato: Dictax ascolta, scrive i sottotitoli a righe brevi (giusti per i reel) e corregge le parole con lo script.</p>
+   <button type="button" class="btn ghost mVid">🎞 Carica il video girato</button><p class="status mVidSt" aria-live="polite" style="margin:0"></p><div class="mSubs"></div></section>
+  <section class="mSec"><b class="mH">2 · 🎬 Scaletta di montaggio</b><p class="help" style="margin:0">In ordine: quale ripresa, quanto dura, il testo a schermo e dove tagliare. Se hai già caricato il video, segue i tempi veri del parlato.</p>
+   <button type="button" class="btn mEdGo"></button><p class="status mEdSt" aria-live="polite" style="margin:0"></p><div class="mEd"></div></section>`;
+  const vin=document.createElement("input");vin.type="file";vin.accept="video/*,audio/*";vin.hidden=true;d.append(vin);
+  const subsBox=d.querySelector(".mSubs"),vs=d.querySelector(".mVidSt");
+  const renderSubs=()=>{subsBox.innerHTML="";const S=n.subs;if(!S?.caps?.length)return;const info=document.createElement("p");info.className="help";info.style.margin="0";info.textContent="✓ "+S.caps.length+" righe · video di "+mmss(S.dur||S.caps.at(-1).e)+(S.name?" · "+S.name:"");subsBox.append(info);
+    const L=document.createElement("div");L.className="mCaps";S.caps.forEach((c,i)=>{const r=document.createElement("label");r.className="mCap";r.innerHTML='<small></small><input type="text">';r.querySelector("small").textContent=mmss(c.s);const inp=r.querySelector("input");inp.value=c.t;inp.onchange=()=>{c.t=inp.value.trim();saveNote(n)};L.append(r)});
+    const det=document.createElement("details");det.className="mCapsD";det.innerHTML="<summary>Vedi e correggi le righe</summary>";det.append(L);subsBox.append(det);
+    const row=document.createElement("div");row.className="row tight";row.style.cssText="gap:8px;flex-wrap:wrap";
+    const dl=document.createElement("button");dl.type="button";dl.className="btn";dl.textContent="⬇️ Scarica i sottotitoli (.srt)";dl.onclick=async()=>{const f=new File(["﻿"+srtOf(n.subs.caps)],(String(n.title||"reel").replace(/[^\w\sàèéìòù-]/gi,"").trim().slice(0,30)||"reel")+".srt",{type:"application/x-subrip"});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:f.name});return}catch(e){if(e.name==="AbortError")return}}const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.append(a);a.click();a.remove()};
+    const cp=document.createElement("button");cp.type="button";cp.className="btn ghost";cp.textContent="Copia il testo";cp.onclick=()=>copyText(n.subs.caps.map(c=>c.t).join("\n"),cp);
+    row.append(dl,cp);subsBox.append(row);const h=document.createElement("p");h.className="help";h.style.margin="0";h.textContent="In CapCut: Testo → Sottotitoli → importa il file .srt (da computer). Sul telefono puoi anche incollare il testo nei sottotitoli automatici e correggere al volo.";subsBox.append(h)};
+  d.querySelector(".mVid").onclick=()=>{vin.value="";vin.click()};
+  vin.onchange=async()=>{const f=vin.files[0];if(!f)return;const b=d.querySelector(".mVid");b.disabled=true;try{await videoToSubs(n,f,t=>vs.textContent=t);vs.textContent="✓ Sottotitoli pronti.";renderSubs();renderEdBtn()}catch(e){vs.textContent=errMsg(e)}finally{b.disabled=false}};
+  const eb=d.querySelector(".mEdGo"),es=d.querySelector(".mEdSt"),eBox=d.querySelector(".mEd");const renderEdBtn=()=>{eb.textContent=n.edit?"↻ Rifai la scaletta":"✨ Prepara la scaletta"+(n.subs?" (con i tempi del video)":"")};
+  const renderEd=()=>{eBox.innerHTML="";const E=n.edit;if(!E?.passi?.length)return;if(E.durata||E.musica){const p=document.createElement("p");p.className="mEdTop";p.textContent=[E.durata?"⏱ "+E.durata:"",E.musica?"🎵 "+E.musica:""].filter(Boolean).join(" · ");eBox.append(p)}
+    const ol=document.createElement("ol");ol.className="mSteps";E.passi.forEach(x=>{const li=document.createElement("li");li.innerHTML='<div class="msTop"><b></b><span class="msT"></span></div><div class="msClip"></div><div class="msTxt"></div><div class="msNote"></div>';
+      li.querySelector("b").textContent=x.clip||"";li.querySelector(".msT").textContent=x.tempo||"";const tx=li.querySelector(".msTxt");tx.hidden=!x.testo;tx.textContent=x.testo?"🅣 "+x.testo:"";
+      li.querySelector(".msClip").textContent=x.dice?"🎙 \""+x.dice+"\"":"";li.querySelector(".msClip").hidden=!x.dice;const no=li.querySelector(".msNote");no.hidden=!x.nota;no.textContent=x.nota?"✂️ "+x.nota:"";ol.append(li)});eBox.append(ol);
+    if(E.consigli){const p=document.createElement("p");p.className="help";p.style.margin="0";p.textContent="💡 "+E.consigli;eBox.append(p)}
+    const cp=document.createElement("button");cp.type="button";cp.className="btn ghost sm";cp.style.alignSelf="flex-start";cp.textContent="Copia la scaletta";cp.onclick=()=>copyText(E.passi.map((x,i)=>`${i+1}. ${x.clip}${x.tempo?" ("+x.tempo+")":""}${x.dice?"\n   Dice: "+x.dice:""}${x.testo?"\n   Testo a schermo: "+x.testo:""}${x.nota?"\n   Taglio: "+x.nota:""}`).join("\n"),cp);eBox.append(cp)};
+  eb.onclick=async()=>{eb.disabled=true;es.textContent="Preparo la scaletta…";
+    try{const shots=(n.shots||[]).map((x,i)=>(i+1)+". "+x.t).join("\n"),tl=n.subs?.caps?.length?n.subs.caps.map(c=>mmss(c.s)+" "+c.t).join("\n"):"";
+      const r=await sampleFn.json(`Sei un montatore di reel per Instagram. Prepara la scaletta di montaggio di questo reel, passo per passo, per chi monta da solo sul telefono (CapCut o Edits). Ritmo veloce: i primi 2 secondi devono agganciare, tagli ogni 2-4 secondi, niente pause morte.
+SCRIPT:\n${String(reelOf(n)||"").slice(0,4000)}\n${shots?"RIPRESE DISPONIBILI:\n"+shots+"\n":""}${tl?"PARLATO VERO DEL VIDEO CON I TEMPI (usa questi tempi):\n"+tl.slice(0,4000)+"\n":""}
+Per ogni passo: "clip" = quale ripresa usare (inizia con il tipo, es. "In camera:", "Dettaglio:", "B-roll:"); "tempo" = ${tl?"da-a in secondi del video, es. 0:00-0:03":"durata indicativa, es. 3 sec"}; "dice" = la frase detta in quel momento (breve, se c'è); "testo" = testo grande a schermo se serve (max 6 parole), altrimenti ""; "nota" = taglio, zoom, transizione o suono, breve, altrimenti "".
+Rispondi solo con JSON {"durata":"es. 35 secondi","musica":"che tipo di musica e volume","passi":[{"clip":"","tempo":"","dice":"","testo":"","nota":""}],"consigli":"una frase per farlo rendere di più"}.`);
+      if(!Array.isArray(r?.passi)||!r.passi.length)throw new Error("Non sono riuscito a fare la scaletta: riprova.");n.edit={...r,at:Date.now()};saveNote(n);es.textContent="";renderEd();renderEdBtn()}
+    catch(e){es.textContent=errMsg(e)}finally{eb.disabled=false}};
+  renderSubs();renderEd();renderEdBtn();return d}
 function shotsCard(n){const d=document.createElement("article");d.className="card shotCard";const S=n.shots||[];
   if(!S.length){d.innerHTML='<div class="shotHead"><b>🎬 Riprese da fare</b></div><p class="help" style="margin:0">La lista di cosa girare per questo reel, da spuntare mentre registri.</p><button class="btn ghost" type="button">🎬 Prepara la lista delle riprese</button>';const b=d.querySelector("button");b.onclick=()=>makeShots(n,b);return d}
   const done=S.filter(x=>x.done).length;d.innerHTML='<div class="shotHead"><b>🎬 Riprese da fare</b><span></span></div><div class="shotBar"><i></i></div><div class="shotList"></div><div class="shotAddBox"><div class="shotOpts"><select class="shType" aria-label="Tipo di ripresa"></select><select class="shPos" aria-label="Dove la metto"></select></div><div class="shotAdd"><input type="text" placeholder="Aggiungi una ripresa tua"><button class="btn sm" type="button">+ Aggiungi</button></div></div><div class="shotMeta"><button type="button" class="redo">↻ Rifai la lista dallo script</button></div>';
@@ -2230,7 +2292,7 @@ function todoCard(n){const tasks=ensureTasks(n),done=tasks.filter(x=>x.done).len
   d.querySelector(".btn").onclick=add;inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   return d}
 function openNote(n,keepScroll){cur=n;$("dSeg").querySelector("button").click();$("aStatus").textContent="";$("dStatus").textContent="";$("del").textContent="Elimina";$("dOrg").hidden=false;
-  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));if(n.thumbs?.length){const T=document.createElement("div");T.className="nThumbs";n.thumbs.forEach((u,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span>';f.querySelector("img").src=u;f.querySelector("span").textContent="Foto "+(i+1);T.append(f)});$("dOut").append(T)}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));if(typeOf(n)==="contenuto"&&reelOf(n))$("dOut").append(shotsCard(n));else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
+  document.body.classList.toggle("isLink",typeOf(n)==="link");renderHead();$("dOut").innerHTML="";if(typeOf(n)==="link"){$("dOut").append(linkCard(n));if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail");return}if(n.idea&&!Object.keys(n.out||{}).length)$("dOut").append(ideaCard(n));if(n.thumbs?.length){const T=document.createElement("div");T.className="nThumbs";n.thumbs.forEach((u,i)=>{const f=document.createElement("figure");f.innerHTML='<img alt=""><span></span>';f.querySelector("img").src=u;f.querySelector("span").textContent="Foto "+(i+1);T.append(f)});$("dOut").append(T)}for(const k of orderedOut(n)){if(k==="todo"&&hasTodo(n))continue;const c=outCard(k,n.out[k],n);c.el.dataset.k=k;$("dOut").append(c.el)}if(hasTodo(n))$("dOut").append(todoCard(n));if(typeOf(n)==="contenuto"&&reelOf(n)){$("dOut").append(shotsCard(n));$("dOut").append(montCard(n))}else if(typeOf(n)!=="contenuto"){const b=document.createElement("button");b.className="btn ghost big todoMake";b.textContent="☑️ Crea la lista delle cose da fare";b.onclick=()=>makeTodo(n,b);$("dOut").append(b)}$("dOrig").textContent=n.tr;renderAudio(n);if(keepScroll){const y=scrollY;show("detail");scrollTo(0,y)}else show("detail")}
 
 async function makeTodo(n,b){b.disabled=true;b.textContent="Sto preparando la lista…";try{const src=[Object.entries(n.out).filter(([k])=>k!=="todo").map(([,v])=>v)[0]||"",n.tr].join("\n\n");n.tasks=await extractTasks(src);syncTodo(n);saveNote(n);if(cur===n)openNote(n,true)}catch(e){b.disabled=false;b.textContent="☑️ Crea la lista delle cose da fare";$("dStatus").textContent=errMsg(e)}}
 /* Contenuti: risultati, pagella, gobbo, settimana */
@@ -2263,8 +2325,8 @@ function setCTab(t){const V=$("v-detail");ctab=t;V.dataset.ct=t;if(t==="altro")$
 $("cSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("dSeg").querySelector("button").click();setCTab(b.dataset.c)});
 $("origBtn").onclick=()=>{setCTab("testo");$("dSeg").querySelectorAll("button")[1].click();$("dMore").open=false;scrollTo(0,0)};
 function applyCTabs(n){const V=$("v-detail"),isC=typeOf(n)==="contenuto",hasR=!!reelOf(n);V.classList.toggle("ct",isC);$("cSeg").hidden=!isC;$("origBtn").hidden=!isC;
-  if(!isC){delete V.dataset.ct;return}$("cSeg").querySelector('[data-c=riprese]').hidden=!hasR;$("cSeg").style.setProperty("--n",hasR?4:3);
-  if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if(ctab==="riprese"&&!hasR)ctab="testo";setCTab(ctab)}
+  if(!isC){delete V.dataset.ct;return}$("cSeg").querySelector('[data-c=riprese]').hidden=!hasR;$("cSeg").querySelector('[data-c=monta]').hidden=!hasR;$("cSeg").style.setProperty("--n",hasR?5:3);$("cSeg").classList.toggle("five",hasR);
+  if(n.id!==ctabId){ctabId=n.id;ctab="testo"}if((ctab==="riprese"||ctab==="monta")&&!hasR)ctab="testo";setCTab(ctab)}
 /* Girato: il video è registrato ma non ancora montato/pubblicato */
 function isShot(n){return !!reelOf(n)&&(!!n.gir||((n.shots||[]).length>0&&n.shots.every(x=>x.done)))}
 /* Promemoria del calendario → contenuto vero (testo, voto, riprese) */

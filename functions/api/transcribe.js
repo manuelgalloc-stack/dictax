@@ -43,6 +43,14 @@ export async function onRequestPost({ request, env }) {
       task: "transcribe",
       language: lang,
     });
+    if (new URL(request.url).searchParams.get("ts")) {
+      // Sottotitoli: servono i tempi (segmenti e parole) oltre al testo.
+      const segs = (result?.segments || []).map((g) => ({
+        start: g.start, end: g.end, text: g.text,
+        words: (g.words || []).map((w) => ({ w: w.word, s: w.start, e: w.end })),
+      }));
+      return json({ text: result?.text || "", segments: segs, vtt: segs.length ? "" : (result?.vtt || "") });
+    }
     return json({ text: result?.text || "" });
   } catch (err) {
     console.error("transcribe failed", err);
