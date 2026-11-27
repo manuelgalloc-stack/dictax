@@ -341,7 +341,7 @@ body.noClients .cliOpt{display:none!important}
 #v-detail[data-ct=riprese] #dOut>*:not(.shotCard),#v-detail[data-ct=riprese] #dStBox{display:none!important}
 #v-detail:not([data-ct=monta]) .montCard,#v-detail[data-ct=monta] #dOut>*:not(.montCard),#v-detail[data-ct=monta] #dStBox,#v-detail[data-ct=monta] #gobboBtn{display:none!important}
 .cSeg.five button{font-size:12px;padding:10px 1px}.montCard{display:flex;flex-direction:column;gap:14px}.mSec{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--line)}.mH{font-size:16px}.mCaps{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:320px;overflow:auto}.mCap{display:grid;grid-template-columns:40px 1fr;gap:6px;align-items:center}.mCap small{color:var(--muted);font-family:var(--mono,monospace);font-size:12px}.mCap input{padding:6px 8px;font-size:14px}.mCapsD summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
-.mEdTop{margin:0;font-weight:600;font-size:14px}.mSteps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}.mSteps li{padding-left:2px}.msTop{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.msT{color:var(--muted);font-size:13px;white-space:nowrap;font-family:var(--mono,monospace)}.msClip,.msTxt,.msNote{font-size:14px;margin-top:2px}.msTxt{font-weight:700;color:#5a2fb0}.msNote{color:var(--muted)}
+.mMain{margin:0}.mBar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.mBar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}.mPrev{width:100%;max-width:300px;align-self:center;border-radius:14px;background:#000;aspect-ratio:9/16}.msClipB{font-size:13px;padding:2px 0;margin-top:2px}.mEdTop{margin:0;font-weight:600;font-size:14px}.mSteps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}.mSteps li{padding-left:2px}.msTop{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.msT{color:var(--muted);font-size:13px;white-space:nowrap;font-family:var(--mono,monospace)}.msClip,.msTxt,.msNote{font-size:14px;margin-top:2px}.msTxt{font-weight:700;color:#5a2fb0}.msNote{color:var(--muted)}
 #v-detail[data-ct=stato] #fixSlot,#v-detail[data-ct=stato] #dOut,#v-detail[data-ct=stato] #gobboBtn{display:none!important}
 #v-detail[data-ct=testo] #dStBox .cTools,#v-detail[data-ct=stato] #dStBox .cTools{grid-template-columns:1fr}
 .pill.votePill{background:#fff4d6;color:#7a5600;cursor:pointer}.pill.votePill.ok{background:#e3f4ea;color:#1e9a55}
@@ -716,7 +716,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 27 nov · montaggio: sottotitoli e scaletta</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 27 nov · monta il video in automatico</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -2214,13 +2214,48 @@ async function videoToSubs(n,file,say){if(file.size>400*1024*1024)throw new Erro
   try{const r=await sampleFn.json(`Questi sono i sottotitoli di un reel, divisi in righe numerate. Correggi solo errori di trascrizione (parole capite male, nomi, ortografia, punteggiatura), usando lo script come riferimento per nomi e parole difficili. Non unire, non dividere, non spostare righe: stesso numero di righe, stesso ordine, stesso senso; ogni riga resta breve. Niente punto finale a fine riga, tieni ? e !. Rispondi solo con JSON {"righe":["..."]}.\nSCRIPT:\n${String(reelOf(n)||"").slice(0,3000)}\n\nRIGHE:\n${caps.map((c,i)=>(i+1)+". "+c.t).join("\n")}`,{modelTier:"quick"});
     const R=r?.righe;if(Array.isArray(R)&&R.length===caps.length)caps=caps.map((c,i)=>({...c,t:String(R[i]||c.t).trim()||c.t}))}catch{}
   caps=caps.map(c=>({...c,t:c.t.replace(/[.,;]$/,"")}));n.subs={caps,dur:decoded.duration,name:file.name,at:Date.now()};saveNote(n);return n.subs}
+/* 🎬 Monta il video: segue la scaletta e i sottotitoli, tutto nel telefono (canvas + MediaRecorder, tempo reale) */
+const vidFiles={},brollFiles={};
+function parseRange(s){const m=String(s||"").match(/(\d+):(\d{1,2})(?:[.,]\d+)?\s*[-–]\s*(\d+):(\d{1,2})/);return m?[+m[1]*60+ +m[2],+m[3]*60+ +m[4]]:null}
+function stepTimes(E){let acc=0;return (E?.passi||[]).map(x=>{const r=parseRange(x.tempo);if(r){acc=r[1];return r}const sec=parseFloat(String(x.tempo||"").replace(",","."))||3;const a=[acc,acc+sec];acc+=sec;return a})}
+function keepRanges(caps,dur){if(!caps?.length)return[[0,dur]];const R=[];caps.forEach(c=>{const a=Math.max(0,c.s-0.15),b=Math.min(dur,c.e+0.3);const L=R[R.length-1];if(L&&a-L[1]<0.4)L[1]=Math.max(L[1],b);else R.push([a,b])});if(R[0][0]<0.6)R[0][0]=0;return R.filter(r=>r[1]-r[0]>0.2)}
+function coverDraw(x,src,W,H,z){const vw=src.videoWidth||src.width,vh=src.videoHeight||src.height;if(!vw||!vh)return;const k=Math.max(W/vw,H/vh)*(z||1),w=vw*k,h=vh*k;x.drawImage(src,(W-w)/2,(H-h)/2,w,h)}
+function drawOverlay(x,W,H,t,L,caps,steps,ti,opt,passi){
+  if(opt.txt&&ti>=0&&passi[ti]?.testo){const F=L.font==="Anton"?"Anton":L.font==="Young Serif"?"'Young Serif'":"Figtree",b=L.font==="Figtree"?"800 ":"",fs=W*0.075,txt=L.font==="Anton"?passi[ti].testo.toUpperCase():passi[ti].testo;
+    x.font=b+fs+"px "+F;const lines=wrapTxt(x,txt,W*0.8).slice(0,3),lh=fs*1.15,pad=W*0.04,bw=Math.max(...lines.map(l=>x.measureText(l).width))+pad*2,bh=lines.length*lh+pad*1.4,by=H*0.12;
+    x.fillStyle=L.bg;x.beginPath();if(x.roundRect)x.roundRect((W-bw)/2,by,bw,bh,W*0.03);else x.rect((W-bw)/2,by,bw,bh);x.fill();x.fillStyle=fgOf(L.bg);x.textAlign="center";x.textBaseline="top";lines.forEach((l,i)=>x.fillText(l,W/2,by+pad*0.7+i*lh))}
+  if(opt.subs){const c=(caps||[]).find(c=>t>=c.s&&t<c.e);if(c){const fs=W*0.068;x.font="800 "+fs+"px Figtree";x.textAlign="center";x.textBaseline="middle";const lines=wrapTxt(x,c.t,W*0.86).slice(0,2);
+    lines.forEach((l,i)=>{const y=H*0.7+i*fs*1.2;x.lineJoin="round";x.lineWidth=W*0.014;x.strokeStyle="rgba(0,0,0,.85)";x.strokeText(l,W/2,y);x.fillStyle="#fff";x.fillText(l,W/2,y)})}}}
+async function renderReel(n,opt,prog,els){const{v,ac,bEls}=els,W=720,H=1280,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  if(!v.duration||isNaN(v.duration))await new Promise((ok,ko)=>{v.onloadedmetadata=ok;v.onerror=()=>ko(new Error("Non riesco ad aprire il video: prova a esportarlo in MP4."))});
+  try{await document.fonts.load("800 40px Figtree");await document.fonts.load("40px Anton")}catch{}
+  const srcN=ac.createMediaElementSource(v),dst=ac.createMediaStreamDestination();srcN.connect(dst);
+  const mime=["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t));
+  if(!mime||!c.captureStream)throw new Error("Questo browser non sa creare video: prova con Chrome o con Safari aggiornato.");
+  const stream=new MediaStream([...c.captureStream(30).getVideoTracks(),...dst.stream.getAudioTracks()]),rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5e6}),chunks=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  const dur=v.duration,caps=n.subs?.caps||[],ranges=opt.cut?keepRanges(caps,dur):[[0,dur]],total=ranges.reduce((a,r)=>a+r[1]-r[0],0),steps=stepTimes(n.edit),passi=n.edit?.passi||[],L=lookOf(n);let done=0,curB=-1;
+  const stepAt=t=>steps.findIndex(r=>t>=r[0]&&t<r[1]);
+  const frame=()=>{const t=v.currentTime,ti=stepAt(t),b=ti>=0?bEls[ti]:null;
+    if(ti!==curB){if(curB>=0&&bEls[curB])bEls[curB].pause();curB=ti;if(b){try{b.currentTime=0}catch{}b.play().catch(()=>{})}}
+    x.fillStyle="#000";x.fillRect(0,0,W,H);if(b&&b.readyState>=2)coverDraw(x,b,W,H,1);else coverDraw(x,v,W,H,opt.zoom&&ti>=0&&ti%2?1.08:1);drawOverlay(x,W,H,t,L,caps,steps,ti,opt,passi)};
+  rec.start(500);rec.pause();
+  for(const[a,b]of ranges){v.currentTime=a;await new Promise(ok=>{const f=()=>{v.removeEventListener("seeked",f);ok()};v.addEventListener("seeked",f);setTimeout(f,1500)});frame();rec.resume();await v.play();
+    await new Promise(ok=>{const tick=()=>{frame();prog(Math.min(1,(done+Math.max(0,v.currentTime-a))/total));if(v.currentTime>=b-0.03||v.ended){ok();return}requestAnimationFrame(tick)};requestAnimationFrame(tick)});
+    v.pause();rec.pause();done+=b-a}
+  if(curB>=0&&bEls[curB])bEls[curB].pause();
+  const out=await new Promise(ok=>{rec.onstop=()=>ok(new Blob(chunks,{type:mime.split(";")[0]}));rec.resume();rec.stop()});try{ac.close()}catch{}stream.getTracks().forEach(t=>t.stop());return out}
 function montCard(n){const d=document.createElement("article");d.className="card montCard";
   d.innerHTML=`<div class="head"><span class="fmt">✂️ Montaggio</span></div>
   <section class="mSec"><b class="mH">1 · 📝 Sottotitoli dal video</b><p class="help" style="margin:0">Carica il video che hai girato: Dictax ascolta, scrive i sottotitoli a righe brevi (giusti per i reel) e corregge le parole con lo script.</p>
    <button type="button" class="btn ghost mVid">🎞 Carica il video girato</button><p class="status mVidSt" aria-live="polite" style="margin:0"></p><div class="mSubs"></div></section>
   <section class="mSec"><b class="mH">2 · 🎬 Scaletta di montaggio</b><p class="help" style="margin:0">In ordine: quale ripresa, quanto dura, il testo a schermo e dove tagliare. Se hai già caricato il video, segue i tempi veri del parlato.</p>
-   <button type="button" class="btn mEdGo"></button><p class="status mEdSt" aria-live="polite" style="margin:0"></p><div class="mEd"></div></section>`;
+   <button type="button" class="btn mEdGo"></button><p class="status mEdSt" aria-live="polite" style="margin:0"></p><div class="mEd"></div></section>
+  <section class="mSec"><b class="mH">3 · 🎬 Monta il video</b><p class="help" style="margin:0">Dictax segue la scaletta: taglia le pause, mette sottotitoli e testi a schermo e infila le clip che aggiungi ai passi (📎). Tieni lo schermo acceso: ci mette quanto dura il video.</p>
+   <p class="mMain"></p>
+   <div class="chips mOpts"><button type="button" class="chip" data-o="cut">✂️ Taglia le pause</button><button type="button" class="chip" data-o="subs">📝 Sottotitoli</button><button type="button" class="chip" data-o="txt">🅣 Testi a schermo</button><button type="button" class="chip" data-o="zoom">🔍 Zoom a scatti</button></div>
+   <button type="button" class="btn big mGo">🎬 Monta il video</button><div class="mBar" hidden><i></i></div><p class="status mGoSt" aria-live="polite" style="margin:0"></p><div class="mOut"></div></section>`;
   const vin=document.createElement("input");vin.type="file";vin.accept="video/*,audio/*";vin.hidden=true;d.append(vin);
+  const cin=document.createElement("input");cin.type="file";cin.accept="video/*";cin.hidden=true;d.append(cin);
   const subsBox=d.querySelector(".mSubs"),vs=d.querySelector(".mVidSt");
   const renderSubs=()=>{subsBox.innerHTML="";const S=n.subs;if(!S?.caps?.length)return;const info=document.createElement("p");info.className="help";info.style.margin="0";info.textContent="✓ "+S.caps.length+" righe · video di "+mmss(S.dur||S.caps.at(-1).e)+(S.name?" · "+S.name:"");subsBox.append(info);
     const L=document.createElement("div");L.className="mCaps";S.caps.forEach((c,i)=>{const r=document.createElement("label");r.className="mCap";r.innerHTML='<small></small><input type="text">';r.querySelector("small").textContent=mmss(c.s);const inp=r.querySelector("input");inp.value=c.t;inp.onchange=()=>{c.t=inp.value.trim();saveNote(n)};L.append(r)});
@@ -2231,11 +2266,11 @@ function montCard(n){const d=document.createElement("article");d.className="card
     const cp=document.createElement("button");cp.type="button";cp.className="btn ghost";cp.textContent="Copia il testo";cp.onclick=()=>copyText(n.subs.caps.map(c=>c.t).join("\n"),cp);
     row.append(dl,cp);subsBox.append(row);const h=document.createElement("p");h.className="help";h.style.margin="0";h.textContent="In CapCut: Testo → Sottotitoli → importa il file .srt (da computer). Sul telefono puoi anche incollare il testo nei sottotitoli automatici e correggere al volo.";subsBox.append(h)};
   d.querySelector(".mVid").onclick=()=>{vin.value="";vin.click()};
-  vin.onchange=async()=>{const f=vin.files[0];if(!f)return;const b=d.querySelector(".mVid");b.disabled=true;try{await videoToSubs(n,f,t=>vs.textContent=t);vs.textContent="✓ Sottotitoli pronti.";renderSubs();renderEdBtn()}catch(e){vs.textContent=errMsg(e)}finally{b.disabled=false}};
+  vin.onchange=async()=>{const f=vin.files[0];if(!f)return;const b=d.querySelector(".mVid");b.disabled=true;vidFiles[n.id]=f;try{await videoToSubs(n,f,t=>vs.textContent=t);vs.textContent="✓ Sottotitoli pronti.";renderSubs();renderEdBtn()}catch(e){vs.textContent=errMsg(e)}finally{b.disabled=false}};
   const eb=d.querySelector(".mEdGo"),es=d.querySelector(".mEdSt"),eBox=d.querySelector(".mEd");const renderEdBtn=()=>{eb.textContent=n.edit?"↻ Rifai la scaletta":"✨ Prepara la scaletta"+(n.subs?" (con i tempi del video)":"")};
   const renderEd=()=>{eBox.innerHTML="";const E=n.edit;if(!E?.passi?.length)return;if(E.durata||E.musica){const p=document.createElement("p");p.className="mEdTop";p.textContent=[E.durata?"⏱ "+E.durata:"",E.musica?"🎵 "+E.musica:""].filter(Boolean).join(" · ");eBox.append(p)}
     const ol=document.createElement("ol");ol.className="mSteps";E.passi.forEach(x=>{const li=document.createElement("li");li.innerHTML='<div class="msTop"><b></b><span class="msT"></span></div><div class="msClip"></div><div class="msTxt"></div><div class="msNote"></div>';
-      li.querySelector("b").textContent=x.clip||"";li.querySelector(".msT").textContent=x.tempo||"";const tx=li.querySelector(".msTxt");tx.hidden=!x.testo;tx.textContent=x.testo?"🅣 "+x.testo:"";
+      li.querySelector("b").textContent=x.clip||"";const si=E.passi.indexOf(x);if(!/^\s*in camera/i.test(x.clip||"")){const cb=document.createElement("button");cb.type="button";cb.className="back msClipB";const upd=()=>cb.textContent=brollFiles[n.id]?.[si]?"✓ Clip messa · cambia":"📎 Metti la clip";upd();cb.onclick=()=>{cin.value="";cin.onchange=()=>{const f=cin.files[0];if(!f)return;(brollFiles[n.id]=brollFiles[n.id]||{})[si]=f;upd()};cin.click()};li.append(cb)}li.querySelector(".msT").textContent=x.tempo||"";const tx=li.querySelector(".msTxt");tx.hidden=!x.testo;tx.textContent=x.testo?"🅣 "+x.testo:"";
       li.querySelector(".msClip").textContent=x.dice?"🎙 \""+x.dice+"\"":"";li.querySelector(".msClip").hidden=!x.dice;const no=li.querySelector(".msNote");no.hidden=!x.nota;no.textContent=x.nota?"✂️ "+x.nota:"";ol.append(li)});eBox.append(ol);
     if(E.consigli){const p=document.createElement("p");p.className="help";p.style.margin="0";p.textContent="💡 "+E.consigli;eBox.append(p)}
     const cp=document.createElement("button");cp.type="button";cp.className="btn ghost sm";cp.style.alignSelf="flex-start";cp.textContent="Copia la scaletta";cp.onclick=()=>copyText(E.passi.map((x,i)=>`${i+1}. ${x.clip}${x.tempo?" ("+x.tempo+")":""}${x.dice?"\n   Dice: "+x.dice:""}${x.testo?"\n   Testo a schermo: "+x.testo:""}${x.nota?"\n   Taglio: "+x.nota:""}`).join("\n"),cp);eBox.append(cp)};
@@ -2247,7 +2282,24 @@ Per ogni passo: "clip" = quale ripresa usare (inizia con il tipo, es. "In camera
 Rispondi solo con JSON {"durata":"es. 35 secondi","musica":"che tipo di musica e volume","passi":[{"clip":"","tempo":"","dice":"","testo":"","nota":""}],"consigli":"una frase per farlo rendere di più"}.`);
       if(!Array.isArray(r?.passi)||!r.passi.length)throw new Error("Non sono riuscito a fare la scaletta: riprova.");n.edit={...r,at:Date.now()};saveNote(n);es.textContent="";renderEd();renderEdBtn()}
     catch(e){es.textContent=errMsg(e)}finally{eb.disabled=false}};
-  renderSubs();renderEd();renderEdBtn();return d}
+  const opt=raw.get("montOpt",{cut:true,subs:true,txt:true,zoom:true}),mm=d.querySelector(".mMain");
+  const renderMain=()=>{const f=vidFiles[n.id];mm.innerHTML="";const b=document.createElement("button");b.type="button";b.className=f?"back":"btn ghost";b.textContent=f?"🎞 "+f.name+" · cambia":"🎞 Scegli il video principale (quello parlato)";b.onclick=()=>{vin2.value="";vin2.click()};mm.append(b)};
+  const vin2=document.createElement("input");vin2.type="file";vin2.accept="video/*";vin2.hidden=true;d.append(vin2);
+  vin2.onchange=async()=>{const f=vin2.files[0];if(!f)return;vidFiles[n.id]=f;renderMain();if(!n.subs?.caps?.length||n.subs.name!==f.name){const gs=d.querySelector(".mGoSt");try{await videoToSubs(n,f,t=>gs.textContent=t);gs.textContent="✓ Video pronto, sottotitoli fatti.";renderSubs();renderEdBtn()}catch(e){gs.textContent=errMsg(e)}}};
+  d.querySelectorAll(".mOpts .chip").forEach(b=>{const o=b.dataset.o;b.setAttribute("aria-pressed",!!opt[o]);b.onclick=()=>{opt[o]=!opt[o];raw.set("montOpt",opt);b.setAttribute("aria-pressed",!!opt[o])}});
+  const go=d.querySelector(".mGo"),gs=d.querySelector(".mGoSt"),bar=d.querySelector(".mBar"),outB=d.querySelector(".mOut");
+  go.onclick=async()=>{const f=vidFiles[n.id];if(!f){gs.textContent="Scegli prima il video principale.";return}
+    /* elementi creati e "sbloccati" subito, dentro il tocco: iPhone permette poi di farli partire */
+    const v=document.createElement("video");v.playsInline=true;v.setAttribute("playsinline","");v.preload="auto";v.src=URL.createObjectURL(f);const AC=window.AudioContext||window.webkitAudioContext,ac=new AC();ac.resume().catch(()=>{});
+    v.play().then(()=>v.pause()).catch(()=>{});const bEls={};Object.entries(brollFiles[n.id]||{}).forEach(([i,bf])=>{const b=document.createElement("video");b.muted=true;b.playsInline=true;b.setAttribute("playsinline","");b.preload="auto";b.src=URL.createObjectURL(bf);b.play().then(()=>b.pause()).catch(()=>{});bEls[i]=b});
+    go.disabled=true;bar.hidden=false;outB.innerHTML="";gs.textContent="Sto montando il video… tieni lo schermo acceso.";let wl=null;try{wl=await navigator.wakeLock?.request("screen")}catch{}
+    try{const blob=await renderReel(n,opt,p=>{bar.querySelector("i").style.width=Math.round(p*100)+"%";gs.textContent="Sto montando… "+Math.round(p*100)+"%"},{v,ac,bEls});
+      const ext=blob.type.includes("mp4")?"mp4":"webm",file=new File([blob],(String(n.title||"reel").replace(/[^\w\sàèéìòù-]/gi,"").trim().slice(0,30)||"reel")+"."+ext,{type:blob.type});
+      const pv=document.createElement("video");pv.controls=true;pv.playsInline=true;pv.src=URL.createObjectURL(blob);pv.className="mPrev";outB.append(pv);
+      const sb=document.createElement("button");sb.type="button";sb.className="btn big";sb.textContent="📤 Salva o condividi il video";sb.onclick=async()=>{if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:file.name});return}catch(e){if(e.name==="AbortError")return}}const a=document.createElement("a");a.href=pv.src;a.download=file.name;document.body.append(a);a.click();a.remove()};outB.append(sb);
+      gs.textContent="✓ Video montato. Guardalo qui sopra: se ti va bene salvalo e caricalo."+(ext==="webm"?" Nota: questo telefono lo salva in formato WebM; se Instagram non lo accetta, aprilo in CapCut ed esportalo.":"")}
+    catch(e){gs.textContent=errMsg(e)}finally{go.disabled=false;bar.hidden=true;try{wl&&wl.release()}catch{}}};
+  renderSubs();renderEd();renderEdBtn();renderMain();return d}
 function shotsCard(n){const d=document.createElement("article");d.className="card shotCard";const S=n.shots||[];
   if(!S.length){d.innerHTML='<div class="shotHead"><b>🎬 Riprese da fare</b></div><p class="help" style="margin:0">La lista di cosa girare per questo reel, da spuntare mentre registri.</p><button class="btn ghost" type="button">🎬 Prepara la lista delle riprese</button>';const b=d.querySelector("button");b.onclick=()=>makeShots(n,b);return d}
   const done=S.filter(x=>x.done).length;d.innerHTML='<div class="shotHead"><b>🎬 Riprese da fare</b><span></span></div><div class="shotBar"><i></i></div><div class="shotList"></div><div class="shotAddBox"><div class="shotOpts"><select class="shType" aria-label="Tipo di ripresa"></select><select class="shPos" aria-label="Dove la metto"></select></div><div class="shotAdd"><input type="text" placeholder="Aggiungi una ripresa tua"><button class="btn sm" type="button">+ Aggiungi</button></div></div><div class="shotMeta"><button type="button" class="redo">↻ Rifai la lista dallo script</button></div>';
