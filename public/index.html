@@ -643,7 +643,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <button class="btn ghost" id="calIdeaBtn" type="button">💡 Scegli tra le idee pronte</button><div id="calIdeas" class="calIdeas" hidden></div>
         <button class="btn ghost" id="calOwnBtn" type="button">✍️ Ho un'idea mia: creala tu</button>
         <div id="calOwn" class="calIdeas ownBox" hidden><textarea id="calOwnT" rows="3" placeholder="Es. la cliente vuole una promo di Natale: pacchetto regalo massaggio + trattamento viso a 89 €, valido fino al 24 dicembre"></textarea>
-          <span class="lbl">Formato</span><div class="chips" id="calOwnF"></div><span class="lbl">Obiettivo</span><div class="chips" id="calOwnO"></div>
+          <span class="lbl">Formato</span><div class="chips" id="calOwnF"></div><div id="calOwnSlW" hidden><span class="lbl">Quante slide?</span><div class="chips" id="calOwnSl"></div></div><span class="lbl">Obiettivo</span><div class="chips" id="calOwnO"></div><p class="calSugg" id="calOwnHint" hidden style="font-size:14px"></p>
           <button class="btn" id="calOwnGo" type="button" style="background:var(--t-contenuto)">✨ Crea il contenuto</button></div>
         <button class="back" id="calPlan" type="button" style="align-self:center">✍️ Manuale: un promemoria per questo giorno</button>
         <div id="calMemo" class="calIdeas" hidden><textarea id="calMemoT" rows="2" placeholder="Es. video con Marco in negozio, da decidere"></textarea><button class="btn sm" id="calMemoGo" type="button">Salva promemoria</button></div>
@@ -729,7 +729,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · obiettivi con icone</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · promo: argomento fisso e slide giuste</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1493,7 +1493,8 @@ async function fillWeek(k,btn,quiet){const sl=weekSlots(k).ds;if(!sl.length)retu
   catch(e){btn.disabled=false;btn.textContent=old;if(quiet)throw e;alert(errMsg(e))}}
 /* ⚡ Prepara tutta la settimana: riempie i giorni da fare, scrive, vota, migliora e prepara le riprese */
 function unwritten(n){return (!!n.idea||!!n.slot)&&!Object.keys(n.out||{}).length&&!isPub(n)}
-async function writeIdea(n,onText){const x=n.idea||{},k=FORMATS[x.formato]?x.formato:"instagram";
+async function writeIdea(n,onText){const c0=carN;if(n.carN)carN=n.carN;try{return await writeIdea0(n,onText)}finally{carN=c0}}
+async function writeIdea0(n,onText){const x=n.idea||{},k=FORMATS[x.formato]?x.formato:"instagram";
   n.fun=!!n.fun||/sketch|divert|scenett|ironi|simpatic/i.test((x.fisso||"")+" "+(x.tema||""));const gv=genVid;genFun=n.fun;genVid="";const pr=promptFor(k,n.tr,n.client);genVid=gv;
   const{text}=await sampleFn(pr,onText?{onText}:{});n.out={...(n.out||{}),[k]:text};n.st="lavoro";tagVid(n);saveNote(n);if(cur===n)openNote(n,true);
   await ensureQuality(n);if(reelOf(n)&&!n.shots)try{await makeShots(n)}catch{}return n}
@@ -1944,16 +1945,21 @@ $("calIdeaBtn").onclick=()=>{const B=$("calIdeas");if(!B.hidden){B.hidden=true;r
     r.onclick=()=>calDone(planIdea(k,x,calDay));B.append(r)})};
 const OB_IC={"Farsi conoscere":"📣","Creare fiducia":"🤝","Vendere":"💰"},obIc=o=>(OB_IC[o]?OB_IC[o]+" ":"")+o;
 /* ✍️ Idea mia dal giorno del calendario: la scrivo, scelgo formato e obiettivo, Dictax la crea subito */
-let ownF="",ownO="";
+let ownF="",ownO="",ownSl=3,ownTouched=false;
 function renderOwnChips(){const F=$("calOwnF"),O=$("calOwnO");F.innerHTML="";O.innerHTML="";
-  FMT3.forEach(([k,l])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",ownF===k);b.onclick=()=>{ownF=k;renderOwnChips()};F.append(b)});
+  FMT3.forEach(([k,l])=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=l;b.setAttribute("aria-pressed",ownF===k);b.onclick=()=>{ownF=k;ownTouched=true;renderOwnChips()};F.append(b)});
+  $("calOwnSlW").hidden=ownF!=="carosello";const SL=$("calOwnSl");SL.innerHTML="";[2,3,4,5,6,7,8].forEach(v=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=v;b.setAttribute("aria-pressed",ownSl===v);b.onclick=()=>{ownSl=v;renderOwnChips()};SL.append(b)});
   OB3.forEach(o=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=obIc(o);b.setAttribute("aria-pressed",ownO===o);b.onclick=()=>{ownO=o;renderOwnChips()};O.append(b)})}
-$("calOwnBtn").onclick=()=>{const B=$("calOwn");B.hidden=!B.hidden;if(B.hidden)return;ownF=$("calMake").dataset.f||"instagram";ownO=$("calMake").dataset.ob||"Vendere";renderOwnChips();$("calOwnT").focus()};
-$("calOwnT").addEventListener("input",()=>{if(/promo|sconto|offert|regal|prezz|pacchett|natale|black friday|saldi|prenot/i.test($("calOwnT").value)&&ownO!=="Vendere"){ownO="Vendere";if(ownF==="carosello")ownF="instagram";renderOwnChips()}});
+$("calOwnBtn").onclick=()=>{const B=$("calOwn");B.hidden=!B.hidden;if(B.hidden)return;ownF=$("calMake").dataset.f||"instagram";ownO=$("calMake").dataset.ob||"Vendere";ownSl=3;ownTouched=false;$("calOwnHint").hidden=true;renderOwnChips();$("calOwnT").focus()};
+$("calOwnT").addEventListener("input",()=>{const t=$("calOwnT").value,promo=/promo|sconto|offert|regal|prezz|pacchett|natale|black friday|saldi|prenot|coupon|omaggio/i.test(t),sl=t.match(/(\d{1,2})\s*slide/i);
+  if(sl){ownF="carosello";ownSl=Math.max(2,Math.min(10,+sl[1]));ownTouched=true}
+  if(promo&&ownO!=="Vendere")ownO="Vendere";if(promo&&!ownTouched)ownF="instagram";
+  const H=$("calOwnHint");H.hidden=!promo;if(promo)H.textContent="💡 Per una promo funziona meglio un Post: una sola immagine con offerta, prezzo e scadenza chiari. Se vuoi spiegarla, un Carosello corto da 2-3 slide (offerta → cosa comprende → come prenotare). Negli ultimi giorni aggiungi una storia con il conto alla rovescia.";
+  renderOwnChips()});
 $("calOwnGo").onclick=async()=>{const t=$("calOwnT").value.trim();if(!t){$("calOwnT").focus();return}const k=calAddK,ds=calDay,b=$("calOwnGo");if(!ds)return;b.disabled=true;
   const x={titolo:t.split(/\n/)[0].replace(/^(idea|promo)\s*:\s*/i,"").slice(0,70),formato:fmtNice(ownF),obiettivo:ownO,gancio:"",angolo:t};
   const P=cliProfiles();if(P[k]){P[k].ideas=[...(P[k].ideas||[]),x];store.set("clients",P)}
-  const n=planIdea(k,x,ds);n.tr=`Idea dell'autore${n.client?" per "+n.client:""} (obiettivo: ${ownO.toLowerCase()}): ${t}`;saveNote(n);$("calOwnT").value="";$("calOwn").hidden=true;b.disabled=false;renderList();renderCal();
+  const n=planIdea(k,x,ds);n.tr=`Idea dell'autore${n.client?" per "+n.client:""} (obiettivo: ${ownO.toLowerCase()}): ${t}${ownF==="carosello"?`\nIl carosello deve avere esattamente ${ownSl} slide.`:""}${ownO==="Vendere"?"\nÈ un contenuto di vendita: offerta, prezzo e scadenza devono essere chiari, con un motivo per scrivere o prenotare adesso.":""}`;if(ownF==="carosello")n.carN=ownSl;saveNote(n);$("calOwnT").value="";$("calOwn").hidden=true;b.disabled=false;renderList();renderCal();
   openNote(n);setTimeout(()=>{const w=document.querySelector("#dOut .ideaCard .btn");if(w)w.click()},60)};
 /* Giorno del calendario: 4 schede grandi (Consigliato · Idee pronte · Idea mia · Promemoria) */
 function calTab(t){$("calAddTabs").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));$("calSugg").hidden=$("calMake").hidden=t!=="sugg";
@@ -2708,11 +2714,13 @@ async function runCheck(n){const k=mainKey(n);const my=(n.myFix||[]).slice(-5);
 $("checkBtn").onclick=async()=>{const n=cur,b=$("checkBtn");if(!mainKey(n))return;b.disabled=true;b.textContent="Controllo…";
   try{await runCheck(n);if(cur===n)renderCTools()}catch(e){$("dStatus").textContent=errMsg(e)}finally{b.disabled=false;b.textContent="↻ Ricontrolla"}};
 async function fixContent(n,b,mine,auto){const k=mainKey(n);if(!k)return;const reel0=reelOf(n);const old=b.textContent;b.disabled=true;b.textContent="Sto sistemando…";
+  const sl=String(mine||"").match(/(\d{1,2})\s*slide/i);if(sl&&/^carosello|^caso/.test(baseK(k)))n.carN=Math.max(1,Math.min(10,+sl[1]));const c0=carN;if(n.carN)carN=n.carN;
+  const topic=String(n.tr||"").replace(/\nSTESSA IDEA,[\s\S]*$/,"").slice(0,1500);
   try{const c=n.check&&n.check.k===k?n.check:null,probs=c?[["gancio",c.gancio],["posizionamento",c.pos],["invito all'azione",c.cta]].filter(([,x])=>!x?.ok).map(([l,x])=>l+": "+(x?.nota||"")).join("; "):"";
-    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee e il tipo di contenuto, non inventare fatti.${n.fun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF}${QUALITY}${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
+    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${topic?`\nARGOMENTO DA NON CAMBIARE (l'idea di partenza dell'autore): ${topic}\nResta su questo argomento, con la stessa offerta, gli stessi prodotti, prezzi e date: non cambiare tema e non proporne uno diverso. Le dritte, i risultati e i virali servono solo per il modo di scriverlo.`:""}${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, anche sul formato: se chiedono un numero di slide, righe o una lunghezza, rispettalo esattamente; seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee e il tipo di contenuto, non inventare fatti.${n.fun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF}${QUALITY}${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
     const fn=n.fun;genFun=!!fn;n.out[k]=text;if(mine)n.myFix=[...(n.myFix||[]),mine].slice(-5);delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto sistemato. Ricontrollo il voto…"}
     try{await runCheck(n);if(cur===n){renderCTools();$("dStatus").textContent="Contenuto sistemato ✓ Nuovo voto: "+n.check.voto+" su 10."}}catch{if(cur===n)$("dStatus").textContent="Contenuto sistemato ✓"}if(!auto)reShots(n,reel0)}
-  catch(e){b.disabled=false;b.textContent=old;$("dStatus").textContent=errMsg(e)}}
+  catch(e){b.disabled=false;b.textContent=old;$("dStatus").textContent=errMsg(e)}finally{carN=c0}}
 /* Gobbo */
 let gRun=false,gSpeed=raw.get("gSpeed",45),gLast=0,gY=0;
 $("gobboBtn").onclick=()=>{const n=cur,k=reelOf(n)!=null?"reel":mainKey(n);if(!k)return;const T=$("gTxt");T.innerHTML="";
