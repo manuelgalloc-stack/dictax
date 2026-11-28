@@ -729,7 +729,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · gobbo solo nei reel</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · immagini solo per le storie</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -2193,7 +2193,7 @@ function outCard(k,text,n){const d=document.createElement("article");d.className
   d.innerHTML='<div class="head"><span class="fmt"></span><span class="hBtns"><button class="btn ghost sm edB" hidden>✏️ Modifica</button><button class="btn ghost sm cpB">Copia</button></span></div><div class="txt"></div><div class="fid"></div>';
   d.querySelector(".fmt").textContent=n?.plain&&k==="pulito"?"Il tuo testo":k==="nota"?"Testo":fmtName(k);if(k.endsWith(ML))d.classList.add("ml");const t=d.querySelector(".txt");t.textContent=text;const b=d.querySelector(".cpB");
   b.onclick=()=>copyText(t.textContent,b,t);
-  if(n&&/^(storie|carosello|caso)/.test(baseK(k))){const cv=document.createElement("div");cv.className="cvRow";cv.innerHTML='<button type="button" class="btn ghost cvB">🖼 Crea le immagini</button>';d.querySelector(".fid").before(cv);cv.querySelector(".cvB").onclick=e=>openImgEd(n,k,e.currentTarget)}
+  if(n&&/^storie/.test(baseK(k))){const cv=document.createElement("div");cv.className="cvRow";cv.innerHTML='<button type="button" class="btn ghost cvB">🖼 Crea le immagini</button>';d.querySelector(".fid").before(cv);cv.querySelector(".cvB").onclick=e=>openImgEd(n,k,e.currentTarget)}
   if(n&&k!=="todo"){const e=d.querySelector(".edB");e.hidden=false;e.onclick=()=>{if(d.querySelector(".edBox"))return;const box=document.createElement("div");box.className="edBox";box.innerHTML='<textarea class="edTa"></textarea><div class="edAct"><button class="btn sm">Salva</button><button class="btn ghost sm">Annulla</button></div>';
     const ta=box.querySelector("textarea");ta.value=n.out[k]??t.textContent;t.hidden=true;e.hidden=true;t.after(box);const fit=()=>{ta.style.height="auto";ta.style.height=Math.max(160,ta.scrollHeight+4)+"px"};ta.oninput=fit;fit();ta.focus();
     const [sv,an]=box.querySelectorAll("button");an.onclick=()=>{box.remove();t.hidden=false;e.hidden=false};
