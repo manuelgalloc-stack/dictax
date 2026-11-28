@@ -729,7 +729,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · promo: argomento fisso e slide giuste</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · gobbo solo nei reel</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -2449,7 +2449,7 @@ function perfCtx(cl){const same=allNotes().filter(n=>!n.ex&&typeOf(n)==="contenu
   const ps=perfStats(same);if(ps)t+=ps;
   return t}
 function renderCTools(){const n=cur,isF=isPub(n);$("dRes").hidden=!isF;document.querySelectorAll(".resBtns button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===n.res));
-  $("gobboBtn").hidden=!mainKey(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
+  $("gobboBtn").hidden=!reelOf(n);$("checkBtn").hidden=!mainKey(n);renderCheck(n)}
 document.querySelectorAll(".resBtns button").forEach(b=>b.onclick=()=>{cur.res=cur.res===b.dataset.r?undefined:b.dataset.r;if(!cur.res)delete cur.res;cur.resAt=Date.now();saveNote(cur);try{bankHook(cur)}catch{}renderCTools();$("dStatus").textContent=cur.res==="lead"?"Ottimo: è il risultato che conta. Dictax punterà su contenuti come questo"+(cur.client?" per "+cur.client:"")+".":cur.res?"Grazie: Dictax ne terrà conto nei prossimi contenuti"+(cur.client?" per "+cur.client:"")+".":""});
 let ctab="testo",ctabId=null;
 function setCTab(t){const V=$("v-detail");ctab=t;V.dataset.ct=t;if(t==="altro")$("dMore").open=true;$("cSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===t));if($("dOrigBox").hidden===false&&t!=="testo")$("dSeg").querySelector("button").click()}
