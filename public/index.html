@@ -399,6 +399,7 @@ body.noClients .cliOpt{display:none!important}
 .cRecent{display:flex;flex-direction:column;gap:8px;margin-top:4px}.cRecent:empty{display:none}.cRow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);font:inherit;color:inherit;cursor:pointer}.cRow b{font-size:15px}.cRow small{color:var(--muted);font-size:13px}.cRow.done{opacity:.55}
 #cliEdit.isNew .notNew,#cliEdit:not(.isNew) .newOnly{display:none!important}.back.danger{color:var(--danger,#d33)}
 .cComp{display:flex;flex-direction:column;gap:8px}.compRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px}.compRow .cu{grid-column:1/2}.compRow .cn{grid-column:1/4}.compRow a,.compRow button{font-size:14px;font-weight:700;color:var(--accent);background:none;border:0;padding:6px;text-decoration:none;cursor:pointer}.compRow button{color:var(--muted)}
+.cLinks{display:flex;flex-direction:column;gap:8px}.cLink{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}.cLinkT{all:unset;cursor:pointer;font-weight:700;color:var(--t-link);overflow-wrap:anywhere}.cLinkN{margin:0}.cLinkA{display:flex;gap:8px;justify-content:flex-end}
 .stBox{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#faf7ff}.stThumbs,.nThumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}.stThumbs:empty{display:none}.stThumbs figure,.nThumbs figure{margin:0;flex:none;position:relative;text-align:center;font-size:12px;font-weight:700;color:var(--muted)}.stThumbs img,.nThumbs img{width:64px;height:96px;object-fit:cover;border-radius:10px;display:block;margin-bottom:3px}.stThumbs button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#222;color:#fff;font-size:13px;cursor:pointer}.stGo .btn{flex:1}.nThumbs{margin:0 0 10px}.fixRow .fx{flex:1 1 100%;min-width:0}.fixRow .fn{width:58px;flex:none;text-align:center;padding:8px 4px}.fixRow span{font-size:13px;color:var(--muted);flex:none}.fixRow button{flex:none;border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer;padding:4px}
 .ideaCard{border:2px dashed var(--t-contenuto);display:flex;flex-direction:column;gap:8px}.ideaCard .btn{background:var(--t-contenuto)}
 #cDays .chip{min-width:44px;justify-content:center}
@@ -730,7 +731,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · ads a pagamento per le promo</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · link del cliente per prendere spunto</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -801,7 +802,7 @@ body:not(.solo) .soloOnly{display:none!important}
         <div id="cPaneCrea" class="cPane">
           <div id="cNoPos" class="cNoPos" hidden><p class="lead" style="margin:0">Per iniziare serve il posizionamento: Dictax lo crea da solo partendo da cosa fa il cliente.</p><button class="btn big" id="cGoPos" type="button">✨ Crea il posizionamento</button></div>
           <div class="cTiles" id="cTiles">
-            <button type="button" class="cTile" data-t="idee"><span>💡</span><b>Idee</b><small>temi e diario</small></button>
+            <button type="button" class="cTile" data-t="idee"><span>💡</span><b>Idee</b><small>temi, diario e link</small></button>
             <button type="button" class="cTile" data-t="storie"><span>📱</span><b>Storie dalle foto</b><small>foto del cliente → storie</small></button>
             <button type="button" class="cTile" data-t="girare"><span>🎥</span><b>Da girare</b><small id="cShotCount">riprese dei reel</small></button><button type="button" class="cTile" data-t="nuovo"><span>🎙</span><b>Nuovo contenuto</b><small>parla o scrivi</small></button>
           </div>
@@ -815,6 +816,7 @@ body:not(.solo) .soloOnly{display:none!important}
           <span class="lbl">💡 Idee</span>
           <div id="cIdeas" class="list" style="gap:10px"></div>
           <button class="btn ghost" id="cIdeasGo">💡 Trova le idee</button>
+          <div class="callBox linkBox"><span class="lbl">🔗 Link per prendere spunto</span><p class="help" style="margin:0">Hai trovato un articolo, un video o un post buono per questo cliente? Incollalo qui e scrivi cosa ti piace: Dictax ne terrà conto quando prepara idee e contenuti.</p><div id="cLinks" class="cLinks"></div><button class="btn ghost" id="cLinkAdd" type="button">+ Aggiungi un link</button></div>
         </div>
           <div id="stBox" class="stBox cPanel" hidden>
           <span class="lbl">📱 Storie dal cliente</span>
@@ -983,6 +985,10 @@ body:not(.solo) .soloOnly{display:none!important}
     <div class="row tight"><input type="url" id="lUrl" inputmode="url" placeholder="https://…" autocomplete="off" style="flex:1;min-width:0"><button class="btn sm" id="lPaste" type="button">📋 Incolla</button></div>
     <label class="lbl" for="lTitle">Di cosa si tratta?</label>
     <input type="text" id="lTitle" placeholder="Es. Tutorial per i Reel" autocomplete="off">
+    <label class="lbl cliOpt" for="lCli">Per quale cliente? (facoltativo)</label>
+    <input type="text" id="lCli" class="cliOpt" placeholder="Nome del cliente" autocomplete="off">
+    <label class="lbl" for="lNota">Cosa ti piace? (facoltativo)</label>
+    <input type="text" id="lNota" placeholder="Es. il gancio iniziale, l'argomento delle offerte" autocomplete="off">
     <label class="lbl" for="lTags">Tag (facoltativo)</label>
     <input type="text" id="lTags" placeholder="Es. reel, tutorial" autocomplete="off" autocapitalize="none">
     <div class="chips tagSugg" id="lTagSugg"></div>
@@ -1616,6 +1622,7 @@ const isSolo=()=>mode==="creator"&&ckind==="solo";
 const clientsOn=()=>useClients&&!isSolo();
 const ctxFor=cl=>cl?clientCtx(cl):isSolo()&&cliProfiles().__me?clientCtx("__me"):"";
 function clientCtx(cl){const p=cliProfiles()[cl];let t=cl==="__me"?"\nIl contenuto è per il brand personale dell'autore (creator).":`\nIl contenuto è per il cliente/brand: ${cl}.`;if(!p)return t;
+  {const L=cliLinks(cl).slice(0,8);if(L.length)t+=`\nSPUNTI SALVATI DALL'AUTORE PER QUESTO CLIENTE (link che gli sono piaciuti: prendi l'argomento o lo spirito, non copiare): ${L.map(n=>"- "+n.title+(n.nota?" (cosa gli piace: "+n.nota+")":"")+(n.tags?.length?" ["+n.tags.join(", ")+"]":"")).join("\n")}`}
   if(p.perche)t+=`\nPERCHÉ SCEGLIERE QUESTO CLIENTE (rileggilo prima di scrivere: ogni contenuto deve rinforzarlo): ${p.perche}`;
   {const mai=String(p.mai??"").split(/\n+/).map(s=>s.trim()).filter(Boolean);if(mai.length)t+=`\nLISTA "MAI" DEL CLIENTE (cose da non dire, mostrare o sembrare mai: rispettala sempre): ${mai.join("; ")}`}
   {const g=(p.ganci||[]).slice(0,8);if(g.length)t+=`\nGANCI CHE HANNO GIÀ FUNZIONATO PER QUESTO CLIENTE (riusa la loro struttura cambiando il contesto, non ricopiarli uguali): ${g.map(x=>"“"+x.t+"”").join(" · ")}`}
@@ -1647,7 +1654,7 @@ function renderClients(){const L=$("cliList");L.innerHTML="";const P=cliProfiles
   if(!names.length)L.innerHTML='<div class="empty">Ancora nessun cliente. Aggiungine uno qui sotto.</div>';
   names.forEach(nm=>{const p=P[nm]||{};const c=document.createElement("article");c.className="card cliCard";c.innerHTML='<div><b></b><small></small></div><span class="pill"></span>';c.querySelector("b").textContent=nm;
     c.querySelector("small").textContent=p.niche||"Nicchia non ancora indicata";c.querySelector("div").append(wkEl(nm,p));const pl=c.querySelector(".pill");pl.textContent=p.pos?"✓ Posizionamento":"Da creare";if(!p.pos)pl.className="pill st-idea";c.onclick=()=>editClient(nm);L.append(c)})}
-function editClient(nm,pane){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};$("cliEdit").hidden=false;$("cliHome").hidden=true;$("cliEdit").classList.toggle("isNew",!nm);renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cReq").value=p.req||"";$("cCall").value=p.call||"";$("cCallStat").textContent="";$("cServ").value=p.serv||"";$("cFocus").value=p.focus||"";$("cDiary").value="";$("cDiaryStat").textContent="";cVid=new Set(p.vid||[]);renderVid();cComp=(p.comp||[]).map(c=>({...c}));renderComp();stImgs=[];renderSt();$("stStat").textContent="";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=false;$("cReqWrap").style.display=p.req?"contents":"none";if(!p.serv&&p.offer)$("cServ").value=p.offer;cDays=new Set(p.days||[]);renderDays();$("cStat").textContent="";$("cDel").hidden=!nm;$("posMore").open=false;renderMetodo(p);setCPane(nm?(pane||"crea"):"scheda");refreshCrea();scrollTo(0,0);if(!nm)$("cName").focus()}
+function editClient(nm,pane){cliCur=nm||null;const p=(nm&&cliProfiles()[nm])||{};setTimeout(renderCliLinks,0);$("cliEdit").hidden=false;$("cliHome").hidden=true;$("cliEdit").classList.toggle("isNew",!nm);renderIdeas(p);$("cName").value=nm||"";$("cNiche").value=p.niche||"";$("cWk").value=p.wk||"";$("cReq").value=p.req||"";$("cCall").value=p.call||"";$("cCallStat").textContent="";$("cServ").value=p.serv||"";$("cFocus").value=p.focus||"";$("cDiary").value="";$("cDiaryStat").textContent="";cVid=new Set(p.vid||[]);renderVid();cComp=(p.comp||[]).map(c=>({...c}));renderComp();stImgs=[];renderSt();$("stStat").textContent="";$("cTarget").value=p.target||"";$("cOffer").value=p.offer||"";$("cZone").value=p.zone||"";$("cAvoid").value=p.avoid||"";$("cPos").value=p.pos||"";$("cDr").value=p.dritte||(p.fissi||[]).map(f=>`${f.cosa} (${f.n} volte al mese)`).join("\n");$("cliMore").open=false;$("cReqWrap").style.display=p.req?"contents":"none";if(!p.serv&&p.offer)$("cServ").value=p.offer;cDays=new Set(p.days||[]);renderDays();$("cStat").textContent="";$("cDel").hidden=!nm;$("posMore").open=false;renderMetodo(p);setCPane(nm?(pane||"crea"):"scheda");refreshCrea();scrollTo(0,0);if(!nm)$("cName").focus()}
 function setCPane(k){$("cTabs").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p===k));$("cPaneCrea").hidden=k!=="crea";$("cPaneScheda").hidden=k!=="scheda";$("cPaneMetodo").hidden=k!=="metodo";$("cTabs").hidden=!cliCur}
 $("cTabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.p==="crea")refreshCrea();setCPane(b.dataset.p)});
 function refreshCrea(){const nm=cliCur,p=(nm&&cliProfiles()[nm])||{};$("cTitle").textContent=nm==="__me"?"Il mio brand":nm||"Nuovo cliente";
@@ -2777,21 +2784,31 @@ const parseTags=v=>[...new Set(String(v||"").split(/[,\s]+/).map(t=>t.replace(/^
 const topTags=(k=8)=>{const c={};visNotes().forEach(n=>(n.tags||[]).forEach(t=>{const x=tagKey(t);if(x)c[x]=(c[x]||0)+1}));return Object.keys(c).sort((a,b)=>c[b]-c[a]).slice(0,k)};
 function tagSuggest(box,inp,onAdd){box.innerHTML="";const have=parseTags(inp.value);topTags().filter(t=>!have.includes(t)).forEach(t=>{const c=document.createElement("button");c.type="button";c.className="chip";c.textContent="#"+t;c.onclick=()=>{inp.value=[...parseTags(inp.value),t].join(", ");onAdd&&onAdd();tagSuggest(box,inp,onAdd)};box.append(c)})}
 function linkCard(n){const d=document.createElement("article");d.className="card linkCard";
-  d.innerHTML='<span class="fmt" style="color:var(--t-link)">Link utile</span><a class="url" target="_blank" rel="noopener"></a><div class="row tight"><a class="btn open" target="_blank" rel="noopener">🔗 Apri il link</a><button class="btn ghost sm" type="button">Copia</button></div><label class="lbl">Di cosa si tratta?</label><input type="text" class="lt"><label class="lbl">Link</label><input type="url" class="lu" inputmode="url"><label class="lbl">Tag</label><input type="text" class="lg" placeholder="Es. reel, tutorial" autocapitalize="none"><div class="chips tagSugg"></div>';
+  d.innerHTML='<span class="fmt" style="color:var(--t-link)">Link utile</span><a class="url" target="_blank" rel="noopener"></a><div class="row tight"><a class="btn open" target="_blank" rel="noopener">🔗 Apri il link</a><button class="btn ghost sm" type="button">Copia</button></div><label class="lbl">Di cosa si tratta?</label><input type="text" class="lt"><label class="lbl">Link</label><input type="url" class="lu" inputmode="url"><label class="lbl">Cosa ti piace?</label><input type="text" class="ln" placeholder="Es. il gancio iniziale"><label class="lbl">Tag</label><input type="text" class="lg" placeholder="Es. reel, tutorial" autocapitalize="none"><div class="chips tagSugg"></div>';
   const u=n.out.link||"",a=d.querySelector("a.url"),o=d.querySelector("a.open");a.textContent=u;a.href=u;o.href=u;
   const cb=d.querySelector("button");cb.onclick=()=>copyText(n.out.link,cb,a);
-  const lt=d.querySelector(".lt"),lu=d.querySelector(".lu");lt.value=n.title;lu.value=u;
+  const lt=d.querySelector(".lt"),lu=d.querySelector(".lu"),ln=d.querySelector(".ln");lt.value=n.title;lu.value=u;ln.value=n.nota||"";ln.onchange=()=>{n.nota=ln.value.trim();saveNote(n)};
   lt.onchange=()=>{const t=lt.value.trim();if(!t)return;n.title=t;saveNote(n);renderHead()};
   lu.onchange=()=>{const v=fixUrl(lu.value);if(!v)return;n.out.link=v;n.tr=v;saveNote(n);a.textContent=v;a.href=v;o.href=v};
   const lg=d.querySelector(".lg"),sg=d.querySelector(".tagSugg");lg.value=(n.tags||[]).join(", ");const saveT=()=>{n.tags=parseTags(lg.value);saveNote(n);renderHead()};lg.onchange=saveT;tagSuggest(sg,lg,saveT);
   return d}
-function openLink(url,title){$("lUrl").value=url||"";$("lTitle").value=title||"";$("lTags").value="";tagSuggest($("lTagSugg"),$("lTags"));$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
+function openLink(url,title,cl){$("lUrl").value=url||"";$("lTitle").value=title||"";$("lTags").value="";$("lNota").value="";const lc=$("lCli");lc.value=cl||"";lc.dataset.new="";if(!isSolo())cliChips(lc,()=>{});tagSuggest($("lTagSugg"),$("lTags"));$("lStatus").textContent="";$("lPaste").hidden=!navigator.clipboard?.readText;$("linkSheet").hidden=false;setTimeout(()=>(url?$("lTitle"):$("lUrl")).focus(),50)}
 $("lCancel").onclick=()=>{$("linkSheet").hidden=true};
 $("lPaste").onclick=async()=>{try{const t=(await navigator.clipboard.readText()).trim();if(t){$("lUrl").value=t;$("lTitle").focus()}else $("lStatus").textContent="Non c'è niente da incollare."}catch{$("lStatus").textContent="Tieni premuto nella casella e scegli Incolla."}};
 $("lSave").onclick=()=>{const url=fixUrl($("lUrl").value);if(!url){$("lStatus").textContent="Incolla prima il link.";return}
   let title=$("lTitle").value.trim();if(!title){try{title=new URL(url).hostname.replace(/^www\./,"")}catch{title=url}}
-  const n={id:"n"+Date.now(),at:Date.now(),tr:url,out:{link:url},type:"link",client:"",title,tags:parseTags($("lTags").value)};
-  $("linkSheet").hidden=true;$("transcript").value="";saveNote(n);renderTabs();renderList();openNote(n)};
+  const n={id:"n"+Date.now(),at:Date.now(),tr:url,out:{link:url},type:"link",client:isSolo()?"":$("lCli").value.trim(),title,tags:parseTags($("lTags").value)};const nota=$("lNota").value.trim();if(nota)n.nota=nota;
+  $("linkSheet").hidden=true;$("transcript").value="";saveNote(n);renderTabs();renderList();if(linkBack){linkBack=false;renderCliLinks();return}openNote(n)};
+/* 🔗 Link per prendere spunto, legati al cliente (sono normali "Link utili" con il cliente) */
+let linkBack=false;
+const cliLinks=cl=>allNotes().filter(n=>typeOf(n)==="link"&&(n.client||"")===(cl==="__me"?"":cl)).sort((a,b)=>b.at-a.at);
+function renderCliLinks(){const B=$("cLinks");if(!B)return;const k=isSolo()?"__me":cliCur;B.innerHTML="";if(!k){B.closest(".linkBox").hidden=true;return}B.closest(".linkBox").hidden=false;
+  const L=cliLinks(k);if(!L.length){B.innerHTML='<p class="help" style="margin:0">Ancora nessun link.</p>';return}
+  L.forEach(n=>{const r=document.createElement("div");r.className="cLink";const u=n.out?.link||n.tr||"";r.innerHTML='<button type="button" class="cLinkT"></button><span class="cLinkN help"></span><span class="cLinkA"><a class="btn ghost sm" target="_blank" rel="noopener">Apri</a><button type="button" class="btn ghost sm cLinkX" aria-label="Togli il link">✕</button></span>';
+    r.querySelector(".cLinkT").textContent=n.title||u;r.querySelector(".cLinkT").onclick=()=>openNote(n);const nn=r.querySelector(".cLinkN");nn.textContent=n.nota?"👍 "+n.nota:"";nn.hidden=!n.nota;r.querySelector("a").href=u;
+    r.querySelector(".cLinkX").onclick=()=>{if(!confirm("Togliere questo link?"))return;deleteNote(n);renderCliLinks()};B.append(r)})}
+$("cLinkAdd").onclick=()=>{linkBack=true;openLink("","",isSolo()?"":cliCur||"")};
+$("lCancel").addEventListener("click",()=>{linkBack=false});
 /* Markdown / Obsidian */
 function toMarkdown(n){const d=new Date(n.at).toISOString().slice(0,10);
   return `---\ntitolo: "${n.title.replace(/"/g,"'")}"\ndata: ${d}\ntipo: ${TYPES[typeOf(n)].n}\ncliente: ${n.client||""}\ntags: [${(n.tags||[]).join(", ")}]\nfonte: Dictax\n---\n\n# ${n.title}\n\n`+
