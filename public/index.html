@@ -729,7 +729,7 @@ body:not(.solo) .soloOnly{display:none!important}
       <div class="head"><span class="fmt">I tuoi dati</span></div>
       <button class="btn ghost" id="dataDl">⬇️ Scarica tutti i miei dati</button>
       <button class="btn ghost" id="guideAgain">👋 Rivedi la guida</button>
-      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · immagini solo per le storie</p>
+      <p class="help" id="appVer" style="margin:0;text-align:center">Versione 28 nov · promo chiara dalla prima slide</p>
       <a class="btn ghost" href="/privacy.html" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">🔒 Privacy e termini d'uso</a>
       <button class="btn danger" id="dataDel">🗑 Elimina tutti i miei dati</button>
     </div>
@@ -1495,7 +1495,7 @@ async function fillWeek(k,btn,quiet){const sl=weekSlots(k).ds;if(!sl.length)retu
 function unwritten(n){return (!!n.idea||!!n.slot)&&!Object.keys(n.out||{}).length&&!isPub(n)}
 async function writeIdea(n,onText){const c0=carN;if(n.carN)carN=n.carN;try{return await writeIdea0(n,onText)}finally{carN=c0}}
 async function writeIdea0(n,onText){const x=n.idea||{},k=FORMATS[x.formato]?x.formato:"instagram";
-  n.fun=!!n.fun||/sketch|divert|scenett|ironi|simpatic/i.test((x.fisso||"")+" "+(x.tema||""));const gv=genVid;genFun=n.fun;genVid="";const pr=promptFor(k,n.tr,n.client);genVid=gv;
+  n.fun=!!n.fun||/sketch|divert|scenett|ironi|simpatic/i.test((x.fisso||"")+" "+(x.tema||""));const gv=genVid;genFun=n.fun;genVid="";const pr=promptFor(k,n.tr+(isPromo(n.tr)?PROMO_RULE:""),n.client);genVid=gv;
   const{text}=await sampleFn(pr,onText?{onText}:{});n.out={...(n.out||{}),[k]:text};n.st="lavoro";tagVid(n);saveNote(n);if(cur===n)openNote(n,true);
   await ensureQuality(n);if(reelOf(n)&&!n.shots)try{await makeShots(n)}catch{}return n}
 /* 📱 Storie della settimana: una traccia per cliente, 7 tipi di storia alternati */
@@ -1944,6 +1944,9 @@ $("calIdeaBtn").onclick=()=>{const B=$("calIdeas");if(!B.hidden){B.hidden=true;r
       const tg=(t,c)=>{const e=document.createElement("span");e.className="iTag "+c;e.textContent=t;sm.append(e)};tg(fl,"iFmt"+(IDEA_FMT(x.formato)===f?" ok":""));tg(io?obIc(io):"Obiettivo da decidere",io?"ob-y"+(io===ob?" ok":""):"ob-x");if(x.diario)tg("🎙 dal diario","iFmt");if(m===3)tg("⭐ adatta a questo giorno","iOk")}
     r.onclick=()=>calDone(planIdea(k,x,calDay));B.append(r)})};
 const OB_IC={"Farsi conoscere":"📣","Creare fiducia":"🤝","Vendere":"💰"},obIc=o=>(OB_IC[o]?OB_IC[o]+" ":"")+o;
+/* Promo: l'offerta deve vedersi subito (il desiderio la presenta, non la sostituisce) */
+const isPromo=t=>/promo|sconto|offert|omaggio|regal[oa]|prezz|pacchett|coupon|saldi|black friday|in regalo|gratis|\d+\s*(€|euro)/i.test(String(t||""));
+const PROMO_RULE="\nÈ UNA PROMO: l'offerta deve essere chiara e visibile subito. Nella prima slide o nella prima riga c'è l'offerta con parole semplici (cosa ottieni, a quali condizioni, fino a quando, il prezzo se l'autore l'ha dato); poi il perché conviene adesso, facendo leva sul desiderio; alla fine come prenotare. Il racconto e le emozioni servono a presentare l'offerta, non a nasconderla: chi legge solo la prima slide deve aver capito la promo. Non aggiungere ricorrenze (es. Natale), condizioni o prezzi che l'autore non ha scritto.";
 /* ✍️ Idea mia dal giorno del calendario: la scrivo, scelgo formato e obiettivo, Dictax la crea subito */
 let ownF="",ownO="",ownSl=3,ownTouched=false;
 function renderOwnChips(){const F=$("calOwnF"),O=$("calOwnO");F.innerHTML="";O.innerHTML="";
@@ -2717,7 +2720,7 @@ async function fixContent(n,b,mine,auto){const k=mainKey(n);if(!k)return;const r
   const sl=String(mine||"").match(/(\d{1,2})\s*slide/i);if(sl&&/^carosello|^caso/.test(baseK(k)))n.carN=Math.max(1,Math.min(10,+sl[1]));const c0=carN;if(n.carN)carN=n.carN;
   const topic=String(n.tr||"").replace(/\nSTESSA IDEA,[\s\S]*$/,"").slice(0,1500);
   try{const c=n.check&&n.check.k===k?n.check:null,probs=c?[["gancio",c.gancio],["posizionamento",c.pos],["invito all'azione",c.cta]].filter(([,x])=>!x?.ok).map(([l,x])=>l+": "+(x?.nota||"")).join("; "):"";
-    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${topic?`\nARGOMENTO DA NON CAMBIARE (l'idea di partenza dell'autore): ${topic}\nResta su questo argomento, con la stessa offerta, gli stessi prodotti, prezzi e date: non cambiare tema e non proporne uno diverso. Le dritte, i risultati e i virali servono solo per il modo di scriverlo.`:""}${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, anche sul formato: se chiedono un numero di slide, righe o una lunghezza, rispettalo esattamente; seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee e il tipo di contenuto, non inventare fatti.${n.fun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF}${QUALITY}${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
+    const{text}=await sampleFn(`${MANULAB_VOICE}\n\nFormato da rispettare: ${FORMATS[baseK(k)]?.p||k}.${kwRule(baseK(k))}${ctxFor(n.client)}${perfCtx(n.client)}${dritteCtx()}\nMigliora questo contenuto.${topic?`\nARGOMENTO DA NON CAMBIARE (l'idea di partenza dell'autore): ${topic}\nResta su questo argomento, con la stessa offerta, gli stessi prodotti, prezzi e date: non cambiare tema e non proporne uno diverso. Le dritte, i risultati e i virali servono solo per il modo di scriverlo.${isPromo(topic)?PROMO_RULE:""}`:""}${mine?`\nINDICAZIONI DELL'AUTORE (hanno la priorità su tutto il resto, anche sul formato: se chiedono un numero di slide, righe o una lunghezza, rispettalo esattamente; seguile alla lettera): ${mine}`:""}${c?`\nRevisione: ${probs?"problemi: "+probs+". ":""}consiglio principale: ${c.consiglio}.`:""}\nMantieni le idee e il tipo di contenuto, non inventare fatti.${n.fun&&String(k).startsWith("reel")?FUN_ON:FUN_OFF}${QUALITY}${langRule()} Rispondi solo con il testo finale in italiano, senza preamboli né markdown.\n\nCONTENUTO:\n${n.out[k]}`);
     const fn=n.fun;genFun=!!fn;n.out[k]=text;if(mine)n.myFix=[...(n.myFix||[]),mine].slice(-5);delete n.check;saveNote(n);if(cur===n){openNote(n,true);$("dStatus").textContent="Contenuto sistemato. Ricontrollo il voto…"}
     try{await runCheck(n);if(cur===n){renderCTools();$("dStatus").textContent="Contenuto sistemato ✓ Nuovo voto: "+n.check.voto+" su 10."}}catch{if(cur===n)$("dStatus").textContent="Contenuto sistemato ✓"}if(!auto)reShots(n,reel0)}
   catch(e){b.disabled=false;b.textContent=old;$("dStatus").textContent=errMsg(e)}finally{carN=c0}}
